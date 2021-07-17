@@ -1,0 +1,14 @@
+numpy
+torch
+opencv_python
+loguru
+scikit_image
+tqdm
+apex
+torchvision
+pycocotools
+apex
+Pillow
+skimage
+thop
+ninja
