@@ -1,3 +1,7 @@
+#!/usr/bin/env python3
+# -*- coding:utf-8 -*-
+# Copyright (c) Megvii, Inc. and its affiliates.
+
 import contextlib
 import io
 import itertools
@@ -87,7 +91,7 @@ class COCOEvaluator:
             model_trt.load_state_dict(torch.load(trt_file))
 
             x = torch.ones(1, 3, test_size[0], test_size[1]).cuda()
-            dump_out = model(x)
+            model(x)
             model = model_trt
 
         for cur_iter, (imgs, _, info_imgs, ids) in enumerate(

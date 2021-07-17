@@ -1,9 +1,13 @@
+#!/usr/bin/env python
+# -*- encoding: utf-8 -*-
+# Copyright (c) 2014-2021 Megvii Inc. All rights reserved.
+
 import torch
 import torch.nn as nn
 
 
 class SiLU(nn.Module):
-    # export-friendly version of nn.SiLU()
+    """export-friendly version of nn.SiLU()"""
 
     @staticmethod
     def forward(x):
@@ -23,9 +27,7 @@ def get_activation(name="silu", inplace=True):
 
 
 class BaseConv(nn.Module):
-    """
-    A Conv2d -> Batchnorm -> silu/leaky relu block
-    """
+    """A Conv2d -> Batchnorm -> silu/leaky relu block"""
 
     def __init__(self, in_channels, out_channels, ksize, stride, groups=1, bias=False, act="silu"):
         super().__init__()
@@ -99,7 +101,7 @@ class ResLayer(nn.Module):
 
 
 class SPPBottleneck(nn.Module):
-    # Spatial pyramid pooling layer used in YOLOv3-SPP
+    """Spatial pyramid pooling layer used in YOLOv3-SPP"""
     def __init__(self, in_channels, out_channels, kernel_sizes=(5, 9, 13), activation="silu"):
         super().__init__()
         hidden_channels = in_channels // 2
@@ -126,6 +128,8 @@ class CSPLayer(nn.Module):
     ):
         """
         Args:
+            in_channels (int): input channels.
+            out_channels (int): output channels.
             n (int): number of Bottlenecks. Default value: 1.
         """
         # ch_in, ch_out, number, shortcut, groups, expansion
@@ -150,6 +154,7 @@ class CSPLayer(nn.Module):
 
 class Focus(nn.Module):
     """Focus width and height information into channel space."""
+
     def __init__(self, in_channels, out_channels, ksize=1, stride=1):
         super().__init__()
         self.conv = BaseConv(in_channels * 4, out_channels, ksize, stride)

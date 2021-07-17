@@ -1,10 +1,10 @@
-"""VOC Dataset Classes
-
-Original author: Francisco Massa
-https://github.com/fmassa/vision/blob/voc_dataset/torchvision/datasets/voc.py
-
-Updated by: Ellis Brown, Max deGroot
-"""
+#!/usr/bin/env python3
+# -*- coding:utf-8 -*-
+# Code are based on
+# https://github.com/fmassa/vision/blob/voc_dataset/torchvision/datasets/voc.py
+# Copyright (c) Francisco Massa.
+# Copyright (c) Ellis Brown, Max deGroot.
+# Copyright (c) Megvii, Inc. and its affiliates.
 
 import os
 import os.path

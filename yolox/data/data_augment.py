@@ -1,3 +1,6 @@
+#!/usr/bin/env python3
+# -*- coding:utf-8 -*-
+# Copyright (c) Megvii, Inc. and its affiliates.
 """
 Data augmentation functionality. Passed as callable transformations to
 Dataset classes.

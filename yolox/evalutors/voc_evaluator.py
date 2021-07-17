@@ -1,3 +1,8 @@
+#!/usr/bin/env python3
+# -*- coding:utf-8 -*-
+# Copyright (c) Megvii, Inc. and its affiliates.
+
+# NOTE: this file is not finished.
 import sys
 import tempfile
 import time
@@ -5,11 +10,8 @@ from tqdm import tqdm
 
 import torch
 
-# TODO check VOC
 from yolox.data.dataset.vocdataset import ValTransform
 from yolox.utils import get_rank, is_main_process, make_pred_vis, make_vis, synchronize
-
-# TODO refactor this file in the future.
 
 
 def _accumulate_predictions_from_multiple_gpus(predictions_per_gpu):

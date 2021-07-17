@@ -1,8 +1,9 @@
-# --------------------------------------------------------
-# Fast/er R-CNN
-# Licensed under The MIT License [see LICENSE for details]
-# Written by Bharath Hariharan
-# --------------------------------------------------------
+#!/usr/bin/env python3
+# -*- coding:utf-8 -*-
+# Code are based on
+# https://github.com/rbgirshick/py-faster-rcnn/blob/master/lib/datasets/voc_eval.py
+# Copyright (c) Bharath Hariharan.
+# Copyright (c) Megvii, Inc. and its affiliates.
 
 import os
 import pickle

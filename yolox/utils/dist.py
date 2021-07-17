@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 # -*- coding:utf-8 -*-
-# This file comes from
+# This file mainly comes from
 # https://github.com/facebookresearch/detectron2/blob/master/detectron2/utils/comm.py
 # Copyright (c) Facebook, Inc. and its affiliates.
+# Copyright (c) 2014-2021 Megvii Inc. All rights reserved.
 """
 This file contains primitives for multi-gpu communication.
 This is useful when doing distributed training.
@@ -248,7 +249,7 @@ def shared_random_seed():
 
 
 def time_synchronized():
-    # pytorch-accurate time
+    """pytorch-accurate time"""
     if torch.cuda.is_available():
         torch.cuda.synchronize()
     return time.time()

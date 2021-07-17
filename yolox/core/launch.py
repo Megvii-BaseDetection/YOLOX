@@ -5,7 +5,6 @@
 # Copyright (c) Facebook, Inc. and its affiliates.
 # Copyright (c) Megvii, Inc. and its affiliates.
 
-
 from loguru import logger
 
 import torch

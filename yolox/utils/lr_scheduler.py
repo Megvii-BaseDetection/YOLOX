@@ -1,3 +1,7 @@
+#!/usr/bin/env python3
+# -*- coding:utf-8 -*-
+# Copyright (c) 2014-2021 Megvii Inc. All rights reserved.
+
 import math
 from functools import partial
 
@@ -7,10 +11,14 @@ class LRScheduler:
         """
         Supported lr schedulers: [cos, warmcos, multistep]
 
-        Extra keyword arguments:
-          - cos: None
-          - warmcos: [warmup_epochs, warmup_lr_start (default 1e-6)]
-          - multistep: [milestones (epochs), gamma (default 0.1)]
+        Args:
+            lr (float): learning rate.
+            iters_per_peoch (int): number of iterations in one epoch.
+            total_epochs (int): number of epochs in training.
+            kwargs (dict):
+                - cos: None
+                - warmcos: [warmup_epochs, warmup_lr_start (default 1e-6)]
+                - multistep: [milestones (epochs), gamma (default 0.1)]
         """
 
         self.lr = lr
