@@ -25,11 +25,12 @@ def get_exp_by_name(exp_name):
         "yolox-m": "yolox_l.py",
         "yolox-l": "yolox_l.py",
         "yolox-x": "yolox_x.py",
+        "yolox-tiny": "yolox_tiny.py",
         "yolox-nano": "nano.py",
         "yolov3": "yolov3.py",
     }
     filename = filedict[exp_name]
-    exp_path = os.path.join(yolox_path, "exps", "base", filename)
+    exp_path = os.path.join(yolox_path, "exps", filename)
     return get_exp_by_file(exp_path)
 
 

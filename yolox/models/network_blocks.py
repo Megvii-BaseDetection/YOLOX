@@ -72,12 +72,15 @@ class DWConv(nn.Module):
 
 class Bottleneck(nn.Module):
     # Standard bottleneck
-    def __init__(self, in_channels, out_channels, shortcut=True, expansion=0.5, depthwise=False):
+    def __init__(
+        self, in_channels, out_channels, shortcut=True,
+        expansion=0.5, depthwise=False, act="silu"
+    ):
         super().__init__()
         hidden_channels = int(out_channels * expansion)
         Conv = DWConv if depthwise else BaseConv
-        self.conv1 = BaseConv(in_channels, hidden_channels, 1, stride=1)
-        self.conv2 = Conv(hidden_channels, out_channels, 3, stride=1)
+        self.conv1 = BaseConv(in_channels, hidden_channels, 1, stride=1, act=act)
+        self.conv2 = Conv(hidden_channels, out_channels, 3, stride=1, act=act)
         self.use_add = shortcut and in_channels == out_channels
 
     def forward(self, x):
@@ -124,7 +127,7 @@ class CSPLayer(nn.Module):
 
     def __init__(
         self, in_channels, out_channels, n=1,
-        shortcut=True, expansion=0.5, depthwise=False
+        shortcut=True, expansion=0.5, depthwise=False, act="silu"
     ):
         """
         Args:
@@ -135,11 +138,11 @@ class CSPLayer(nn.Module):
         # ch_in, ch_out, number, shortcut, groups, expansion
         super().__init__()
         hidden_channels = int(out_channels * expansion)  # hidden channels
-        self.conv1 = BaseConv(in_channels, hidden_channels, 1, stride=1)
-        self.conv2 = BaseConv(in_channels, hidden_channels, 1, stride=1)
-        self.conv3 = BaseConv(2 * hidden_channels, out_channels, 1, stride=1)  # act=FReLU(c2)
+        self.conv1 = BaseConv(in_channels, hidden_channels, 1, stride=1, act=act)
+        self.conv2 = BaseConv(in_channels, hidden_channels, 1, stride=1, act=act)
+        self.conv3 = BaseConv(2 * hidden_channels, out_channels, 1, stride=1, act=act)
         module_list = [
-            Bottleneck(hidden_channels, hidden_channels, shortcut, 1.0, depthwise)
+            Bottleneck(hidden_channels, hidden_channels, shortcut, 1.0, depthwise, act=act)
             for _ in range(n)
         ]
         self.m = nn.Sequential(*module_list)
@@ -155,9 +158,9 @@ class CSPLayer(nn.Module):
 class Focus(nn.Module):
     """Focus width and height information into channel space."""
 
-    def __init__(self, in_channels, out_channels, ksize=1, stride=1):
+    def __init__(self, in_channels, out_channels, ksize=1, stride=1, act="silu"):
         super().__init__()
-        self.conv = BaseConv(in_channels * 4, out_channels, ksize, stride)
+        self.conv = BaseConv(in_channels * 4, out_channels, ksize, stride, act=act)
 
     def forward(self, x):
         # shape of x (b,c,w,h) -> y(b,4c,w/2,h/2)

@@ -5,6 +5,8 @@
 import cv2
 import numpy as np
 
+__all__ = ["vis"]
+
 
 def vis(img, boxes, scores, cls_ids, conf=0.5, class_names=None):
 

@@ -48,10 +48,10 @@ class MosaicDetection(Dataset):
     def __getitem__(self, idx):
         if self._mosaic:
             labels4 = []
-            s = self._dataset.input_dim[0]
+            input_dim = self._dataset.input_dim
             # yc, xc = s, s  # mosaic center x, y
-            yc = int(random.uniform(0.5 * s, 1.5 * s))
-            xc = int(random.uniform(0.5 * s, 1.5 * s))
+            yc = int(random.uniform(0.5 * input_dim[0], 1.5 * input_dim[0]))
+            xc = int(random.uniform(0.5 * input_dim[1], 1.5 * input_dim[1]))
 
             # 3 additional image indices
             indices = [idx] + [random.randint(0, len(self._dataset) - 1) for _ in range(3)]
@@ -59,26 +59,28 @@ class MosaicDetection(Dataset):
             for i, index in enumerate(indices):
                 img, _labels, _, _ = self._dataset.pull_item(index)
                 h0, w0 = img.shape[:2]  # orig hw
-                r = 1.0 * s / max(h0, w0)  # resize image to img_size
+                scale = min(1. * input_dim[0] / h0, 1. * input_dim[1] / w0)
                 interp = cv2.INTER_LINEAR
-                img = cv2.resize(img, (int(w0 * r), int(h0 * r)), interpolation=interp)
+                img = cv2.resize(img, (int(w0 * scale), int(h0 * scale)), interpolation=interp)
                 (h, w) = img.shape[:2]
 
                 if i == 0:  # top left
                     # base image with 4 tiles
-                    img4 = np.full((s * 2, s * 2, img.shape[2]), 114, dtype=np.uint8)
+                    img4 = np.full(
+                        (input_dim[0] * 2, input_dim[1] * 2, img.shape[2]), 114, dtype=np.uint8
+                    )
                     # xmin, ymin, xmax, ymax (large image)
                     x1a, y1a, x2a, y2a = (max(xc - w, 0), max(yc - h, 0), xc, yc,)
                     # xmin, ymin, xmax, ymax (small image)
                     x1b, y1b, x2b, y2b = (w - (x2a - x1a), h - (y2a - y1a), w, h,)
                 elif i == 1:  # top right
-                    x1a, y1a, x2a, y2a = xc, max(yc - h, 0), min(xc + w, s * 2), yc
+                    x1a, y1a, x2a, y2a = xc, max(yc - h, 0), min(xc + w, input_dim[1] * 2), yc
                     x1b, y1b, x2b, y2b = 0, h - (y2a - y1a), min(w, x2a - x1a), h
                 elif i == 2:  # bottom left
-                    x1a, y1a, x2a, y2a = max(xc - w, 0), yc, xc, min(s * 2, yc + h)
+                    x1a, y1a, x2a, y2a = max(xc - w, 0), yc, xc, min(input_dim[0] * 2, yc + h)
                     x1b, y1b, x2b, y2b = w - (x2a - x1a), 0, w, min(y2a - y1a, h)
                 elif i == 3:  # bottom right
-                    x1a, y1a, x2a, y2a = xc, yc, min(xc + w, s * 2), min(s * 2, yc + h)
+                    x1a, y1a, x2a, y2a = xc, yc, min(xc + w, input_dim[1] * 2), min(input_dim[0] * 2, yc + h)  # noqa
                     x1b, y1b, x2b, y2b = 0, 0, min(w, x2a - x1a), min(y2a - y1a, h)
 
                 img4[y1a:y2a, x1a:x2a] = img[y1b:y2b, x1b:x2b]  # img4[ymin:ymax, xmin:xmax]
@@ -87,15 +89,20 @@ class MosaicDetection(Dataset):
 
                 labels = _labels.copy()  # [[xmin, ymin, xmax, ymax, label_ind], ... ]
                 if _labels.size > 0:  # Normalized xywh to pixel xyxy format
-                    labels[:, 0] = r * _labels[:, 0] + padw
-                    labels[:, 1] = r * _labels[:, 1] + padh
-                    labels[:, 2] = r * _labels[:, 2] + padw
-                    labels[:, 3] = r * _labels[:, 3] + padh
+                    labels[:, 0] = scale * _labels[:, 0] + padw
+                    labels[:, 1] = scale * _labels[:, 1] + padh
+                    labels[:, 2] = scale * _labels[:, 2] + padw
+                    labels[:, 3] = scale * _labels[:, 3] + padh
+
                 labels4.append(labels)
 
             if len(labels4):
                 labels4 = np.concatenate(labels4, 0)
-                np.clip(labels4[:, :4], 0, 2 * s, out=labels4[:, :4])  # use with random_affine
+                np.clip(labels4[:, 0], 0, 2 * input_dim[1], out=labels4[:, 0])
+                np.clip(labels4[:, 1], 0, 2 * input_dim[0], out=labels4[:, 1])
+                np.clip(labels4[:, 2], 0, 2 * input_dim[1], out=labels4[:, 2])
+                np.clip(labels4[:, 3], 0, 2 * input_dim[0], out=labels4[:, 3])
+
             img4, labels4 = random_perspective(
                 img4,
                 labels4,
@@ -104,7 +111,7 @@ class MosaicDetection(Dataset):
                 scale=self.scale,
                 shear=self.shear,
                 perspective=self.perspective,
-                border=[-s // 2, -s // 2],
+                border=[-input_dim[0] // 2, -input_dim[1] // 2],
             )  # border to remove
 
             # -----------------------------------------------------------------
@@ -124,7 +131,6 @@ class MosaicDetection(Dataset):
             return img, label, img_info, int(idx)
 
     def mixup(self, origin_img, origin_labels, input_dim):
-        # jit_factor = random.uniform(0.8, 1.2)
         jit_factor = random.uniform(*self.mixup_scale)
         FLIP = random.uniform(0, 1) > 0.5
         cp_labels = []
@@ -139,7 +145,7 @@ class MosaicDetection(Dataset):
             cp_img = np.ones((input_dim[0], input_dim[1], 3)) * 114.0
         else:
             cp_img = np.ones(input_dim) * 114.0
-        cp_scale_ratio = input_dim[0] / max(img.shape[0], img.shape[1])
+        cp_scale_ratio = min(input_dim[0] / img.shape[0], input_dim[1] / img.shape[1])
         resized_img = cv2.resize(
             img,
             (int(img.shape[1] * cp_scale_ratio), int(img.shape[0] * cp_scale_ratio)),

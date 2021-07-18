@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding:utf-8 -*-
+# Copyright (c) Megvii, Inc. and its affiliates.
 
 import argparse
 import os
+import shutil
 from loguru import logger
 
 import tensorrt as trt
@@ -61,6 +63,14 @@ def main():
     )
     torch.save(model_trt.state_dict(), os.path.join(file_name, 'model_trt.pth'))
     logger.info("Converted TensorRT model done.")
+    engine_file = os.path.join(file_name, 'model_trt.engine')
+    engine_file_demo = os.path.join('yolox', 'deploy', 'demo_trt_c++', 'model_trt.engine')
+    with open(engine_file, 'wb') as f:
+        f.write(model_trt.engine.serialize())
+
+    shutil.copyfile(engine_file, engine_file_demo)
+
+    logger.info("Converted TensorRT model engine file is saved for C++ inference.")
 
 
 if __name__ == "__main__":
