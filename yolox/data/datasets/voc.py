@@ -14,7 +14,7 @@ import xml.etree.ElementTree as ET
 import cv2
 import numpy as np
 
-from yolox.evalutors.voc_eval import voc_eval
+from yolox.evaluators.voc_eval import voc_eval
 
 from .datasets_wrapper import Dataset
 from .voc_classes import VOC_CLASSES

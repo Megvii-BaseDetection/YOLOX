@@ -16,7 +16,7 @@ from openvino.inference_engine import IECore
 
 from yolox.data.data_augment import preproc as preprocess
 from yolox.data.datasets import COCO_CLASSES
-from yolox.utils import mkdir, multiclass_nms, postprocess, vis
+from yolox.utils import mkdir, multiclass_nms, demo_postprocess, vis
 
 
 def parse_args() -> argparse.Namespace:
@@ -130,7 +130,7 @@ def main():
     # ---------------------------Step 8. Process output--------------------------------------------------------------------
     res = res[out_blob]
 
-    predictions = postprocess(res, (h, w), p6=False)[0]
+    predictions = demo_postprocess(res, (h, w), p6=False)[0]
 
     boxes = predictions[:, :4]
     scores = predictions[:, 4, None] * predictions[:, 5:]

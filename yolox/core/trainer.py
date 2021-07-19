@@ -146,7 +146,7 @@ class Trainer:
             is_distributed=self.is_distributed,
             no_aug=self.no_aug
         )
-        logger.info("init prefetcher, this might take a while...")
+        logger.info("init prefetcher, this might take one minute or less...")
         self.prefetcher = DataPrefetcher(self.train_loader)
         # max_iter means iters per epoch
         self.max_iter = len(self.train_loader)

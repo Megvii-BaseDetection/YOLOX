@@ -111,7 +111,7 @@ class Exp(MyExp):
         return val_loader
 
     def get_evaluator(self, batch_size, is_distributed, testdev=False):
-        from yolox.evalutors import VOCEvaluator
+        from yolox.evaluators import VOCEvaluator
 
         val_loader = self.get_eval_loader(batch_size, is_distributed, testdev=testdev)
         evaluator = VOCEvaluator(

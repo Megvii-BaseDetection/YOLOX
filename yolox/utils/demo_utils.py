@@ -6,7 +6,7 @@ import os
 
 import numpy as np
 
-__all__ = ["mkdir", "nms", "multiclass_nms", "postprocess"]
+__all__ = ["mkdir", "nms", "multiclass_nms", "demo_postprocess"]
 
 
 def mkdir(path):
@@ -64,7 +64,7 @@ def multiclass_nms(boxes, scores, nms_thr, score_thr):
     return np.concatenate(final_dets, 0)
 
 
-def postprocess(outputs, img_size, p6=False):
+def demo_postprocess(outputs, img_size, p6=False):
 
     grids = []
     expanded_strides = []
