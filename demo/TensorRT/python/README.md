@@ -37,10 +37,10 @@ The converted model and the serialized engine file (for C++ demo) will be saved 
 The TensorRT python demo is merged on our pytorch demo file, so you can run the pytorch demo command with ```--trt```.
 
 ```shell
-python tools/demo.py -n yolox-s --trt --conf 0.3 --nms 0.65 --tsize 640
+python tools/demo.py image -n yolox-s --trt --save_result
 ```
 or
 ```shell
-python tools/demo.py -f exps/base/yolox_s.py --trt --conf 0.3 --nms 0.65 --tsize 640
+python tools/demo.py image -f exps/base/yolox_s.py --trt --save_result
 ```
 

@@ -230,25 +230,6 @@ float* blobFromImage(cv::Mat& img){
 }
 
 
-int read_files_in_dir(const char *p_dir_name, std::vector<std::string> &file_names) {
-    DIR *p_dir = opendir(p_dir_name);
-    if (p_dir == nullptr) {
-        return -1;
-    }
-
-    struct dirent* p_file = nullptr;
-    while ((p_file = readdir(p_dir)) != nullptr) {
-        if (strcmp(p_file->d_name, ".") != 0 &&
-                strcmp(p_file->d_name, "..") != 0) {
-            std::string cur_file_name(p_file->d_name);
-            file_names.push_back(cur_file_name);
-        }
-    }
-
-    closedir(p_dir);
-    return 0;
-}
-
 static void decode_outputs(float* prob, std::vector<Object>& objects, float scale, const int img_w, const int img_h) {
         std::vector<Object> proposals;
         std::vector<int> strides = {8, 16, 32};
@@ -432,7 +413,7 @@ static void draw_objects(const cv::Mat& bgr, const std::vector<Object>& objects,
                     cv::FONT_HERSHEY_COMPLEX, 0.4, txt_color, 1);
     }
 
-    cv::imwrite("_" + f, image);
+    cv::imwrite("det_res.jpg", image);
     fprintf(stderr, "save vis file\n");
     /* cv::imshow("image", image); */
     /* cv::waitKey(0); */
@@ -482,8 +463,9 @@ int main(int argc, char** argv) {
     char *trtModelStream{nullptr};
     size_t size{0};
 
-    if (argc == 3 && std::string(argv[1]) == "-d") {
-        std::ifstream file("model_trt.engine", std::ios::binary);
+    if (argc == 4 && std::string(argv[2]) == "-i") {
+        const std::string engine_file_path {argv[1]};
+        std::ifstream file(engine_file_path, std::ios::binary);
         if (file.good()) {
             file.seekg(0, file.end);
             size = file.tellg();
@@ -496,15 +478,17 @@ int main(int argc, char** argv) {
     } else {
         std::cerr << "arguments not right!" << std::endl;
         std::cerr << "run 'python3 yolox/deploy/trt.py -n yolox-{tiny, s, m, l, x}' to serialize model first!" << std::endl;
-        std::cerr << "./yolox -d ../samples  // deserialize file and run inference" << std::endl;
+        std::cerr << "Then use the following command:" << std::endl;
+        std::cerr << "./yolox ../model_trt.engine -i ../../../assets/dog.jpg  // deserialize file and run inference" << std::endl;
         return -1;
     }
+    const std::string input_image_path {argv[3]};
 
-    std::vector<std::string> file_names;
-    if (read_files_in_dir(argv[2], file_names) < 0) {
-        std::cout << "read_files_in_dir failed." << std::endl;
-        return -1;
-    }
+    //std::vector<std::string> file_names;
+    //if (read_files_in_dir(argv[2], file_names) < 0) {
+        //std::cout << "read_files_in_dir failed." << std::endl;
+        //return -1;
+    //}
 
     IRuntime* runtime = createInferRuntime(gLogger);
     assert(runtime != nullptr);
@@ -520,33 +504,27 @@ int main(int argc, char** argv) {
     }
     static float* prob = new float[output_size];
 
-    int fcount = 0;
-    for (auto f: file_names) {
-        fcount++;
-        std::cout << fcount << "  " << f << std::endl;
-        cv::Mat img = cv::imread(std::string(argv[2]) + "/" + f);
-        if (img.empty()) continue;
-        int img_w = img.cols;
-        int img_h = img.rows;
-        cv::Mat pr_img = static_resize(img);
-        std::cout << "blob image" << std::endl;
+    cv::Mat img = cv::imread(input_image_path);
+    int img_w = img.cols;
+    int img_h = img.rows;
+    cv::Mat pr_img = static_resize(img);
+    std::cout << "blob image" << std::endl;
 
-        float* blob;
-        blob = blobFromImage(pr_img);
-        float scale = std::min(INPUT_W / (img.cols*1.0), INPUT_H / (img.rows*1.0));
+    float* blob;
+    blob = blobFromImage(pr_img);
+    float scale = std::min(INPUT_W / (img.cols*1.0), INPUT_H / (img.rows*1.0));
 
-        // Run inference
-        auto start = std::chrono::system_clock::now();
-        doInference(*context, blob, prob, output_size, pr_img.size());
-        auto end = std::chrono::system_clock::now();
-        std::cout << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() << "ms" << std::endl;
+    // run inference
+    auto start = std::chrono::system_clock::now();
+    doInference(*context, blob, prob, output_size, pr_img.size());
+    auto end = std::chrono::system_clock::now();
+    std::cout << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count() << "ms" << std::endl;
 
-        std::vector<Object> objects;
-        decode_outputs(prob, objects, scale, img_w, img_h);
-        draw_objects(img, objects, f);
-    }
+    std::vector<Object> objects;
+    decode_outputs(prob, objects, scale, img_w, img_h);
+    draw_objects(img, objects, input_image_path);
 
-    // Destroy the engine
+    // destroy the engine
     context->destroy();
     engine->destroy();
     runtime->destroy();

@@ -8,6 +8,8 @@ our C++ demo will not include the model converting or constructing like other te
 
 Follow the trt [python demo README](../python/README.md) to convert and save the serialized engine file.
 
+Check the 'model_trt.engine' file generated from Step 1, which will automatically saved at the current demo dir.
+
 
 ## Step 2: build the demo
 
@@ -24,20 +26,14 @@ cmake ..
 make
 ```
 
-Move the 'model_trt.engine' file generated from Step 1 (saved at the exp output dir) to the build dir:
-
-```shell
-mv /path/to/your/exp/output/dir/model_trt.engine .
-```
-
 Then run the demo:
 
 ```shell
-./yolox -d /your/path/to/yolox/assets
+./yolox ../model_trt.engine -i ../../../../assets/dog.jpg
 ```
 
 or
 
 ```shell
-./yolox -d <img dir>
+./yolox <path/to/your/engine_file> -i <path/to/image>
 ```

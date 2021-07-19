@@ -3,11 +3,18 @@
 
 ## Introduction
 YOLOX is an anchor-free version of YOLO, with a simpler design but better performance! It aims to bridge the gap between research and industrial communities.
+For more details, please refer to our [Arxiv report]().
 
 <img src="assets/git_fig.png" width="1000" >
 
 ## Updates!!
-* 【2020/07/19】 We have released our technical report on Arxiv.
+* 【2020/07/19】 We have released our technical report on [Arxiv]().
+
+## Comming soon
+- [ ] YOLOX-P6 and larger model.
+- [ ] Obj365 pretrain.
+- [ ] Transformer modules.
+- [ ] More features in need.
 
 ## Benchmark
 
@@ -31,19 +38,26 @@ YOLOX is an anchor-free version of YOLO, with a simpler design but better perfor
 <details>
 <summary>Installation</summary>
 
-Step1. Install [apex](https://github.com/NVIDIA/apex).
+Step1. Install YOLOX.
+```shell
+git clone git@github.com:Megvii-BaseDetection/YOLOX.git
+cd yolox
+pip3 install -U pip && pip3 install -v -e .  # or  python3 setup.py develop
+```
+Step2. Install [apex](https://github.com/NVIDIA/apex).
 
 ```shell
 git clone https://github.com/NVIDIA/apex
 cd apex
 pip3 install -v --disable-pip-version-check --no-cache-dir --global-option="--cpp_ext" --global-option="--cuda_ext" ./
 ```
-Step2. Install YOLOX.
-```bash
-$ git clone git@github.com:Megvii-BaseDetection/YOLOX.git
-$ cd yolox
-$ pip3 install -v -e .  # or "python3 setup.py develop
+Step3. Install [pycocotools](https://github.com/cocodataset/cocoapi).
+
+```shell
+pip3 install cython; pip3 install 'git+https://github.com/cocodataset/cocoapi.git#subdirectory=PythonAPI'
 ```
+
+</details>
 
 </details>
 
