@@ -2,6 +2,8 @@
 # -*- coding: utf-8 -*-
 # Copyright (C) 2018-2021 Intel Corporation
 # SPDX-License-Identifier: Apache-2.0
+# Copyright (c) Megvii, Inc. and its affiliates.
+
 import argparse
 import logging as log
 import os
@@ -10,11 +12,11 @@ import sys
 import cv2
 import numpy as np
 
-from demo_utils import mkdir, multiclass_nms, postprocess
 from openvino.inference_engine import IECore
+
 from yolox.data.data_augment import preproc as preprocess
 from yolox.data.datasets import COCO_CLASSES
-from yolox.utils.visualize import vis
+from yolox.utils import mkdir, multiclass_nms, postprocess, vis
 
 
 def parse_args() -> argparse.Namespace:

@@ -5,6 +5,7 @@
 from .allreduce_norm import *
 from .boxes import *
 from .checkpoint import load_ckpt, save_checkpoint
+from .demo_utils import *
 from .dist import *
 from .ema import ModelEMA
 from .logger import setup_logger

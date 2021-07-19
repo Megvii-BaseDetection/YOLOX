@@ -1,14 +1,18 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+# Copyright (c) Megvii, Inc. and its affiliates.
+
+import argparse
+import os
+
 import cv2
 import numpy as np
 
+import onnxruntime
+
 from yolox.data.data_augment import preproc as preprocess
 from yolox.data.datasets import COCO_CLASSES
-from yolox.utils.visualize import vis
-
-import argparse
-import onnxruntime
-import os
-from demo_utils import mkdir, multiclass_nms, postprocess
+from yolox.utils import mkdir, multiclass_nms, postprocess, vis
 
 
 def make_parser():
