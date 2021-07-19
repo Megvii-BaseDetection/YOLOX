@@ -1,4 +1,4 @@
-# User Guide for Deploy YOLOX on TensorRT C++
+# YOLOX-TensorRT in C++
 
 As YOLOX models is easy to converted to tensorrt using [torch2trt gitrepo](https://github.com/NVIDIA-AI-IOT/torch2trt), 
 our C++ demo will not include the model converting or constructing like other tenorrt demos.
@@ -6,7 +6,7 @@ our C++ demo will not include the model converting or constructing like other te
 
 ## Step 1: Prepare serialized engine file
 
-Follow the trt [python demo README](../Python/README.md) to convert and save the serialized engine file.
+Follow the trt [python demo README](../python/README.md) to convert and save the serialized engine file.
 
 
 ## Step 2: build the demo

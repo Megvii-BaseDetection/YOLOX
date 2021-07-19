@@ -66,12 +66,6 @@ def make_parser():
         action="store_true",
         help="Using TensorRT model for testing.",
     )
-    parser.add_argument(
-        "opts",
-        help="Modify config options using the command-line",
-        default=None,
-        nargs=argparse.REMAINDER,
-    )
     return parser
 
 
@@ -137,13 +131,14 @@ class Predictor(object):
     def visual(self, output, img_info, cls_conf=0.35):
         ratio = img_info['ratio']
         img = img_info['raw_img']
+        if output is None:
+            return img
         output = output.cpu()
 
         bboxes = output[:, 0:4]
 
         # preprocessing: resize
         bboxes /= ratio
-        bboxes = xyxy2xywh(bboxes)
 
         cls = output[:, 6]
         scores = output[:, 4] * output[:, 5]
@@ -193,7 +188,7 @@ def imageflow_demo(predictor, vis_folder, current_time, args):
         ret_val, frame = cap.read()
         if ret_val:
             outputs, img_info = predictor.inference(frame)
-            result_frame = predictor.visualize(outputs[0], img_info)
+            result_frame = predictor.visual(outputs[0], img_info)
             if args.save_result:
                 vid_writer.write(result_frame)
             ch = cv2.waitKey(1)
@@ -258,7 +253,7 @@ def main(exp, args):
             "TensorRT model is not support model fusing!"
         trt_file = os.path.join(file_name, "model_trt.pth")
         assert os.path.exists(trt_file), (
-            "TensorRT model is not found!\n Run python3 yolox/deploy/trt.py first!"
+            "TensorRT model is not found!\n Run python3 tools/trt.py first!"
         )
         model.head.decode_in_inference = False
         decoder = model.head.decode_outputs

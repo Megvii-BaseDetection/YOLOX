@@ -1,4 +1,4 @@
-# User Guide for Deploy YOLOX on TensorRT
+# YOLOX-TensorRT in Python
 
 This toturial includes a Python demo for TensorRT.
 
@@ -12,21 +12,21 @@ YOLOX models can be easily conveted to TensorRT models using torch2trt
    
    If you want to convert our model, use the flag -n to specify a model name:
    ```shell
-   python tools/deploy/trt.py -n <YOLOX_MODEL_NAME> -c <YOLOX_CHECKPOINT>
+   python tools/trt.py -n <YOLOX_MODEL_NAME> -c <YOLOX_CHECKPOINT>
    ```
    For example:
    ```shell
-   python tools/deploy/trt.py -n yolox-s -c your_ckpt.pth.tar
+   python tools/trt.py -n yolox-s -c your_ckpt.pth.tar
    ```
    <YOLOX_MODEL_NAME> can be: yolox-nano, yolox-tiny. yolox-s, yolox-m, yolox-l, yolox-x.
    
    If you want to convert your customized model, use the flag -f to specify you exp file:
    ```shell
-   python tools/deploy/trt.py -f <YOLOX_EXP_FILE> -c <YOLOX_CHECKPOINT>
+   python tools/trt.py -f <YOLOX_EXP_FILE> -c <YOLOX_CHECKPOINT>
    ```
    For example:
    ```shell
-   python tools/deploy/trt.py -f /path/to/your/yolox/exps/yolox_s.py -c your_ckpt.pth.tar
+   python tools/trt.py -f /path/to/your/yolox/exps/yolox_s.py -c your_ckpt.pth.tar
    ```
    *yolox_s.py* can be any exp file modified by you.
    

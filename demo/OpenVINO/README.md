@@ -1,4 +1,4 @@
-## YOLOX on OpenVINO
+## YOLOX for OpenVINO
 
-* [C++ Demo]()
-* [Python Demo]()
+* [C++ Demo](./cpp)
+* [Python Demo](./python)

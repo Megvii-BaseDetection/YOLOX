@@ -12,3 +12,6 @@ Pillow
 skimage
 thop
 ninja
+tabulate
+tensorboard
+onnxruntime

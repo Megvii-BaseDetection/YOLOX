@@ -166,6 +166,13 @@ class YOLOXHead(nn.Module):
                     torch.zeros(1, grid.shape[1]).fill_(stride_this_level).type_as(xin[0])
                 )
                 if self.use_l1:
+                    batch_size = reg_output.shape[0]
+                    hsize, wsize = reg_output.shape[-2:]
+                    reg_output = reg_output.view(batch_size, self.n_anchors, 4, hsize, wsize)
+                    reg_output = (
+                        reg_output.permute(0, 1, 3, 4, 2)
+                        .reshape(batch_size, -1, 4)
+                    )
                     origin_preds.append(reg_output.clone())
 
             else:
@@ -193,7 +200,7 @@ class YOLOXHead(nn.Module):
         batch_size = output.shape[0]
         n_ch = 5 + self.num_classes
         hsize, wsize = output.shape[-2:]
-        if grid.shape[2:3] != output.shape[2:3]:
+        if grid.shape[2:4] != output.shape[2:4]:
             yv, xv = torch.meshgrid([torch.arange(hsize), torch.arange(wsize)])
             grid = torch.stack((xv, yv), 2).view(1, 1, hsize, wsize, 2).type(dtype)
             self.grids[k] = grid

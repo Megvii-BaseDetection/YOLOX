@@ -46,29 +46,20 @@ class COCODataset(Dataset):
         cats = self.coco.loadCats(self.coco.getCatIds())
         self._classes = tuple([c["name"] for c in cats])
         self.name = name
-        self.max_labels = 50
         self.img_size = img_size
         self.preproc = preproc
 
     def __len__(self):
         return len(self.ids)
 
-    def pull_item(self, index):
+    def load_anno(self, index):
         id_ = self.ids[index]
+        anno_ids = self.coco.getAnnIds(imgIds=[int(id_)], iscrowd=False)
+        annotations = self.coco.loadAnns(anno_ids)
 
         im_ann = self.coco.loadImgs(id_)[0]
         width = im_ann["width"]
         height = im_ann["height"]
-        anno_ids = self.coco.getAnnIds(imgIds=[int(id_)], iscrowd=False)
-        annotations = self.coco.loadAnns(anno_ids)
-
-        # load image and preprocess
-        img_file = os.path.join(
-            self.data_dir, self.name, "{:012}".format(id_) + ".jpg"
-        )
-
-        img = cv2.imread(img_file)
-        assert img is not None
 
         # load labels
         valid_objs = []
@@ -90,6 +81,25 @@ class COCODataset(Dataset):
             res[ix, 0:4] = obj["clean_bbox"]
             res[ix, 4] = cls
 
+        return res
+
+    def pull_item(self, index):
+        id_ = self.ids[index]
+
+        im_ann = self.coco.loadImgs(id_)[0]
+        width = im_ann["width"]
+        height = im_ann["height"]
+
+        # load image and preprocess
+        img_file = os.path.join(
+            self.data_dir, self.name, "{:012}".format(id_) + ".jpg"
+        )
+
+        img = cv2.imread(img_file)
+        assert img is not None
+
+        # load anno
+        res = self.load_anno(index)
         img_info = (height, width)
 
         return img, res, img_info, id_
@@ -105,7 +115,7 @@ class COCODataset(Dataset):
         Returns:
             img (numpy.ndarray): pre-processed image
             padded_labels (torch.Tensor): pre-processed label data.
-                The shape is :math:`[self.max_labels, 5]`.
+                The shape is :math:`[max_labels, 5]`.
                 each label consists of [class, xc, yc, w, h]:
                     class (float): class index.
                     xc, yc (float) : center of bbox whose values range from 0 to 1.

@@ -1,17 +1,17 @@
-# User Guide for Deploy YOLOX on OpenVINO
+# YOLOX-OpenVINO in C++
 
 This toturial includes a C++ demo for OpenVINO, as well as some converted models.
 
 ### Download OpenVINO models.
-| Model | Parameters | GFLOPs | Test Size | mAP |
-|:------| :----: | :----: | :---: | :---: | 
-|  [YOLOX-Nano](https://github.com/Joker316701882/OTA/tree/main/playground/detection/coco/ota.res101.fpn.coco.800size.1x) |  0.91M  | 1.08 | 416x416 | 25.3 |
-|  [YOLOX-Tiny](https://github.com/Joker316701882/OTA/tree/main/playground/detection/coco/ota.x101.fpn.coco.800size.1x) | 5.06M     | 6.45 | 416x416 |31.7 |
-|  [YOLOX-S](https://github.com/Joker316701882/OTA/tree/main/playground/detection/coco/ota.x101.dcnv2.fpn.coco.800size.1x) | 9.0M | 26.8 | 640x640 |39.6 | 
-|  [YOLOX-M](https://github.com/Joker316701882/OTA/tree/main/playground/detection/coco/ota.x101.dcnv2.fpn.coco.800size.1x) | 25.3M | 73.8 | 640x640 |46.4 |
-|  [YOLOX-L](https://github.com/Joker316701882/OTA/tree/main/playground/detection/coco/ota.x101.dcnv2.fpn.coco.800size.1x) | 54.2M | 155.6 | 640x640 |50.0 | 
-|  [YOLOX-X](https://github.com/Joker316701882/OTA/tree/main/playground/detection/coco/ota.x101.dcnv2.fpn.coco.800size.1x) | 99.1M | 281.9 | 640x640 |51.2 | 
-|  [YOLOX-Darknet53](https://github.com/Joker316701882/OTA/tree/main/playground/detection/coco/ota.x101.dcnv2.fpn.coco.800size.1x) | 63.72M | 185.3 | 640x640 |47.3 | 
+| Model | Parameters | GFLOPs | Test Size | mAP | Weights |
+|:------| :----: | :----: | :---: | :---: | :---: |
+|  [YOLOX-Nano](../../../exps/nano.py) |  0.91M  | 1.08 | 416x416 | 25.3 | [Download](https://megvii-my.sharepoint.cn/:u:/g/personal/gezheng_megvii_com/EeWY57o5wQZFtXYd1KJw6Z8B4vxZru649XxQHYIFgio3Qw?e=ZS81ce) |
+|  [YOLOX-Tiny](../../../exps/yolox_tiny.py) | 5.06M     | 6.45 | 416x416 |31.7 | [Download](https://megvii-my.sharepoint.cn/:u:/g/personal/gezheng_megvii_com/ETfvOoCXdVZNinoSpKA_sEYBIQVqfjjF5_M6VvHRnLVcsA?e=STL1pi) |
+|  [YOLOX-S](../../../exps/yolox_s.py) | 9.0M | 26.8 | 640x640 |39.6 | [Download](https://megvii-my.sharepoint.cn/:u:/g/personal/gezheng_megvii_com/EXUjf3PQnbBLrxNrXPueqaIBzVZOrYQOnJpLK1Fytj5ssA?e=GK0LOM) |
+|  [YOLOX-M](../../../exps/yolox_m.py) | 25.3M | 73.8 | 640x640 |46.4 | [Download](https://megvii-my.sharepoint.cn/:u:/g/personal/gezheng_megvii_com/EcoT1BPpeRpLvE_4c441zn8BVNCQ2naxDH3rho7WqdlgLQ?e=95VaM9) |
+|  [YOLOX-L](../../../exps/yolox_l.py) | 54.2M | 155.6 | 640x640 |50.0 | [Download](https://megvii-my.sharepoint.cn/:u:/g/personal/gezheng_megvii_com/EZvmn-YLRuVPh0GAP_w3xHMB2VGvrKqQXyK_Cv5yi_DXUg?e=YRh6Eq) |
+|  [YOLOX-Darknet53](../../../exps/yolov3.py) | 63.72M | 185.3 | 640x640 |47.3 | [Download](https://megvii-my.sharepoint.cn/:u:/g/personal/gezheng_megvii_com/EQP8LSroikFHuwX0jFRetmcBOCDWSFmylHxolV7ezUPXGw?e=bEw5iq) |
+|  [YOLOX-X](../../../exps/yolox_x.py) | 99.1M | 281.9 | 640x640 |51.2 | [Download](https://megvii-my.sharepoint.cn/:u:/g/personal/gezheng_megvii_com/EZFPnLqiD-xIlt7rcZYDjQgB4YXE9wnq1qaSXQwJrsKbdg?e=83nwEz) |
 
 ## Install OpenVINO Toolkit
 
@@ -51,7 +51,7 @@ source ~/.bashrc
 
 1. Export ONNX model
    
-   Please refer to the [ONNX toturial]() for more details. **Note that you should set --opset to 10, otherwise your next step will fail.**
+   Please refer to the [ONNX toturial](../../ONNXRuntime). **Note that you should set --opset to 10, otherwise your next step will fail.**
 
 2. Convert ONNX to OpenVINO 
 

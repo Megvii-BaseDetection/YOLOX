@@ -19,16 +19,6 @@ from yolox.evalutors.voc_eval import voc_eval
 from .datasets_wrapper import Dataset
 from .voc_classes import VOC_CLASSES
 
-# for making bounding boxes pretty
-COLORS = (
-    (255, 0, 0, 128),
-    (0, 255, 0, 128),
-    (0, 0, 255, 128),
-    (0, 255, 255, 128),
-    (255, 0, 255, 128),
-    (255, 255, 0, 128),
-)
-
 
 class AnnotationTransform(object):
 
@@ -100,16 +90,17 @@ class VOCDetection(Dataset):
 
     def __init__(
         self,
-        root,
-        image_sets,
+        data_dir,
+        image_sets=[('2007', 'trainval'), ('2012', 'trainval')],
+        img_size=(416, 416),
         preproc=None,
         target_transform=AnnotationTransform(),
-        input_dim=(416, 416),
         dataset_name="VOC0712",
     ):
-        super().__init__(input_dim)
-        self.root = root
+        super().__init__(img_size)
+        self.root = data_dir
         self.image_set = image_sets
+        self.img_size = img_size
         self.preproc = preproc
         self.target_transform = target_transform
         self.name = dataset_name
@@ -125,59 +116,16 @@ class VOCDetection(Dataset):
             ):
                 self.ids.append((rootpath, line.strip()))
 
-    @Dataset.resize_getitem
-    def __getitem__(self, index):
-        img_id = self.ids[index]
-        target = ET.parse(self._annopath % img_id).getroot()
-        img = cv2.imread(self._imgpath % img_id, cv2.IMREAD_COLOR)
-        # img = Image.open(self._imgpath % img_id).convert('RGB')
-
-        height, width, _ = img.shape
-
-        if self.target_transform is not None:
-            target = self.target_transform(target)
-
-        if self.preproc is not None:
-            img, target = self.preproc(img, target, self.input_dim)
-            # print(img.size())
-
-        img_info = (width, height)
-
-        return img, target, img_info, img_id
-
     def __len__(self):
         return len(self.ids)
 
-    def pull_image(self, index):
-        """Returns the original image object at index in PIL form
-
-        Note: not using self.__getitem__(), as any transformations passed in
-        could mess up this functionality.
-
-        Argument:
-            index (int): index of img to show
-        Return:
-            PIL img
-        """
+    def load_anno(self, index):
         img_id = self.ids[index]
-        return cv2.imread(self._imgpath % img_id, cv2.IMREAD_COLOR)
+        target = ET.parse(self._annopath % img_id).getroot()
+        if self.target_transform is not None:
+            target = self.target_transform(target)
 
-    def pull_anno(self, index):
-        """Returns the original annotation of image at index
-
-        Note: not using self.__getitem__(), as any transformations passed in
-        could mess up this functionality.
-
-        Argument:
-            index (int): index of img to get annotation of
-        Return:
-            list:  [img_id, [(label, bbox coords),...]]
-                eg: ('001718', [('dog', (96, 13, 438, 332))])
-        """
-        img_id = self.ids[index]
-        anno = ET.parse(self._annopath % img_id).getroot()
-        gt = self.target_transform(anno, 1, 1)
-        return img_id[1], gt
+        return target
 
     def pull_item(self, index):
         """Returns the original image and target at an index for mixup
@@ -191,14 +139,21 @@ class VOCDetection(Dataset):
             img, target
         """
         img_id = self.ids[index]
-        target = ET.parse(self._annopath % img_id).getroot()
         img = cv2.imread(self._imgpath % img_id, cv2.IMREAD_COLOR)
-
         height, width, _ = img.shape
 
+        target = self.load_anno(index)
+
         img_info = (width, height)
-        if self.target_transform is not None:
-            target = self.target_transform(target)
+
+        return img, target, img_info, index
+
+    @Dataset.resize_getitem
+    def __getitem__(self, index):
+        img, target, img_info, img_id = self.pull_item(index)
+
+        if self.preproc is not None:
+            img, target = self.preproc(img, target, self.input_dim)
 
         return img, target, img_info, img_id
 
@@ -212,7 +167,7 @@ class VOCDetection(Dataset):
         all_boxes[class][image] = [] or np.array of shape #dets x 5
         """
         self._write_voc_results_file(all_boxes)
-        IouTh = np.linspace(0.5, 0.95, np.round((0.95 - 0.5) / 0.05) + 1, endpoint=True)
+        IouTh = np.linspace(0.5, 0.95, int(np.round((0.95 - 0.5) / 0.05)) + 1, endpoint=True)
         mAPs = []
         for iou in IouTh:
             mAP = self._do_python_eval(output_dir, iou)
@@ -270,7 +225,7 @@ class VOCDetection(Dataset):
         aps = []
         # The PASCAL VOC metric changed in 2010
         use_07_metric = True if int(self._year) < 2010 else False
-        print("VOC07 metric? " + ("Yes" if use_07_metric else "No"))
+        print("Eval IoU : {:.2f}".format(iou))
         if output_dir is not None and not os.path.isdir(output_dir):
             os.mkdir(output_dir)
         for i, cls in enumerate(VOC_CLASSES):

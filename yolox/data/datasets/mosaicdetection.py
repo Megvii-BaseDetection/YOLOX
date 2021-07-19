@@ -93,7 +93,6 @@ class MosaicDetection(Dataset):
                     labels[:, 1] = scale * _labels[:, 1] + padh
                     labels[:, 2] = scale * _labels[:, 2] + padw
                     labels[:, 3] = scale * _labels[:, 3] + padh
-
                 labels4.append(labels)
 
             if len(labels4):
@@ -136,9 +135,7 @@ class MosaicDetection(Dataset):
         cp_labels = []
         while len(cp_labels) == 0:
             cp_index = random.randint(0, self.__len__() - 1)
-            id_ = self._dataset.ids[cp_index]
-            anno_ids = self._dataset.coco.getAnnIds(imgIds=[int(id_)], iscrowd=False)
-            cp_labels = self._dataset.coco.loadAnns(anno_ids)
+            cp_labels = self._dataset.load_anno(cp_index)
         img, cp_labels, _, _ = self._dataset.pull_item(cp_index)
 
         if len(img.shape) == 3:
