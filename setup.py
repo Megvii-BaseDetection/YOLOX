@@ -47,10 +47,6 @@ with open("yolox/__init__.py", "r") as f:
     ).group(1)
 
 
-with open("requirements.txt", "r") as f:
-    reqs = [x.strip() for x in f.readlines()]
-
-
 with open("README.md", "r") as f:
     long_description = f.read()
 
@@ -63,7 +59,6 @@ setuptools.setup(
     long_description=long_description,
     ext_modules=get_extensions(),
     classifiers=["Programming Language :: Python :: 3", "Operating System :: OS Independent"],
-    install_requires=reqs,
     cmdclass={"build_ext": torch.utils.cpp_extension.BuildExtension},
     packages=setuptools.find_packages(),
 )
