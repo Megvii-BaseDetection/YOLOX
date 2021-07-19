@@ -2,11 +2,10 @@ numpy
 torch
 opencv_python
 loguru
-scikit_image
+scikit-image
 tqdm
 torchvision
 Pillow
-skimage
 thop
 ninja
 tabulate
