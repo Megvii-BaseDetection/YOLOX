@@ -144,7 +144,7 @@ python tools/eval.py -n  yolox-s -c yolox_s.pth.tar -b 1 -d 1 --conf 0.001 --fp1
 
 
 <details open>
-<summary>Toturials</summary>
+<summary>Tutorials</summary>
 
 *  [Training on custom data](docs/train_custom_data.md).
 
