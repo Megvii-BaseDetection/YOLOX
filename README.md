@@ -90,7 +90,6 @@ python tools/demo.py video -n yolox-s -c /path/to/your/yolox_s.pth.tar --path /p
 Step1. Prepare COCO dataset
 ```shell
 cd <YOLOX_HOME>
-mkdir datasets
 ln -s /path/to/your/COCO ./datasets/COCO
 ```
 
