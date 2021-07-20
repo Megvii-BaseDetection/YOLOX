@@ -8,7 +8,7 @@ For more details, please refer to our [report on Arxiv](https://arxiv.org/abs/21
 <img src="assets/git_fig.png" width="1000" >
 
 ## Updates!!
-* 【2020/07/20】 We have released our technical report on [Arxiv](https://arxiv.org/abs/2107.08430).
+* 【2021/07/20】 We have released our technical report on [Arxiv](https://arxiv.org/abs/2107.08430).
 
 ## Comming soon
 - [ ] YOLOX-P6 and larger model.
@@ -19,7 +19,7 @@ For more details, please refer to our [report on Arxiv](https://arxiv.org/abs/21
 ## Benchmark
 
 #### Standard Models.
-|Model |size |mAP<sup>test<br>0.5:0.95 | Speed V100<br>(ms) | Params<br>(M) |FLOPs<br>(B)| weights |
+|Model |size |mAP<sup>test<br>0.5:0.95 | Speed V100<br>(ms) | Params<br>(M) |FLOPs<br>(G)| weights |
 | ------        |:---: | :---:       |:---:     |:---:  | :---: | :----: |
 |[YOLOX-s](./exps/default/yolox_s.py)    |640  |39.6      |9.8     |9.0 | 26.8 | [Download](https://megvii-my.sharepoint.cn/:u:/g/personal/gezheng_megvii_com/EW62gmO2vnNNs5npxjzunVwB9p307qqygaCkXdTO88BLUg?e=NMTQYw) |
 |[YOLOX-m](./exps/default/yolox_m.py)    |640  |46.4      |12.3     |25.3 |73.8| [Download](https://megvii-my.sharepoint.cn/:u:/g/personal/gezheng_megvii_com/ERMTP7VFqrVBrXKMU7Vl4TcBQs0SUeCT7kvc-JdIbej4tQ?e=1MDo9y) |
