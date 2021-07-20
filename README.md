@@ -156,7 +156,7 @@ python tools/eval.py -n  yolox-s -c yolox_s.pth.tar -b 1 -d 1 --conf 0.001 --fp1
 
 1.  [ONNX export and an ONNXRuntime](./demo/ONNXRuntime)
 2.  [TensorRT in C++ and Python](./demo/TensorRT)
-3.  [NCNN in C++ and Java](./demo/ncnn)
+3.  [ncnn in C++ and Java](./demo/ncnn)
 4.  [OpenVINO in C++ and Python](./demo/OpenVINO)
 
 ## Cite YOLOX
