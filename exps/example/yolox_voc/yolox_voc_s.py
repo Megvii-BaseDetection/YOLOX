@@ -27,7 +27,7 @@ class Exp(MyExp):
         )
 
         dataset = VOCDetection(
-            data_dir = os.path.join(get_yolox_datadir(), "VOCdevkit")
+            data_dir=os.path.join(get_yolox_datadir(), "VOCdevkit"),
             image_sets=[('2007', 'trainval'), ('2012', 'trainval')],
             img_size=self.input_size,
             preproc=TrainTransform(
@@ -82,7 +82,7 @@ class Exp(MyExp):
         from yolox.data import VOCDetection, ValTransform
 
         valdataset = VOCDetection(
-            data_dir = os.path.join(get_yolox_datadir(), "VOCdevkit")
+            data_dir=os.path.join(get_yolox_datadir(), "VOCdevkit"),
             image_sets=[('2007', 'test')],
             img_size=self.test_size,
             preproc=ValTransform(
