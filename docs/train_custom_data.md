@@ -21,13 +21,18 @@ You can also write the Dataset by you own. Let's take the [VOC](../yolox/data/da
             img, target = self.preproc(img, target, self.input_dim)
 
         return img, target, img_info, img_id
-
 ```
 
 One more thing worth noting is that you should also implement "[pull_item](../yolox/data/datasets/voc.py#L129)" and "[load_anno](../yolox/data/datasets/voc.py#L121)" method for the Mosiac and MixUp augmentation.
 
 **Step 3** Prepare the evaluator. We currently have [COCO evaluator](../yolox/evaluators/coco_evaluator.py) and [VOC evaluator](../yolox/evaluators/voc_evaluator.py).
 If you have your own format data or evaluation metric, you may write your own evaluator.
+
+**Step 4** Put your dataset under $YOLOX_DIR/datasets$, for VOC:
+```shell
+ln -s /path/to/your/VOCdevkit ./datasets/VOCdevkit
+```
+* The path "VOCdevkit" will be used in your exp file described in next section.Specifically, in "get_data_loader" and "get_eval_loader" function.
 
 ## 2. Create your Exp file to control everything
 We put everything involved in a model to one single Exp file, including model setting, training setting, and testing setting.

@@ -6,7 +6,7 @@ import torch.nn as nn
 import torch.distributed as dist
 
 from yolox.exp import Exp as MyExp
-
+from yolox.data import get_yolox_datadir
 
 class Exp(MyExp):
     def __init__(self):
@@ -14,7 +14,6 @@ class Exp(MyExp):
         self.num_classes = 20
         self.depth = 0.33
         self.width = 0.50
-        self.eval_interval = 2
         self.exp_name = os.path.split(os.path.realpath(__file__))[1].split(".")[0]
 
     def get_data_loader(self, batch_size, is_distributed, no_aug=False):
@@ -28,7 +27,7 @@ class Exp(MyExp):
         )
 
         dataset = VOCDetection(
-            data_dir='/data/Datasets/VOCdevkit',
+            data_dir=os.path.join(get_yolox_datadir(), "VOCdevkit"),
             image_sets=[('2007', 'trainval'), ('2012', 'trainval')],
             img_size=self.input_size,
             preproc=TrainTransform(
@@ -83,7 +82,7 @@ class Exp(MyExp):
         from yolox.data import VOCDetection, ValTransform
 
         valdataset = VOCDetection(
-            data_dir='/data/Datasets/VOCdevkit',
+            data_dir=os.path.join(get_yolox_datadir(), "VOCdevkit"),
             image_sets=[('2007', 'test')],
             img_size=self.test_size,
             preproc=ValTransform(
