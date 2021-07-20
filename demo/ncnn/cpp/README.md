@@ -1,4 +1,4 @@
-# YOLOX-CPP-NCNN
+# YOLOX-CPP-ncnn
 
 Cpp file compile of YOLOX object detection base on [ncnn](https://github.com/Tencent/ncnn).
 

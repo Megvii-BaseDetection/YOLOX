@@ -1,6 +1,6 @@
-# YOLOX-Android-NCNN
+# YOLOX-Android-ncnn
 
-Andoird app of YOLOX object detection base on [NCNN](https://github.com/Tencent/ncnn)
+Andoird app of YOLOX object detection base on [ncnn](https://github.com/Tencent/ncnn)
 
 
 ## Tutorial
