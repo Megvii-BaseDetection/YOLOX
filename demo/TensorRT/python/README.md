@@ -9,7 +9,7 @@ Please follow the [TensorRT Installation Guide](https://docs.nvidia.com/deeplear
 ## Convert model
 
 YOLOX models can be easily conveted to TensorRT models using torch2trt
-   
+
    If you want to convert our model, use the flag -n to specify a model name:
    ```shell
    python tools/trt.py -n <YOLOX_MODEL_NAME> -c <YOLOX_CHECKPOINT>
@@ -19,7 +19,7 @@ YOLOX models can be easily conveted to TensorRT models using torch2trt
    python tools/trt.py -n yolox-s -c your_ckpt.pth.tar
    ```
    <YOLOX_MODEL_NAME> can be: yolox-nano, yolox-tiny. yolox-s, yolox-m, yolox-l, yolox-x.
-   
+
    If you want to convert your customized model, use the flag -f to specify you exp file:
    ```shell
    python tools/trt.py -f <YOLOX_EXP_FILE> -c <YOLOX_CHECKPOINT>
@@ -29,7 +29,7 @@ YOLOX models can be easily conveted to TensorRT models using torch2trt
    python tools/trt.py -f /path/to/your/yolox/exps/yolox_s.py -c your_ckpt.pth.tar
    ```
    *yolox_s.py* can be any exp file modified by you.
-   
+
 The converted model and the serialized engine file (for C++ demo) will be saved on your experiment output dir.  
 
 ## Demo
@@ -41,6 +41,6 @@ python tools/demo.py image -n yolox-s --trt --save_result
 ```
 or
 ```shell
-python tools/demo.py image -f exps/base/yolox_s.py --trt --save_result
+python tools/demo.py image -f exps/default/yolox_s.py --trt --save_result
 ```
 

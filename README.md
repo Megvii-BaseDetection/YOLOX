@@ -109,10 +109,10 @@ python tools/train.py -n yolox-s -d 8 -b 64 --fp16 -o
 When using -f, the above commands are equivalent to:
 
 ```shell
-python tools/train.py -f exps/base/yolox-s.py -d 8 -b 64 --fp16 -o
-                         exps/base/yolox-m.py
-                         exps/base/yolox-l.py
-                         exps/base/yolox-x.py
+python tools/train.py -f exps/default/yolox-s.py -d 8 -b 64 --fp16 -o
+                         exps/default/yolox-m.py
+                         exps/default/yolox-l.py
+                         exps/default/yolox-x.py
 ```
 
 </details>
