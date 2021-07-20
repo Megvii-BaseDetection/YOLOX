@@ -32,13 +32,13 @@ If you have your own format data or evaluation metric, you may write your own ev
 ## 2. Create your Exp file to control everything
 We put everything involved in a model to one single Exp file, including model setting, training setting, and testing setting.
 
-A complete Exp file is at [yolox_base.py](../yolox/exp/yolox_base.py). It may be too long to write for every exp, but you can inherit the base Exp file and only overwrite the changed part.
+**A complete Exp file is at [yolox_base.py](../yolox/exp/yolox_base.py).** It may be too long to write for every exp, but you can inherit the base Exp file and only overwrite the changed part.
 
 Let's still take the [VOC Exp file](../exps/example/yolox_voc/yolox_voc_s.py) for an example.
 
 We select YOLOX-S model here, so we should change the network depth and width. VOC has only 20 classes, so we should also change the num_classes.
 
-These configs are changed in the inti() methd:
+These configs are changed in the init() methd:
 ```python
 class Exp(MyExp):
     def __init__(self):
@@ -109,4 +109,4 @@ Generally, for small models, you should weak the aug, while for large models or 
     self.enable_mixup = True
 ```
 
-**Design your own detector** You may refer to our [Arxiv]() paper for details and suggestions for designing your own detector.
+**Design your own detector** You may refer to our [Arxiv](https://arxiv.org/abs/2107.08430) paper for details and suggestions for designing your own detector.
