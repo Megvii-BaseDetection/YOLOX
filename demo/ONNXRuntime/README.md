@@ -1,6 +1,6 @@
 ## YOLOX-ONNXRuntime in Python
 
-This doc introduces how to convert you pytorch model into onnx, and how to run an onnxruntime demo to verify your convertion.
+This doc introduces how to convert your pytorch model into onnx, and how to run an onnxruntime demo to verify your convertion.
 
 ### Download ONNX models.
 | Model | Parameters | GFLOPs | Test Size | mAP | Weights |

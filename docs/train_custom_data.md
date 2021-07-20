@@ -1,7 +1,7 @@
 # Train Custom Data.
 This page explains how to train your own custom data with YOLOX.
 
-We take an example of finetuing YOLOX-S model on VOC dataset to give a more clear guide.
+We take an example of fine-tuning YOLOX-S model on VOC dataset to give a more clear guide.
 
 ## 0. Before you start
 Clone this repo and follow the [README](../README.md) to install YOLOX.
@@ -9,7 +9,7 @@ Clone this repo and follow the [README](../README.md) to install YOLOX.
 ## 1. Create your own dataset
 **Step 1** Prepare your own dataset with images and labels first. For labeling images, you may use a tool like [Labelme](https://github.com/wkentaro/labelme) or [CVAT](https://github.com/openvinotoolkit/cvat).
 
-**Step 2** Then, you should write the corresponding Dataset Class which can load images and labels through "\_\_getitem\_\_" method. We currently support COCO format and VOC format.  
+**Step 2** Then, you should write the corresponding Dataset Class which can load images and labels through "\_\_getitem\_\_" method. We currently support COCO format and VOC format.
 
 You can also write the Dataset by you own. Let's take the [VOC](../yolox/data/datasets/voc.py#L151) Dataset file for example:
 ```python
@@ -26,11 +26,11 @@ You can also write the Dataset by you own. Let's take the [VOC](../yolox/data/da
 
 One more thing worth noting is that you should also implement "[pull_item](../yolox/data/datasets/voc.py#L129)" and "[load_anno](../yolox/data/datasets/voc.py#L121)" method for the Mosiac and MixUp augmentation.
 
-**Step 3** Prepare the evaluator. We currently have [COCO evaluator](../yolox/evaluators/coco_evaluator.py) and [VOC evaluator](../yolox/evaluators/voc_evaluator.py). 
+**Step 3** Prepare the evaluator. We currently have [COCO evaluator](../yolox/evaluators/coco_evaluator.py) and [VOC evaluator](../yolox/evaluators/voc_evaluator.py).
 If you have your own format data or evaluation metric, you may write your own evaluator.
 
 ## 2. Create your Exp file to control everything
-We put everything involved in a model to one single Exp file, including model setting, training setting, and testing setting. 
+We put everything involved in a model to one single Exp file, including model setting, training setting, and testing setting.
 
 A complete Exp file is at [yolox_base.py](../yolox/exp/yolox_base.py). It may be too long to write for every exp, but you can inherit the base Exp file and only overwrite the changed part.
 
@@ -49,19 +49,19 @@ class Exp(MyExp):
         self.exp_name = os.path.split(os.path.realpath(__file__))[1].split(".")[0]
 ```
 
-Besides, you should also overwrite the dataset and evaluator preprared before to training the model on your own data. 
+Besides, you should also overwrite the dataset and evaluator preprared before to training the model on your own data.
 
 Please see "[get_data_loader](../exps/example/yolox_voc/yolox_voc_s.py#L20)", "[get_eval_loader](../exps/example/yolox_voc/yolox_voc_s.py#L82)", and "[get_evaluator](../exps/example/yolox_voc/yolox_voc_s.py#L113)" for more details.
 
 ## 3. Train
-Except special cases, we always recommend to use our [COCO pretrained weights](../README.md) for initializing. 
+Except special cases, we always recommend to use our [COCO pretrained weights](../README.md) for initializing.
 
 Once you get the Exp file and the COCO pretrained weights we provided, you can train your own model by the following command:
 ```bash
 python tools/train.py -f /path/to/your/Exp/file -d 8 -b 64 --fp16 -o -c /path/to/the/pretrained/weights
 ```
 
-or take the YOLOX-S VOC training for example: 
+or take the YOLOX-S VOC training for example:
 ```bash
 python tools/train.py -f exps/example/yolox_voc/yolox_voc_s.py -d 8 -b 64 --fp16 -o -c /path/to/yolox_s.pth.tar
 ```
@@ -70,14 +70,14 @@ python tools/train.py -f exps/example/yolox_voc/yolox_voc_s.py -d 8 -b 64 --fp16
 
 ## 4. Tips for Best Training Results
 
-As YOLOX is an anchor-free detector with only several hyper-parameters, most of the time good results can be obtained with no changes to the models or training settings. 
-We thus always recommend you first train with all default training settings. 
+As YOLOX is an anchor-free detector with only several hyper-parameters, most of the time good results can be obtained with no changes to the models or training settings.
+We thus always recommend you first train with all default training settings.
 
-If at first you don't get good results, there are steps you could considier to take to improve. 
+If at first you don't get good results, there are steps you could consider to take to improve.
 
-**Model Selection** We provide YOLOX-Nano, YOLOX-Tiny, and YOLOX-S for mobile deployments, while YOLOX-M/L/X for cloud or high performance GPU deployments. 
+**Model Selection** We provide YOLOX-Nano, YOLOX-Tiny, and YOLOX-S for mobile deployments, while YOLOX-M/L/X for cloud or high performance GPU deployments.
 
-If your deployment meets some trouble of compatibility. we recommand YOLOX-DarkNet53.  
+If your deployment meets some trouble of compatibility. we recommand YOLOX-DarkNet53.
 
 **Training Configs** If your training overfits early, then you can reduce max\_epochs or decrease the base\_lr and min\_lr\_ratio in your Exp file:
 ```python
@@ -95,7 +95,7 @@ If your deployment meets some trouble of compatibility. we recommand YOLOX-DarkN
     self.momentum = 0.9
 ```
 
-**Aug Configs** You may also change the degree of the augmentations. 
+**Aug Configs** You may also change the degree of the augmentations.
 
 Generally, for small models, you should weak the aug, while for large models or small size of dataset, you may enchance the aug in your Exp file:
 ```python
@@ -110,9 +110,3 @@ Generally, for small models, you should weak the aug, while for large models or 
 ```
 
 **Design your own detector** You may refer to our [Arxiv]() paper for details and suggestions for designing your own detector.
-
-
-
-
-
-
