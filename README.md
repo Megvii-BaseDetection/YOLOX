@@ -60,8 +60,6 @@ pip3 install cython; pip3 install 'git+https://github.com/cocodataset/cocoapi.gi
 
 </details>
 
-</details>
-
 <details>
 <summary>Demo</summary>
 
