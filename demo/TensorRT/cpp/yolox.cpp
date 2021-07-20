@@ -394,7 +394,7 @@ static void draw_objects(const cv::Mat& bgr, const std::vector<Object>& objects,
         sprintf(text, "%s %.1f%%", class_names[obj.label], obj.prob * 100);
 
         int baseLine = 0;
-        cv::Size label_size = cv::getTextSize(text, cv::FONT_HERSHEY_COMPLEX, 0.4, 1, &baseLine);
+        cv::Size label_size = cv::getTextSize(text, cv::FONT_HERSHEY_SIMPLEX, 0.4, 1, &baseLine);
 
         cv::Scalar txt_bk_color = color * 0.7 * 255;
 
@@ -410,7 +410,7 @@ static void draw_objects(const cv::Mat& bgr, const std::vector<Object>& objects,
                       txt_bk_color, -1);
 
         cv::putText(image, text, cv::Point(x, y + label_size.height),
-                    cv::FONT_HERSHEY_COMPLEX, 0.4, txt_color, 1);
+                    cv::FONT_HERSHEY_SIMPLEX, 0.4, txt_color, 1);
     }
 
     cv::imwrite("det_res.jpg", image);
