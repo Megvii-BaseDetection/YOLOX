@@ -17,8 +17,10 @@ After downloading, please extract your zip file. Then, there are two ways to fin
 * change the ncnn_DIR path in app/src/main/jni/CMakeLists.txt to your extracted directory.
 
 ### Step3
-Open this project with Android Studio, build it and enjoy!
+Download example param and bin file from [this link](https://megvii-my.sharepoint.cn/:u:/g/personal/gezheng_megvii_com/ESXBH_GSSmFMszWJ6YG2VkQB5cWDfqVWXgk0D996jH0rpQ?e=qzEqUh). Unzip the file to app/src/main/assets.
 
+### Step4
+Open this project with Android Studio, build it and enjoy!
 
 ## Reference
 
