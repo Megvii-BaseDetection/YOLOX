@@ -8,7 +8,7 @@ For more details, please refer to our [report on Arxiv](https://arxiv.org/abs/21
 <img src="assets/git_fig.png" width="1000" >
 
 ## Updates!!
-* 【2020/07/20】 We have released our technical report on [Arxiv](https://arxiv.org/abs/2107.08430).
+* 【2021/07/20】 We have released our technical report on [Arxiv](https://arxiv.org/abs/2107.08430).
 
 ## Comming soon
 - [ ] YOLOX-P6 and larger model.
@@ -19,7 +19,7 @@ For more details, please refer to our [report on Arxiv](https://arxiv.org/abs/21
 ## Benchmark
 
 #### Standard Models.
-|Model |size |mAP<sup>test<br>0.5:0.95 | Speed V100<br>(ms) | Params<br>(M) |FLOPs<br>(B)| weights |
+|Model |size |mAP<sup>test<br>0.5:0.95 | Speed V100<br>(ms) | Params<br>(M) |FLOPs<br>(G)| weights |
 | ------        |:---: | :---:       |:---:     |:---:  | :---: | :----: |
 |[YOLOX-s](./exps/default/yolox_s.py)    |640  |39.6      |9.8     |9.0 | 26.8 | [Download](https://megvii-my.sharepoint.cn/:u:/g/personal/gezheng_megvii_com/EW62gmO2vnNNs5npxjzunVwB9p307qqygaCkXdTO88BLUg?e=NMTQYw) |
 |[YOLOX-m](./exps/default/yolox_m.py)    |640  |46.4      |12.3     |25.3 |73.8| [Download](https://megvii-my.sharepoint.cn/:u:/g/personal/gezheng_megvii_com/ERMTP7VFqrVBrXKMU7Vl4TcBQs0SUeCT7kvc-JdIbej4tQ?e=1MDo9y) |
@@ -28,7 +28,7 @@ For more details, please refer to our [report on Arxiv](https://arxiv.org/abs/21
 |[YOLOX-Darknet53](./exps/default/yolov3.py)   |640  | 47.4      | 11.1 |63.7 | 185.3 | [Download](https://megvii-my.sharepoint.cn/:u:/g/personal/gezheng_megvii_com/EZ-MV1r_fMFPkPrNjvbJEMoBLOLAnXH-XKEB77w8LhXL6Q?e=mf6wOc) |
 
 #### Light Models.
-|Model |size |mAP<sup>val<br>0.5:0.95 | Params<br>(M) |FLOPs<br>(B)| weights |
+|Model |size |mAP<sup>val<br>0.5:0.95 | Params<br>(M) |FLOPs<br>(G)| weights |
 | ------        |:---:  |  :---:       |:---:     |:---:  | :---: |
 |[YOLOX-Nano](./exps/default/nano.py) |416  |25.3  | 0.91 |1.08 | [Download](https://megvii-my.sharepoint.cn/:u:/g/personal/gezheng_megvii_com/EdcREey-krhLtdtSnxolxiUBjWMy6EFdiaO9bdOwZ5ygCQ?e=yQpdds) |
 |[YOLOX-Tiny](./exps/default/yolox_tiny.py) |416  |31.7 | 5.06 |6.45 | [Download](https://megvii-my.sharepoint.cn/:u:/g/personal/gezheng_megvii_com/EYtjNFPqvZBBrQ-VowLcSr4B6Z5TdTflUsr_gO2CwhC3bQ?e=SBTwXj) |
@@ -74,7 +74,7 @@ python tools/demo.py image -n yolox-s -c /path/to/your/yolox_s.pth.tar --path as
 ```
 or
 ```shell
-python tools/demo.py image -f exps/yolox_s.py -c /path/to/your/yolox_s.pth.tar --path assets/dog.jpg --conf 0.3 --nms 0.65 --tsize 640 --save_result
+python tools/demo.py image -f exps/default/yolox_s.py -c /path/to/your/yolox_s.pth.tar --path assets/dog.jpg --conf 0.3 --nms 0.65 --tsize 640 --save_result
 ```
 Demo for video:
 ```shell
