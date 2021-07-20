@@ -3,12 +3,12 @@
 
 ## Introduction
 YOLOX is an anchor-free version of YOLO, with a simpler design but better performance! It aims to bridge the gap between research and industrial communities.
-For more details, please refer to our [Arxiv report](https://arxiv.org/abs/2107.08430).
+For more details, please refer to our [report on Arxiv](https://arxiv.org/abs/2107.08430).
 
 <img src="assets/git_fig.png" width="1000" >
 
 ## Updates!!
-* 【2020/07/19】 We have released our technical report on [Arxiv](https://arxiv.org/abs/2107.08430).
+* 【2020/07/20】 We have released our technical report on [Arxiv](https://arxiv.org/abs/2107.08430).
 
 ## Comming soon
 - [ ] YOLOX-P6 and larger model.
@@ -103,7 +103,7 @@ python tools/train.py -n yolox-s -d 8 -b 64 --fp16 -o
                          yolox-x
 ```
 * -d: number of gpu devices
-* -b: total batch size, the recommended number for -b is num_gpu * 8
+* -b: total batch size, the recommended number for -b is num-gpu * 8
 * --fp16: mixed precision training
 
 When using -f, the above commands are equivalent to:
@@ -114,7 +114,7 @@ python tools/train.py -f exps/base/yolox-s.py -d 8 -b 64 --fp16 -o
                          exps/base/yolox-l.py
                          exps/base/yolox-x.py
 ```
-  
+
 </details>
 
 
@@ -161,7 +161,7 @@ python tools/eval.py -n  yolox-s -c yolox_s.pth.tar -b 1 -d 1 --conf 0.001 --fp1
 
 ## Cite YOLOX
 If you use YOLOX in your research, please cite our work by using the following BibTeX entry:
-  
+
 ```latex
  @article{yolox2021,
   title={YOLOX: Exceeding YOLO Series in 2021},
