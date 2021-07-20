@@ -3,12 +3,12 @@
 
 ## Introduction
 YOLOX is an anchor-free version of YOLO, with a simpler design but better performance! It aims to bridge the gap between research and industrial communities.
-For more details, please refer to our [Arxiv report]().
+For more details, please refer to our [Arxiv report](https://arxiv.org/abs/2107.08430).
 
 <img src="assets/git_fig.png" width="1000" >
 
 ## Updates!!
-* 【2020/07/19】 We have released our technical report on [Arxiv]().
+* 【2020/07/19】 We have released our technical report on [Arxiv](https://arxiv.org/abs/2107.08430).
 
 ## Comming soon
 - [ ] YOLOX-P6 and larger model.
@@ -166,7 +166,7 @@ If you use YOLOX in your research, please cite our work by using the following B
  @article{yolox2021,
   title={YOLOX: Exceeding YOLO Series in 2021},
   author={Ge, Zheng and Liu, Songtao and Wang, Feng and Li, Zeming and Sun, Jian},
-  journal={arXiv preprint arXiv:2021:xxxx},
+  journal={arXiv preprint arXiv:2107.08430},
   year={2021}
 }
 ```
