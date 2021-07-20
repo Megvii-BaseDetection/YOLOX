@@ -74,7 +74,7 @@ python tools/demo.py image -n yolox-s -c /path/to/your/yolox_s.pth.tar --path as
 ```
 or
 ```shell
-python tools/demo.py image -f exps/yolox_s.py -c /path/to/your/yolox_s.pth.tar --path assets/dog.jpg --conf 0.3 --nms 0.65 --tsize 640 --save_result
+python tools/demo.py image -f exps/default/yolox_s.py -c /path/to/your/yolox_s.pth.tar --path assets/dog.jpg --conf 0.3 --nms 0.65 --tsize 640 --save_result
 ```
 Demo for video:
 ```shell
