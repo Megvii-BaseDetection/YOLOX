@@ -41,7 +41,7 @@ For more details, please refer to our [report on Arxiv](https://arxiv.org/abs/21
 Step1. Install YOLOX.
 ```shell
 git clone git@github.com:Megvii-BaseDetection/YOLOX.git
-cd yolox
+cd YOLOX
 pip3 install -U pip && pip3 install -r requirements.txt
 pip3 install -v -e .  # or  python3 setup.py develop
 ```
