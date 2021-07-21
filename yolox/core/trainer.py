@@ -50,6 +50,8 @@ class Trainer:
         # data/dataloader related attr
         self.data_type = torch.float16 if args.fp16 else torch.float32
         self.input_size = exp.input_size
+        # TODO: set eval_num_workers to work around fd leak in pytorch dataloader.
+        self.exp.eval_num_workers = 0
         self.best_ap = 0
 
         # metric record

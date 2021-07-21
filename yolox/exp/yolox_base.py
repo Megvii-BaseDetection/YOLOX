@@ -25,6 +25,7 @@ class Exp(BaseExp):
         # ---------------- dataloader config ---------------- #
         # set worker to 4 for shorter dataloader init time
         self.data_num_workers = 4
+        self.eval_num_workers = 4
         self.input_size = (640, 640)
         self.random_size = (14, 26)
         self.train_ann = "instances_train2017.json"
@@ -223,7 +224,7 @@ class Exp(BaseExp):
             sampler = torch.utils.data.SequentialSampler(valdataset)
 
         dataloader_kwargs = {
-            "num_workers": self.data_num_workers,
+            "num_workers": self.eval_num_workers,
             "pin_memory": True,
             "sampler": sampler,
         }
