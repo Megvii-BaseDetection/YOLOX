@@ -214,6 +214,9 @@ def main(exp, args):
         vis_folder = os.path.join(file_name, 'vis_res')
         os.makedirs(vis_folder, exist_ok=True)
 
+    if args.trt:
+        args.device="gpu"
+
     logger.info("Args: {}".format(args))
 
     if args.conf is not None:
