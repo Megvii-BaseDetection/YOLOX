@@ -61,6 +61,8 @@ def multiclass_nms(boxes, scores, nms_thr, score_thr):
                 cls_inds = np.ones((len(keep), 1)) * cls_ind
                 dets = np.concatenate([valid_boxes[keep], valid_scores[keep, None], cls_inds], 1)
                 final_dets.append(dets)
+    if len(final_dets) == 0:
+        return None
     return np.concatenate(final_dets, 0)
 
 
