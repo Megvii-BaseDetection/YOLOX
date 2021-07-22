@@ -38,9 +38,8 @@ class Exp(MyExp):
             COCODataset,
             MosaicDetection,
             TrainTransform,
-            YoloBatchSampler,
             DataLoader,
-            InfiniteSampler
+            YoloBatchSampler, InfiniteSampler
         )
 
         dataset = COCODataset(
