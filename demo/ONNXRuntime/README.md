@@ -40,13 +40,13 @@ Notes:
 2. Convert a standard YOLOX model by -f. When using -f, the above command is equivalent to:
 
 ```shell
-python3 tools/export_onnx.py --output-name yolox_s.onnx -f exps/yolox_s.py -c yolox_s.pth.tar
+python3 tools/export_onnx.py --output-name yolox_s.onnx -f exps/default/yolox_s.py -c yolox_s.pth.tar
 ```
 
 3. To convert your customized model, please use -f:
 
 ```shell
-python3 tools/export_onnx.py --output-name your_yolox.onnx -f exps/your_yolox.py -c your_yolox.pth.tar
+python3 tools/export_onnx.py --output-name your_yolox.onnx -f exps/your_dir/your_yolox.py -c your_yolox.pth.tar
 ```
 
 ### ONNXRuntime Demo

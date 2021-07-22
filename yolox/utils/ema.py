@@ -4,13 +4,14 @@
 import math
 from copy import deepcopy
 
-import apex
 import torch
 import torch.nn as nn
 
 
 def is_parallel(model):
     """check if model is in parallel mode."""
+    import apex
+
     parallel_type = (
         nn.parallel.DataParallel,
         nn.parallel.DistributedDataParallel,
