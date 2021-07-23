@@ -1,5 +1,5 @@
 numpy
-torch
+torch>=1.7
 opencv_python
 loguru
 scikit-image
