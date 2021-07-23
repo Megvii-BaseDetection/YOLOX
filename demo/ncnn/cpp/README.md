@@ -63,7 +63,7 @@ YoloV5Focus      focus                    1 1 images 683
 ```
 
 ### Step5
-Use ncnn_optimze to generate new param and bin:
+Use ncnn_optimize to generate new param and bin:
 ```shell
 # suppose you are still under ncnn/build/tools/ncnn dir.
 ../ncnnoptimize model.param model.bin yolox.param yolox.bin 65536
