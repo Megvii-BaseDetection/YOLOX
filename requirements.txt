@@ -1,7 +1,6 @@
 # TODO: Update with exact module version
 numpy
 torch
-opencv_python
 loguru
 scikit-image
 tqdm
