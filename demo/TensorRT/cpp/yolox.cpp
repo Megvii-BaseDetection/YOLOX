@@ -211,17 +211,15 @@ float* blobFromImage(cv::Mat& img){
 
     float* blob = new float[img.total()*3];
     int channels = 3;
-    int img_h = 640;
-    int img_w = 640;
     std::vector<float> mean = {0.485, 0.456, 0.406};
     std::vector<float> std = {0.229, 0.224, 0.225};
     for (size_t c = 0; c < channels; c++) 
     {
-        for (size_t  h = 0; h < img_h; h++) 
+        for (size_t  h = 0; h < INPUT_H; h++) 
         {
-            for (size_t w = 0; w < img_w; w++) 
+            for (size_t w = 0; w < INPUT_W; w++) 
             {
-                blob[c * img_w * img_h + h * img_w + w] =
+                blob[c * INPUT_W * INPUT_H + h * INPUT_W + w] =
                     (((float)img.at<cv::Vec3b>(h, w)[c]) / 255.0f - mean[c]) / std[c];
             }
         }
