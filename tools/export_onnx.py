@@ -23,7 +23,7 @@ def make_parser():
     parser.add_argument("--output", default="output", type=str, help="output name of onnx model")
     parser.add_argument("-o", "--opset", default=11, type=int, help="onnx opset version")
     parser.add_argument("--no-onnxsim", action="store_true", help="use onnxsim or not")
-
+    parser.add_argument("--tsize", default=None, type=int, help="model input img size")
     parser.add_argument(
         "-f",
         "--exp_file",
@@ -50,6 +50,8 @@ def main():
     logger.info("args value: {}".format(args))
     exp = get_exp(args.exp_file, args.name)
     exp.merge(args.opts)
+    if args.tsize is not None:
+        exp.test_size = (args.tsize, args.tsize)
 
     if not args.experiment_name:
         args.experiment_name = exp.exp_name
