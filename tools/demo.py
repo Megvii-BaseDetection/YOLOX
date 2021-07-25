@@ -81,13 +81,12 @@ def get_image_list(path):
 
 
 class Predictor(object):
-    def __init__(self, model, exp, cls_names=COCO_CLASSES, trt_file=None, decoder=None, conf_vis=0.3, device="cpu"):
+    def __init__(self, model, exp, cls_names=COCO_CLASSES, trt_file=None, decoder=None, device="cpu"):
         self.model = model
         self.cls_names = cls_names
         self.decoder = decoder
         self.num_classes = exp.num_classes
         self.confthre = exp.test_conf
-        self.conv_vis = conf_vis
         self.nmsthre = exp.nmsthre
         self.test_size = exp.test_size
         self.device = device
@@ -159,7 +158,7 @@ def image_demo(predictor, vis_folder, path, current_time, save_result):
     files.sort()
     for image_name in files:
         outputs, img_info = predictor.inference(image_name)
-        result_image = predictor.visual(outputs[0], img_info, predictor.conf_vis)
+        result_image = predictor.visual(outputs[0], img_info, predictor.confthre)
         if save_result:
             save_folder = os.path.join(
                 vis_folder, time.strftime("%Y_%m_%d_%H_%M_%S", current_time)
@@ -192,7 +191,7 @@ def imageflow_demo(predictor, vis_folder, current_time, args):
         ret_val, frame = cap.read()
         if ret_val:
             outputs, img_info = predictor.inference(frame)
-            result_frame = predictor.visual(outputs[0], img_info, predictor.conf_vis)
+            result_frame = predictor.visual(outputs[0], img_info, predictor.confthre)
             if args.save_result:
                 vid_writer.write(result_frame)
             ch = cv2.waitKey(1)
@@ -261,7 +260,7 @@ def main(exp, args):
         trt_file = None
         decoder = None
 
-    predictor = Predictor(model, exp, COCO_CLASSES, trt_file, decoder, args.conf, args.device)
+    predictor = Predictor(model, exp, COCO_CLASSES, trt_file, decoder, args.device)
     current_time = time.localtime()
     if args.demo == 'image':
         image_demo(predictor, vis_folder, args.path, current_time, args.save_result)
