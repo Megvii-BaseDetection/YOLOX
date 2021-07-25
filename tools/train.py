@@ -63,11 +63,11 @@ def make_parser():
     )
     parser.add_argument(
         "-o",
-        "--occumpy",
-        dest="occumpy",
+        "--occupy",
+        dest="occupy",
         default=False,
         action="store_true",
-        help="occumpy GPU memory first for training.",
+        help="occupy GPU memory first for training.",
     )
     parser.add_argument(
         "opts",
