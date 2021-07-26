@@ -21,7 +21,7 @@ python3 convert_weights.py -w yolox_s.pth.tar -o yolox_s_mge.pkl
 This part is the same as torch's python demo, but no need to specify device.
 
 ```
-python3 demo.py image -n yolox-s -c yolox_s_mge.pkl --path ../../../assets/dog.jpg --conf 0.3 --nms 0.65 --tsize 640 --save_result
+python3 demo.py image -n yolox-s -c yolox_s_mge.pkl --path ../../../assets/dog.jpg --conf 0.25 --nms 0.45 --tsize 640 --save_result
 ```
 
 ###  [Optional]Step4: dump model for cpp inference
