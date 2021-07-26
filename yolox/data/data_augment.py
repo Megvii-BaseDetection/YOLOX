@@ -266,4 +266,4 @@ class ValTransform:
     # assume input is cv2 img for now
     def __call__(self, img, res, input_size):
         img, _ = preproc(img, input_size, self.means, self.std, self.swap)
-        return torch.tensor_as(img), torch.zeros(1, 5)
+        return torch.as_tensor(img), torch.zeros(1, 5)
