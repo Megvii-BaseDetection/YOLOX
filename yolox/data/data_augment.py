@@ -4,6 +4,9 @@
 """
 Data augmentation functionality. Passed as callable transformations to
 Dataset classes.
+
+The data augmentation procedures were interpreted from @weiliu89's SSD paper
+http://arxiv.org/abs/1512.02325
 """
 
 import math
@@ -13,8 +16,6 @@ import cv2
 import numpy as np
 
 import torch
-
-from yolox.utils import xyxy2cxcywh
 
 
 def augment_hsv(img, hgain=0.015, sgain=0.7, vgain=0.4):
@@ -196,11 +197,20 @@ class TrainTransform:
     def __call__(self, image, targets, input_dim):
         boxes = targets[:, :4].copy()
         labels = targets[:, 4].copy()
+        if targets.shape[1] > 5:
+            mixup = True
+            ratios = targets[:, -1].copy()
+            ratios_o = targets[:, -1].copy()
+        else:
+            mixup = False
+            ratios = None
+            ratios_o = None
+        lshape = 6 if mixup else 5
         if len(boxes) == 0:
-            targets = np.zeros((self.max_labels, 5), dtype=np.float32)
+            targets = np.zeros((self.max_labels, lshape), dtype=np.float32)
             image, r_o = preproc(image, input_dim, self.means, self.std)
             image = np.ascontiguousarray(image, dtype=np.float32)
-            return torch.as_tensor(image), torch.as_tensor(targets)
+            return image, targets
 
         image_o = image.copy()
         targets_o = targets.copy()
@@ -208,36 +218,58 @@ class TrainTransform:
         boxes_o = targets_o[:, :4]
         labels_o = targets_o[:, 4]
         # bbox_o: [xyxy] to [c_x,c_y,w,h]
-        boxes_o = xyxy2cxcywh(boxes_o)
+        b_x_o = (boxes_o[:, 2] + boxes_o[:, 0]) * 0.5
+        b_y_o = (boxes_o[:, 3] + boxes_o[:, 1]) * 0.5
+        b_w_o = (boxes_o[:, 2] - boxes_o[:, 0]) * 1.0
+        b_h_o = (boxes_o[:, 3] - boxes_o[:, 1]) * 1.0
+        boxes_o[:, 0] = b_x_o
+        boxes_o[:, 1] = b_y_o
+        boxes_o[:, 2] = b_w_o
+        boxes_o[:, 3] = b_h_o
 
         image_t = _distort(image)
         image_t, boxes = _mirror(image_t, boxes)
         height, width, _ = image_t.shape
         image_t, r_ = preproc(image_t, input_dim, self.means, self.std)
-        boxes = xyxy2cxcywh(boxes)
+        boxes = boxes.copy()
         # boxes [xyxy] 2 [cx,cy,w,h]
+        b_x = (boxes[:, 2] + boxes[:, 0]) * 0.5
+        b_y = (boxes[:, 3] + boxes[:, 1]) * 0.5
+        b_w = (boxes[:, 2] - boxes[:, 0]) * 1.0
+        b_h = (boxes[:, 3] - boxes[:, 1]) * 1.0
+        boxes[:, 0] = b_x
+        boxes[:, 1] = b_y
+        boxes[:, 2] = b_w
+        boxes[:, 3] = b_h
 
         boxes *= r_
 
         mask_b = np.minimum(boxes[:, 2], boxes[:, 3]) > 8
         boxes_t = boxes[mask_b]
-        labels_t = labels[mask_b]
+        labels_t = labels[mask_b].copy()
+        if mixup:
+            ratios_t = ratios[mask_b].copy()
 
         if len(boxes_t) == 0:
             image_t, r_o = preproc(image_o, input_dim, self.means, self.std)
             boxes_o *= r_o
             boxes_t = boxes_o
             labels_t = labels_o
+            ratios_t = ratios_o
 
         labels_t = np.expand_dims(labels_t, 1)
-        targets_t = np.hstack((labels_t, boxes_t))
-        padded_labels = np.zeros((self.max_labels, 5))
+        if mixup:
+            ratios_t = np.expand_dims(ratios_t, 1)
+            targets_t = np.hstack((labels_t, boxes_t, ratios_t))
+        else:
+            targets_t = np.hstack((labels_t, boxes_t))
+        padded_labels = np.zeros((self.max_labels, lshape))
         padded_labels[range(len(targets_t))[: self.max_labels]] = targets_t[
             : self.max_labels
         ]
         padded_labels = np.ascontiguousarray(padded_labels, dtype=np.float32)
         image_t = np.ascontiguousarray(image_t, dtype=np.float32)
-        return torch.as_tensor(image_t), torch.as_tensor(padded_labels)
+        return image_t, padded_labels
 
 
 class ValTransform:
@@ -266,4 +298,4 @@ class ValTransform:
     # assume input is cv2 img for now
     def __call__(self, img, res, input_size):
         img, _ = preproc(img, input_size, self.means, self.std, self.swap)
-        return torch.as_tensor(img), torch.zeros(1, 5)
+        return torch.from_numpy(img), torch.zeros(1, 5)
