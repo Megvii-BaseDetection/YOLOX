@@ -151,10 +151,11 @@ python tools/eval.py -n  yolox-s -c yolox_s.pth.tar -b 1 -d 1 --conf 0.001 --fp1
 ## Deployment
 
 
-1.  [ONNX export and an ONNXRuntime](./demo/ONNXRuntime)
-2.  [TensorRT in C++ and Python](./demo/TensorRT)
-3.  [ncnn in C++ and Java](./demo/ncnn)
-4.  [OpenVINO in C++ and Python](./demo/OpenVINO)
+1.  [MegEngine in C++ and Python](./demo/MegEngine)
+2.  [ONNX export and an ONNXRuntime](./demo/ONNXRuntime)
+3.  [TensorRT in C++ and Python](./demo/TensorRT)
+4.  [ncnn in C++ and Java](./demo/ncnn)
+5.  [OpenVINO in C++ and Python](./demo/OpenVINO)
 
 ## Cite YOLOX
 If you use YOLOX in your research, please cite our work by using the following BibTeX entry:
