@@ -15,8 +15,8 @@
 /**
  * @brief Define names based depends on Unicode path support
  */
-#define NMS_THRESH 0.65
-#define BBOX_CONF_THRESH 0.3
+#define NMS_THRESH 0.45
+#define BBOX_CONF_THRESH 0.25
 
 constexpr int INPUT_W = 640;
 constexpr int INPUT_H = 640;
