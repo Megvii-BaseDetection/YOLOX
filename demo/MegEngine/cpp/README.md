@@ -114,6 +114,25 @@ Cpp file compile of YOLOX object detection base on [MegEngine](https://github.co
       * <use_weight_preprocess> if >=1, will handle weight preprocess before exe
       * <run_with_fp16> if >=1, will run with fp16 mode
 
+## Bechmark
+
+*  model info: yolox-s @ input(1,3,640,640)					
+
+* test devices
+
+  * x86_64  -- Intel(R) Xeon(R) CPU E5-2620 v4 @ 2.10GHz					
+  * aarch64 -- xiamo phone mi9					
+  * cuda    -- 1080TI @ cuda-10.1-cudnn-v7.6.3-TensorRT-6.0.1.5.sh @ Intel(R) Xeon(R) CPU E5-2620 v4 @ 2.10GHz
+
+  | megengine @ tag1.4(fastrun + weight\_preprocess)/sec | 1 线程   |
+  | ---------------------------------------------------- | -------- |
+  | x86\_64                                              | 0.516245 |
+  | aarch64(fp32+chw44)                                  | 0.587857 |
+
+  | CUDA @ 1080TI/sec   | 1 batch    | 2 batch   | 4 batch   | 8 batch   | 16 batch  | 32 batch | 64 batch |
+  | ------------------- | ---------- | --------- | --------- | --------- | --------- | -------- | -------- |
+  | megengine(fp32+chw) | 0.00813703 | 0.0132893 | 0.0236633 | 0.0444699 | 0.0864917 | 0.16895  | 0.334248 |
+
 ## Acknowledgement
 
 * [MegEngine](https://github.com/MegEngine/MegEngine)
