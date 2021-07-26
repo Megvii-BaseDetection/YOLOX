@@ -18,7 +18,7 @@ using namespace InferenceEngine;
 #define tcout                  std::cout
 #define file_name_t            std::string
 #define imread_t               cv::imread
-#define NMS_THRESH 0.65
+#define NMS_THRESH 0.45
 #define BBOX_CONF_THRESH 0.3
 
 static const int INPUT_W = 416;
