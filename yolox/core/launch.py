@@ -55,17 +55,15 @@ def launch(
             port = _find_free_port()
             dist_url = f"tcp://127.0.0.1:{port}"
 
-        processes = []
-        for rank in range(num_gpus_per_machine):
-            p = mp.Process(
-                target=_distributed_worker, 
-                args=(
-                    rank, main_func, world_size, num_gpus_per_machine,
-                    machine_rank, backend, dist_url, args))
-            p.start()
-            processes.append(p)
-        for p in processes:
-            p.join()
+        mp.spawn(
+            _distributed_worker,
+            nprocs=num_gpus_per_machine,
+            args=(
+                main_func, world_size, num_gpus_per_machine,
+                machine_rank, backend, dist_url, args
+            ),
+            daemon=False,
+        )
     else:
         main_func(*args)
 
