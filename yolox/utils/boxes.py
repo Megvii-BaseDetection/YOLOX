@@ -114,6 +114,7 @@ def xyxy2xywh(bboxes):
     bboxes[:, 3] = bboxes[:, 3] - bboxes[:, 1]
     return bboxes
 
+
 def xyxy2cxcywh(bboxes):
     bboxes[:, 2] = bboxes[:, 2] - bboxes[:, 0]
     bboxes[:, 3] = bboxes[:, 3] - bboxes[:, 1]
