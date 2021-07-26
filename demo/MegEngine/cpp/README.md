@@ -1,0 +1,122 @@
+# YOLOX-CPP-MegEngine
+
+Cpp file compile of YOLOX object detection base on [MegEngine](https://github.com/MegEngine/MegEngine).
+
+## Tutorial
+
+### Step1: install toolchain
+
+	* host: sudo apt install gcc/g++ (gcc/g++, which version >= 6) build-essential git git-lfs gfortran libgfortran-6-dev autoconf gnupg flex bison gperf curl zlib1g-dev gcc-multilib g++-multilib cmake
+ * cross build android: download [NDK](https://developer.android.com/ndk/downloads)
+   	* after unzip download NDK, then export NDK_ROOT="path of NDK"
+
+### Step2: build MegEngine
+
+ * git clone https://github.com/MegEngine/MegEngine.git
+ * then init third_party
+    * then export megengine_root="path of MegEngine"
+    * cd $megengine_root && ./third_party/prepare.sh && ./third_party/install-mkl.sh
+ * build example:
+    * build host without cuda:   ./scripts/cmake-build/host_build.sh
+    * build host with cuda      :   ./scripts/cmake-build/host_build.sh -c
+    * cross build for android aarch64: ./scripts/cmake-build/cross_build_android_arm_inference.sh
+    * cross build for android aarch64(with V8.2+fp16): ./scripts/cmake-build/cross_build_android_arm_inference.sh -f
+* after build MegEngine, you need export the `MGE_INSTALL_PATH`
+  * host without cuda: export MGE_INSTALL_PATH=${megengine_root}/build_dir/host/MGE_WITH_CUDA_OFF/MGE_INFERENCE_ONLY_ON/Release/install
+  * host with cuda: export MGE_INSTALL_PATH=${megengine_root}/build_dir/host/MGE_WITH_CUDA_ON/MGE_INFERENCE_ONLY_ON/Release/install
+  * cross build for android aarch64: export MGE_INSTALL_PATH=${megengine_root}/build_dir/android/arm64-v8a/Release/install
+* you can refs [build tutorial of MegEngine](https://github.com/MegEngine/MegEngine/blob/master/scripts/cmake-build/BUILD_README.md) to build other platform, eg, windows/macos/ etc!
+
+### Step3: build OpenCV
+* git clone https://github.com/opencv/opencv.git
+
+* git checkout 3.4.15 (we test at 3.4.15, if test other version, may need modify some build)
+
+* patch diff for android:
+
+  * ```
+    diff --git a/CMakeLists.txt b/CMakeLists.txt
+    index f6a2da5310..10354312c9 100644
+    --- a/CMakeLists.txt
+    +++ b/CMakeLists.txt
+    @@ -643,7 +643,7 @@ if(UNIX)
+       if(NOT APPLE)
+         CHECK_INCLUDE_FILE(pthread.h HAVE_PTHREAD)
+         if(ANDROID)
+    -      set(OPENCV_LINKER_LIBS ${OPENCV_LINKER_LIBS} dl m log)
+    +      set(OPENCV_LINKER_LIBS ${OPENCV_LINKER_LIBS} dl m log z)
+         elseif(CMAKE_SYSTEM_NAME MATCHES "FreeBSD|NetBSD|DragonFly|OpenBSD|Haiku")
+           set(OPENCV_LINKER_LIBS ${OPENCV_LINKER_LIBS} m pthread)
+         elseif(EMSCRIPTEN)
+    
+    ```
+
+* build for host
+
+  * ```
+    cd root_dir_of_opencv
+    mkdir -p build/install
+    cd build
+    cmake -DBUILD_JAVA=OFF -DBUILD_SHARED_LIBS=ON -DCMAKE_INSTALL_PREFIX=$PWD/install 
+    make install -j32
+    ```
+
+* build for android-aarch64
+
+  * ```
+    cd root_dir_of_opencv
+    mkdir -p build_android/install
+    cd build_android
+    
+    cmake -DCMAKE_TOOLCHAIN_FILE="$NDK_ROOT/build/cmake/android.toolchain.cmake" -DANDROID_NDK="$NDK_ROOT"  -DANDROID_ABI=arm64-v8a -DANDROID_NATIVE_API_LEVEL=21 -DBUILD_JAVA=OFF -DBUILD_ANDROID_PROJECTS=OFF -DBUILD_ANDROID_EXAMPLES=OFF -DBUILD_SHARED_LIBS=ON -DCMAKE_INSTALL_PREFIX=$PWD/install ..
+    
+    make install -j32
+    ```
+
+* after build OpenCV, you need export  `OPENCV_INSTALL_INCLUDE_PATH ` and `OPENCV_INSTALL_LIB_PATH`
+
+  * host build: 
+    * export OPENCV_INSTALL_INCLUDE_PATH=${path of opencv}/build/install/include
+    * export OPENCV_INSTALL_LIB_PATH=${path of opencv}/build/install/lib
+  * cross build for android aarch64:
+    * export OPENCV_INSTALL_INCLUDE_PATH=${path of opencv}/build_android/install/sdk/native/jni/include
+    * export OPENCV_INSTALL_LIB_PATH=${path of opencv}/build_android/install/sdk/native/libs/arm64-v8a
+
+###  Step4: build test demo
+
+ * run build.sh
+    * host:
+       * export CXX=g++
+       * ./build.sh
+   * cross android aarch64
+     *  export CXX=aarch64-linux-android21-clang++
+     * ./build.sh
+
+### Step5: run demo
+
+> **Note**: two ways to get `yolox_s.mge` model file
+>
+> * reference to python demo's `dump.py` script.
+> * wget https://github.com/Megvii-BaseDetection/storage/releases/download/0.0.1/yolox_s.mge
+
+* host:
+  * LD_LIBRARY_PATH=$MGE_INSTALL_PATH/lib/:$OPENCV_INSTALL_LIB_PATH ./yolox yolox_s.mge ../../../assets/dog.jpg cuda/cpu/multithread <warmup_count> <thread_number>
+* cross android
+  * adb push/scp $MGE_INSTALL_PATH/lib/libmegengine.so android_phone
+  * adb push/scp $OPENCV_INSTALL_LIB_PATH/*.so android_phone
+  * adb push/scp ./yolox yolox_s.mge android_phone
+  * adb push/scp ../../../assets/dog.jpg android_phone
+  * login in android_phone by adb or ssh
+    * then run: LD_LIBRARY_PATH=. ./yolox yolox_s.mge dog.jpg cpu/multithread <warmup_count> <thread_number> <use_fast_run> <use_weight_preprocess>  <run_with_fp16>
+      * <warmup_count> means warmup count, valid number >=0
+      * <thread_number> means thread number, valid number >=1, only take effect `multithread` device
+      * <use_fast_run> if >=1 , will use fastrun to choose best algo
+      * <use_weight_preprocess> if >=1, will handle weight preprocess before exe
+      * <run_with_fp16> if >=1, will run with fp16 mode
+
+## Acknowledgement
+
+* [MegEngine](https://github.com/MegEngine/MegEngine)
+* [OpenCV](https://github.com/opencv/opencv)
+* [NDK](https://developer.android.com/ndk)
+* [CMAKE](https://cmake.org/)
