@@ -1,3 +1,26 @@
+### 自定义训练集(COCO格式)
+1. 准备好自己数据集为COCO标准格式
+   - 最终数据集目录结构如下：
+       ```text
+       CustomDataset
+          annotations
+              train.json
+              val.json
+          train
+              000000000009.jpg
+              000000000010.jpg
+          val
+              000000000139.jpg
+              000000000140.jpg
+       ```
+2. 更改类别对应名称:`yolox/data/datasets/custom.py`
+3. 更改自己数据集位置，模型相关参数: `exps/default/yolox_s_custom.py`
+4. 开始训练吧
+   ```shell
+   bash train.sh
+   ```
+
+---
 <div align="center"><img src="assets/logo.png" width="350"></div>
 <img src="assets/demo.png" >
 
