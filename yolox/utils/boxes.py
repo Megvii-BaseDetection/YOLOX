@@ -9,7 +9,7 @@ import torchvision
 
 __all__ = [
     "filter_box", "postprocess", "bboxes_iou", "matrix_iou",
-    "adjust_box_anns", "xyxy2xywh", "xyxy2cxcywh",
+    "adjust_box_anns", "xyxy2xywh",
 ]
 
 
@@ -112,12 +112,4 @@ def adjust_box_anns(bbox, scale_ratio, padw, padh, w_max, h_max):
 def xyxy2xywh(bboxes):
     bboxes[:, 2] = bboxes[:, 2] - bboxes[:, 0]
     bboxes[:, 3] = bboxes[:, 3] - bboxes[:, 1]
-    return bboxes
-
-
-def xyxy2cxcywh(bboxes):
-    bboxes[:, 2] = bboxes[:, 2] - bboxes[:, 0]
-    bboxes[:, 3] = bboxes[:, 3] - bboxes[:, 1]
-    bboxes[:, 0] = bboxes[:, 0] + bboxes[:, 2] * 0.5
-    bboxes[:, 1] = bboxes[:, 1] + bboxes[:, 3] * 0.5
     return bboxes

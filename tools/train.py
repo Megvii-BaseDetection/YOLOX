@@ -12,7 +12,7 @@ import torch.backends.cudnn as cudnn
 
 from yolox.core import Trainer, launch
 from yolox.exp import get_exp
-from yolox.utils import configure_nccl, get_num_devices
+from yolox.utils import configure_nccl
 
 
 def make_parser():
@@ -106,8 +106,8 @@ if __name__ == "__main__":
     exp = get_exp(args.exp_file, args.name)
     exp.merge(args.opts)
 
-    num_gpu = get_num_devices() if args.devices is None else args.devices
-    assert num_gpu <= get_num_devices()
+    num_gpu = torch.cuda.device_count() if args.devices is None else args.devices
+    assert num_gpu <= torch.cuda.device_count()
 
     dist_url = "auto" if args.dist_url is None else args.dist_url
     launch(
