@@ -48,3 +48,5 @@ def configure_module(ulimit_value=8192):
     except Exception:
         # cv2 version mismatch might rasie exceptions.
         pass
+
+    os.environ["OMP_NUM_THREADS"] = str(1)
