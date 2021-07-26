@@ -104,3 +104,4 @@ def _distributed_worker(
             comm._LOCAL_PROCESS_GROUP = pg
 
     main_func(*args)
+
