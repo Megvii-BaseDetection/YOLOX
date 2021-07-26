@@ -14,7 +14,7 @@ Download ncnn-android-vulkan.zip from [releases of ncnn](https://github.com/Tenc
 
 After downloading, please extract your zip file. Then, there are two ways to finish this step:
 * put your extracted directory into **app/src/main/jni**
-* change the **ncnn_DIR** path in **app/src/main/jni/CMakeLists.txt** to your extracted directory.
+* change the **ncnn_DIR** path in **app/src/main/jni/CMakeLists.txt** to your extracted directory
 
 ### Step3
 Download example param and bin file from [onedrive](https://megvii-my.sharepoint.cn/:u:/g/personal/gezheng_megvii_com/ESXBH_GSSmFMszWJ6YG2VkQB5cWDfqVWXgk0D996jH0rpQ?e=qzEqUh) or [github](https://github.com/Megvii-BaseDetection/storage/releases/download/0.0.1/yolox_s_ncnn.tar.gz). Unzip the file to **app/src/main/assets**.
