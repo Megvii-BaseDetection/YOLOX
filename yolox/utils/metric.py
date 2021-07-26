@@ -13,10 +13,17 @@ import torch
 __all__ = [
     "AverageMeter",
     "MeterBuffer",
+    "get_num_devices",
     "get_total_and_free_memory_in_Mb",
     "occupy_mem",
     "gpu_mem_usage",
 ]
+
+
+def get_num_devices():
+    devices_list_info = os.popen("nvidia-smi -L")
+    devices_list_info = devices_list_info.read().strip().split("\n")
+    return len(devices_list_info)
 
 
 def get_total_and_free_memory_in_Mb(cuda_device):
