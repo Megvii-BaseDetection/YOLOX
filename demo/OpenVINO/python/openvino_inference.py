@@ -141,8 +141,8 @@ def main():
     boxes_xyxy[:, 2] = boxes[:, 0] + boxes[:, 2]/2.
     boxes_xyxy[:, 3] = boxes[:, 1] + boxes[:, 3]/2.
     boxes_xyxy /= ratio
-    dets = multiclass_nms(boxes_xyxy, scores, nms_thr=0.65, score_thr=0.1)
-    
+    dets = multiclass_nms(boxes_xyxy, scores, nms_thr=0.45, score_thr=0.1)
+
     if dets is not None:
         final_boxes = dets[:, :4]
         final_scores, final_cls_inds = dets[:, 4], dets[:, 5]

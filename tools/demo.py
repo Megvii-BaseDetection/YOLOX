@@ -10,12 +10,11 @@ from loguru import logger
 import cv2
 
 import torch
-import torch.backends.cudnn as cudnn
 
 from yolox.data.data_augment import preproc
 from yolox.data.datasets import COCO_CLASSES
 from yolox.exp import get_exp
-from yolox.utils import fuse_model, get_model_info, postprocess, setup_logger, vis
+from yolox.utils import fuse_model, get_model_info, postprocess, vis
 
 IMAGE_EXT = ['.jpg', '.jpeg', '.webp', '.bmp', '.png']
 
@@ -42,6 +41,7 @@ def make_parser():
         help="pls input your expriment description file",
     )
     parser.add_argument("-c", "--ckpt", default=None, type=str, help="ckpt for eval")
+    parser.add_argument("--device", default="cpu", type=str, help="device to run our model, can either be cpu or gpu")
     parser.add_argument("--conf", default=None, type=float, help="test conf")
     parser.add_argument("--nms", default=None, type=float, help="test nms threshold")
     parser.add_argument("--tsize", default=None, type=int, help="test img size")
@@ -81,7 +81,7 @@ def get_image_list(path):
 
 
 class Predictor(object):
-    def __init__(self, model, exp, cls_names=COCO_CLASSES, trt_file=None, decoder=None):
+    def __init__(self, model, exp, cls_names=COCO_CLASSES, trt_file=None, decoder=None, device="cpu"):
         self.model = model
         self.cls_names = cls_names
         self.decoder = decoder
@@ -89,6 +89,7 @@ class Predictor(object):
         self.confthre = exp.test_conf
         self.nmsthre = exp.nmsthre
         self.test_size = exp.test_size
+        self.device = device
         if trt_file is not None:
             from torch2trt import TRTModule
             model_trt = TRTModule()
@@ -115,7 +116,9 @@ class Predictor(object):
 
         img, ratio = preproc(img, self.test_size, self.rgb_means, self.std)
         img_info['ratio'] = ratio
-        img = torch.from_numpy(img).unsqueeze(0).cuda()
+        img = torch.from_numpy(img).unsqueeze(0)
+        if self.device == "gpu":
+            img = img.cuda()
 
         with torch.no_grad():
             t0 = time.time()
@@ -155,7 +158,7 @@ def image_demo(predictor, vis_folder, path, current_time, save_result):
     files.sort()
     for image_name in files:
         outputs, img_info = predictor.inference(image_name)
-        result_image = predictor.visual(outputs[0], img_info)
+        result_image = predictor.visual(outputs[0], img_info, predictor.confthre)
         if save_result:
             save_folder = os.path.join(
                 vis_folder, time.strftime("%Y_%m_%d_%H_%M_%S", current_time)
@@ -188,7 +191,7 @@ def imageflow_demo(predictor, vis_folder, current_time, args):
         ret_val, frame = cap.read()
         if ret_val:
             outputs, img_info = predictor.inference(frame)
-            result_frame = predictor.visual(outputs[0], img_info)
+            result_frame = predictor.visual(outputs[0], img_info, predictor.confthre)
             if args.save_result:
                 vid_writer.write(result_frame)
             ch = cv2.waitKey(1)
@@ -202,10 +205,6 @@ def main(exp, args):
     if not args.experiment_name:
         args.experiment_name = exp.exp_name
 
-    # set environment variables for distributed training
-    cudnn.benchmark = True
-    rank = 0
-
     file_name = os.path.join(exp.output_dir, args.experiment_name)
     os.makedirs(file_name, exist_ok=True)
 
@@ -213,9 +212,9 @@ def main(exp, args):
         vis_folder = os.path.join(file_name, 'vis_res')
         os.makedirs(vis_folder, exist_ok=True)
 
-    setup_logger(
-        file_name, distributed_rank=rank, filename="demo_log.txt", mode="a"
-    )
+    if args.trt:
+        args.device="gpu"
+
     logger.info("Args: {}".format(args))
 
     if args.conf is not None:
@@ -228,8 +227,8 @@ def main(exp, args):
     model = exp.get_model()
     logger.info("Model Summary: {}".format(get_model_info(model, exp.test_size)))
 
-    torch.cuda.set_device(rank)
-    model.cuda(rank)
+    if args.device == "gpu":
+        model.cuda()
     model.eval()
 
     if not args.trt:
@@ -238,8 +237,7 @@ def main(exp, args):
         else:
             ckpt_file = args.ckpt
         logger.info("loading checkpoint")
-        loc = "cuda:{}".format(rank)
-        ckpt = torch.load(ckpt_file, map_location=loc)
+        ckpt = torch.load(ckpt_file, map_location="cpu")
         # load the model state dict
         model.load_state_dict(ckpt["model"])
         logger.info("loaded checkpoint done.")
@@ -262,7 +260,7 @@ def main(exp, args):
         trt_file = None
         decoder = None
 
-    predictor = Predictor(model, exp, COCO_CLASSES, trt_file, decoder)
+    predictor = Predictor(model, exp, COCO_CLASSES, trt_file, decoder, args.device)
     current_time = time.localtime()
     if args.demo == 'image':
         image_demo(predictor, vis_folder, args.path, current_time, args.save_result)

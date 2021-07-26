@@ -22,7 +22,7 @@
     } while (0)
 
 #define DEVICE 0  // GPU id
-#define NMS_THRESH 0.65
+#define NMS_THRESH 0.45
 #define BBOX_CONF_THRESH 0.3
 
 using namespace nvinfer1;
@@ -60,7 +60,7 @@ struct GridAndStride
     int stride;
 };
 
-static int generate_grids_and_stride(const int target_size, std::vector<int>& strides, std::vector<GridAndStride>& grid_strides)
+static void generate_grids_and_stride(const int target_size, std::vector<int>& strides, std::vector<GridAndStride>& grid_strides)
 {
     for (auto stride : strides)
     {
