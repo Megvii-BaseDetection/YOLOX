@@ -59,20 +59,6 @@ Step3. Install [pycocotools](https://github.com/cocodataset/cocoapi).
 pip3 install cython; pip3 install 'git+https://github.com/cocodataset/cocoapi.git#subdirectory=PythonAPI'
 ```
 
-Step4. Install [OpenCV](https://github.com/opencv/opencv-python)
-
-- There are many ways to install `opencv-python`, if you are using pip then use below command
-
-  ````shell
-  pip3 install opencv-python
-  ````
-
-- If you are on linux (Ubuntu) you can use `apt` to install it
-
-  ````shell
-  sudo apt-get install -y python3-opencv
-  ````
-
 </details>
 
 <details>
