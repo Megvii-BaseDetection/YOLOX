@@ -23,7 +23,7 @@ from yolox.utils import (
     get_world_size,
     gpu_mem_usage,
     load_ckpt,
-    occumpy_mem,
+    occupy_mem,
     save_checkpoint,
     setup_logger,
     synchronize
@@ -154,8 +154,8 @@ class Trainer:
         self.lr_scheduler = self.exp.get_lr_scheduler(
             self.exp.basic_lr_per_img * self.args.batch_size, self.max_iter
         )
-        if self.args.occumpy:
-            occumpy_mem(self.local_rank)
+        if self.args.occupy:
+            occupy_mem(self.local_rank)
 
         if self.is_distributed:
             model = apex.parallel.DistributedDataParallel(model)
