@@ -17,7 +17,6 @@ from yolox.utils import (
     MeterBuffer,
     ModelEMA,
     all_reduce_norm,
-    get_local_rank,
     get_model_info,
     get_rank,
     get_world_size,
@@ -43,7 +42,7 @@ class Trainer:
         self.amp_training = args.fp16
         self.is_distributed = get_world_size() > 1
         self.rank = get_rank()
-        self.local_rank = get_local_rank()
+        self.local_rank = args.local_rank
         self.device = "cuda:{}".format(self.local_rank)
         self.use_model_ema = exp.ema
 

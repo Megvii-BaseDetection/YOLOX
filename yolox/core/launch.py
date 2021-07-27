@@ -6,6 +6,10 @@
 # Copyright (c) Megvii, Inc. and its affiliates.
 
 from loguru import logger
+import subprocess
+import sys
+import os
+import time
 
 import torch
 import torch.distributed as dist
@@ -47,25 +51,92 @@ def launch(
     """
     world_size = num_machines * num_gpus_per_machine
     if world_size > 1:
-        # https://github.com/pytorch/pytorch/pull/14391
-        # TODO prctl in spawned processes
-
-        if dist_url == "auto":
-            assert num_machines == 1, "dist_url=auto cannot work with distributed training."
-            port = _find_free_port()
-            dist_url = f"tcp://127.0.0.1:{port}"
-
-        mp.spawn(
-            _distributed_worker,
-            nprocs=num_gpus_per_machine,
-            args=(
-                main_func, world_size, num_gpus_per_machine,
-                machine_rank, backend, dist_url, args
-            ),
-            daemon=False,
+        if int(os.environ.get("WORLD_SIZE", "1")) > 1:
+            dist_url = "{}:{}".format(
+                                os.environ.get("MASTER_ADDR", None), 
+                                os.environ.get("MASTER_PORT", "None"),
+                            )
+            local_rank = int(os.environ.get("LOCAL_RANK", "0")) 
+            _distributed_worker(
+                local_rank, main_func, world_size, num_gpus_per_machine,
+                machine_rank, backend, dist_url, args)
+            exit()
+        launch_by_subprocess(
+            sys.argv, 
+            world_size,
+            num_machines, 
+            machine_rank, 
+            num_gpus_per_machine, 
+            dist_url,
+            args,
         )
     else:
         main_func(*args)
+
+
+def launch_by_subprocess(
+    raw_argv, world_size, num_machines, machine_rank, num_gpus_per_machine, dist_url, args,
+):
+    assert world_size > 1, "subprocess mode doesn't support single GPU, use spawn mode instead"
+    machine_rank = int(os.getenv("RLAUNCH_REPLICA", machine_rank))
+
+    if dist_url is None:
+        master_ip = subprocess.check_output(["hostname", "--fqdn"]).decode("utf-8")
+        master_ip = str(master_ip).strip()
+        dist_url = "tcp://{}".format(master_ip)
+
+        # ------------------------hack for multi-machine training -------------------- #
+        if num_machines > 1:
+            ip_add_file = "./" + args[1].experiment_name + "ip_add.txt"
+            if machine_rank == 0:
+                with open(ip_add_file, "w") as ip_add:
+                    ip_add.write(dist_url)
+            else:
+                while not os.path.exists(ip_add_file):
+                    time.sleep(0.5)
+
+                with open(ip_add_file, "r") as ip_add:
+                    dist_url = ip_add.readline()
+        else:
+            dist_url = "tcp://127.0.0.1"
+
+    port = _find_free_port()
+    # set PyTorch distributed related environmental variables
+    current_env = os.environ.copy()
+    current_env["MASTER_ADDR"] = dist_url
+    current_env["MASTER_PORT"] = str(port)
+    current_env["WORLD_SIZE"] = str(world_size)
+    assert num_gpus_per_machine <= torch.cuda.device_count()
+
+    if 'OMP_NUM_THREADS' not in os.environ and num_gpus_per_machine > 1:
+        current_env["OMP_NUM_THREADS"] = str(1)
+        logger.info(
+            "*****************************************\n"
+            "Setting OMP_NUM_THREADS environment variable for each process "
+            "to be {} in default, to avoid your system being overloaded, "
+            "please further tune the variable for optimal performance in "
+            "your application as needed. \n"
+            "*****************************************".format(current_env["OMP_NUM_THREADS"])
+        )
+
+    processes = []
+    for local_rank in range(0, num_gpus_per_machine):
+        # each process's rank
+        dist_rank = machine_rank * num_gpus_per_machine + local_rank
+        current_env["RANK"] = str(dist_rank)
+        current_env["LOCAL_RANK"] = str(local_rank)
+
+        # spawn the processes
+        cmd = ["python3", *raw_argv]
+
+        process = subprocess.Popen(cmd, env=current_env)
+        processes.append(process)
+
+    for process in processes:
+        process.wait()
+        if process.returncode != 0:
+            raise subprocess.CalledProcessError(returncode=process.returncode,
+                                                cmd=cmd)
 
 
 def _distributed_worker(
@@ -92,13 +163,15 @@ def _distributed_worker(
     assert num_gpus_per_machine <= torch.cuda.device_count()
     torch.cuda.set_device(local_rank)
 
+    args[1].local_rank = local_rank
+
     # Setup the local process group (which contains ranks within the same machine)
-    assert comm._LOCAL_PROCESS_GROUP is None
-    num_machines = world_size // num_gpus_per_machine
-    for i in range(num_machines):
-        ranks_on_i = list(range(i * num_gpus_per_machine, (i + 1) * num_gpus_per_machine))
-        pg = dist.new_group(ranks_on_i)
-        if i == machine_rank:
-            comm._LOCAL_PROCESS_GROUP = pg
+    #assert comm._LOCAL_PROCESS_GROUP is None
+    #num_machines = world_size // num_gpus_per_machine
+    #for i in range(num_machines):
+        #ranks_on_i = list(range(i * num_gpus_per_machine, (i + 1) * num_gpus_per_machine))
+        #pg = dist.new_group(ranks_on_i)
+        #if i == machine_rank:
+            #comm._LOCAL_PROCESS_GROUP = pg
 
     main_func(*args)

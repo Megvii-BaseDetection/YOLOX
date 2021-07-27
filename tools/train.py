@@ -109,8 +109,7 @@ if __name__ == "__main__":
     num_gpu = torch.cuda.device_count() if args.devices is None else args.devices
     assert num_gpu <= torch.cuda.device_count()
 
-    dist_url = "auto" if args.dist_url is None else args.dist_url
     launch(
-        main, num_gpu, args.num_machine, backend=args.dist_backend,
-        dist_url=dist_url, args=(exp, args)
+        main, num_gpu, args.num_machine, args.machine_rank, backend=args.dist_backend,
+        dist_url=args.dist_url, args=(exp, args)
     )
