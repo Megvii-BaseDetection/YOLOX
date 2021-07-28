@@ -8,8 +8,13 @@ import torch
 import torchvision
 
 __all__ = [
-    "filter_box", "postprocess", "bboxes_iou", "matrix_iou",
-    "adjust_box_anns", "xyxy2xywh", "xyxy2cxcywh",
+    "filter_box",
+    "postprocess",
+    "bboxes_iou",
+    "matrix_iou",
+    "adjust_box_anns",
+    "xyxy2xywh",
+    "xyxy2cxcywh",
 ]
 
 
@@ -39,7 +44,9 @@ def postprocess(prediction, num_classes, conf_thre=0.7, nms_thre=0.45):
         if not image_pred.size(0):
             continue
         # Get score and class with highest confidence
-        class_conf, class_pred = torch.max(image_pred[:, 5: 5 + num_classes], 1, keepdim=True)
+        class_conf, class_pred = torch.max(
+            image_pred[:, 5 : 5 + num_classes], 1, keepdim=True
+        )
 
         conf_mask = (image_pred[:, 4] * class_conf.squeeze() >= conf_thre).squeeze()
         # _, conf_mask = torch.topk((image_pred[:, 4] * class_conf.squeeze()), 1000)

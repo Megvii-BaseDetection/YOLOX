@@ -2,10 +2,11 @@
 # -*- coding:utf-8 -*-
 # Copyright (c) 2014-2021 Megvii Inc. All rights reserved.
 
+from loguru import logger
+
 import inspect
 import os
 import sys
-from loguru import logger
 
 
 def get_caller_name(depth=0):
@@ -28,6 +29,7 @@ class StreamToLoguru:
     """
     stream object that redirects writes to a logger instance.
     """
+
     def __init__(self, level="INFO", caller_names=("apex", "pycocotools")):
         """
         Args:

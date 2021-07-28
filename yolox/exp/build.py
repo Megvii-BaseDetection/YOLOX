@@ -19,6 +19,7 @@ def get_exp_by_file(exp_file):
 
 def get_exp_by_name(exp_name):
     import yolox
+
     yolox_path = os.path.dirname(os.path.dirname(yolox.__file__))
     filedict = {
         "yolox-s": "yolox_s.py",
@@ -43,7 +44,9 @@ def get_exp(exp_file, exp_name):
         exp_file (str): file path of experiment.
         exp_name (str): name of experiment. "yolo-s",
     """
-    assert exp_file is not None or exp_name is not None, "plz provide exp file or exp name."
+    assert (
+        exp_file is not None or exp_name is not None
+    ), "plz provide exp file or exp name."
     if exp_file is not None:
         return get_exp_by_file(exp_file)
     else:

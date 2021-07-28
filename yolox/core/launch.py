@@ -6,16 +6,17 @@
 # Copyright (c) Megvii, Inc. and its affiliates.
 
 from loguru import logger
-import subprocess
-import sys
-import os
-import time
 
 import torch
 import torch.distributed as dist
 import torch.multiprocessing as mp
 
 import yolox.utils.dist as comm
+
+import os
+import subprocess
+import sys
+import time
 
 __all__ = ["launch"]
 
@@ -36,8 +37,13 @@ def _find_free_port():
 
 
 def launch(
-    main_func, num_gpus_per_machine, num_machines=1, machine_rank=0,
-    backend="nccl", dist_url=None, args=()
+    main_func,
+    num_gpus_per_machine,
+    num_machines=1,
+    machine_rank=0,
+    backend="nccl",
+    dist_url=None,
+    args=(),
 ):
     """
     Args:
@@ -53,20 +59,27 @@ def launch(
     if world_size > 1:
         if int(os.environ.get("WORLD_SIZE", "1")) > 1:
             dist_url = "{}:{}".format(
-                                os.environ.get("MASTER_ADDR", None), 
-                                os.environ.get("MASTER_PORT", "None"),
-                            )
-            local_rank = int(os.environ.get("LOCAL_RANK", "0")) 
+                os.environ.get("MASTER_ADDR", None),
+                os.environ.get("MASTER_PORT", "None"),
+            )
+            local_rank = int(os.environ.get("LOCAL_RANK", "0"))
             _distributed_worker(
-                local_rank, main_func, world_size, num_gpus_per_machine,
-                machine_rank, backend, dist_url, args)
+                local_rank,
+                main_func,
+                world_size,
+                num_gpus_per_machine,
+                machine_rank,
+                backend,
+                dist_url,
+                args,
+            )
             exit()
         launch_by_subprocess(
-            sys.argv, 
+            sys.argv,
             world_size,
-            num_machines, 
-            machine_rank, 
-            num_gpus_per_machine, 
+            num_machines,
+            machine_rank,
+            num_gpus_per_machine,
             dist_url,
             args,
         )
@@ -75,9 +88,17 @@ def launch(
 
 
 def launch_by_subprocess(
-    raw_argv, world_size, num_machines, machine_rank, num_gpus_per_machine, dist_url, args,
+    raw_argv,
+    world_size,
+    num_machines,
+    machine_rank,
+    num_gpus_per_machine,
+    dist_url,
+    args,
 ):
-    assert world_size > 1, "subprocess mode doesn't support single GPU, use spawn mode instead"
+    assert (
+        world_size > 1
+    ), "subprocess mode doesn't support single GPU, use spawn mode instead"
     machine_rank = int(os.getenv("RLAUNCH_REPLICA", machine_rank))
 
     if dist_url is None:
@@ -108,7 +129,7 @@ def launch_by_subprocess(
     current_env["WORLD_SIZE"] = str(world_size)
     assert num_gpus_per_machine <= torch.cuda.device_count()
 
-    if 'OMP_NUM_THREADS' not in os.environ and num_gpus_per_machine > 1:
+    if "OMP_NUM_THREADS" not in os.environ and num_gpus_per_machine > 1:
         current_env["OMP_NUM_THREADS"] = str(1)
         logger.info(
             "\n*****************************************\n"
@@ -116,7 +137,9 @@ def launch_by_subprocess(
             "to be {} in default, to avoid your system being overloaded, "
             "please further tune the variable for optimal performance in "
             "your application as needed. \n"
-            "*****************************************".format(current_env["OMP_NUM_THREADS"])
+            "*****************************************".format(
+                current_env["OMP_NUM_THREADS"]
+            )
         )
 
     processes = []
@@ -135,15 +158,22 @@ def launch_by_subprocess(
     for process in processes:
         process.wait()
         if process.returncode != 0:
-            raise subprocess.CalledProcessError(returncode=process.returncode,
-                                                cmd=cmd)
+            raise subprocess.CalledProcessError(returncode=process.returncode, cmd=cmd)
 
 
 def _distributed_worker(
-    local_rank, main_func, world_size, num_gpus_per_machine,
-    machine_rank, backend, dist_url, args
+    local_rank,
+    main_func,
+    world_size,
+    num_gpus_per_machine,
+    machine_rank,
+    backend,
+    dist_url,
+    args,
 ):
-    assert torch.cuda.is_available(), "cuda is not available. Please check your installation."
+    assert (
+        torch.cuda.is_available()
+    ), "cuda is not available. Please check your installation."
     global_rank = machine_rank * num_gpus_per_machine + local_rank
     logger.info("Rank {} initialization finished.".format(global_rank))
     try:
@@ -166,12 +196,12 @@ def _distributed_worker(
     args[1].local_rank = local_rank
 
     # Setup the local process group (which contains ranks within the same machine)
-    #assert comm._LOCAL_PROCESS_GROUP is None
-    #num_machines = world_size // num_gpus_per_machine
-    #for i in range(num_machines):
-        #ranks_on_i = list(range(i * num_gpus_per_machine, (i + 1) * num_gpus_per_machine))
-        #pg = dist.new_group(ranks_on_i)
-        #if i == machine_rank:
-            #comm._LOCAL_PROCESS_GROUP = pg
+    # assert comm._LOCAL_PROCESS_GROUP is None
+    # num_machines = world_size // num_gpus_per_machine
+    # for i in range(num_machines):
+    # ranks_on_i = list(range(i * num_gpus_per_machine, (i + 1) * num_gpus_per_machine))
+    # pg = dist.new_group(ranks_on_i)
+    # if i == machine_rank:
+    # comm._LOCAL_PROCESS_GROUP = pg
 
     main_func(*args)

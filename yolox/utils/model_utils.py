@@ -2,14 +2,17 @@
 # -*- coding:utf-8 -*-
 # Copyright (c) 2014-2021 Megvii Inc. All rights reserved.
 
-from copy import deepcopy
-
 import torch
 import torch.nn as nn
 from thop import profile
 
+from copy import deepcopy
+
 __all__ = [
-    "fuse_conv_and_bn", "fuse_model", "get_model_info", "replace_module",
+    "fuse_conv_and_bn",
+    "fuse_model",
+    "get_model_info",
+    "replace_module",
 ]
 
 
@@ -84,6 +87,7 @@ def replace_module(module, replaced_module_type, new_module_type, replace_func=N
     Returns:
         model (nn.Module): module that already been replaced.
     """
+
     def default_replace_func(replaced_module_type, new_module_type):
         return new_module_type()
 

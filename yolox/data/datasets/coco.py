@@ -2,11 +2,11 @@
 # -*- coding:utf-8 -*-
 # Copyright (c) Megvii, Inc. and its affiliates.
 
-import os
-
 import cv2
 import numpy as np
 from pycocotools.coco import COCO
+
+import os
 
 from ..dataloading import get_yolox_datadir
 from .datasets_wrapper import Dataset

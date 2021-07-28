@@ -9,15 +9,15 @@ The data augmentation procedures were interpreted from @weiliu89's SSD paper
 http://arxiv.org/abs/1512.02325
 """
 
-import math
-import random
-
 import cv2
 import numpy as np
 
 import torch
 
 from yolox.utils import xyxy2cxcywh
+
+import math
+import random
 
 
 def augment_hsv(img, hgain=0.015, sgain=0.7, vgain=0.4):
@@ -52,7 +52,14 @@ def box_candidates(box1, box2, wh_thr=2, ar_thr=20, area_thr=0.2):
 
 
 def random_perspective(
-    img, targets=(), degrees=10, translate=0.1, scale=0.1, shear=10, perspective=0.0, border=(0, 0),
+    img,
+    targets=(),
+    degrees=10,
+    translate=0.1,
+    scale=0.1,
+    shear=10,
+    perspective=0.0,
+    border=(0, 0),
 ):
     # targets = [cls, xyxy]
     height = img.shape[0] + border[0] * 2  # shape(h,w,c)
@@ -78,8 +85,12 @@ def random_perspective(
 
     # Translation
     T = np.eye(3)
-    T[0, 2] = (random.uniform(0.5 - translate, 0.5 + translate) * width)  # x translation (pixels)
-    T[1, 2] = (random.uniform(0.5 - translate, 0.5 + translate) * height)  # y translation (pixels)
+    T[0, 2] = (
+        random.uniform(0.5 - translate, 0.5 + translate) * width
+    )  # x translation (pixels)
+    T[1, 2] = (
+        random.uniform(0.5 - translate, 0.5 + translate) * height
+    )  # y translation (pixels)
 
     # Combined rotation matrix
     M = T @ S @ R @ C  # order of operations (right to left) is IMPORTANT
@@ -92,16 +103,22 @@ def random_perspective(
 
     if (border[0] != 0) or (border[1] != 0) or (M != np.eye(3)).any():  # image changed
         if perspective:
-            img = cv2.warpPerspective(img, M, dsize=(width, height), borderValue=(114, 114, 114))
+            img = cv2.warpPerspective(
+                img, M, dsize=(width, height), borderValue=(114, 114, 114)
+            )
         else:  # affine
-            img = cv2.warpAffine(img, M[:2], dsize=(width, height), borderValue=(114, 114, 114))
+            img = cv2.warpAffine(
+                img, M[:2], dsize=(width, height), borderValue=(114, 114, 114)
+            )
 
     # Transform label coordinates
     n = len(targets)
     if n:
         # warp points
         xy = np.ones((n * 4, 3))
-        xy[:, :2] = targets[:, [0, 1, 2, 3, 0, 3, 2, 1]].reshape(n * 4, 2)  # x1y1, x2y2, x1y2, x2y1
+        xy[:, :2] = targets[:, [0, 1, 2, 3, 0, 3, 2, 1]].reshape(
+            n * 4, 2
+        )  # x1y1, x2y2, x1y2, x2y1
         xy = xy @ M.T  # transform
         if perspective:
             xy = (xy[:, :2] / xy[:, 2:3]).reshape(n, 8)  # rescale
@@ -172,7 +189,9 @@ def preproc(image, input_size, mean, std, swap=(2, 0, 1)):
     img = np.array(image)
     r = min(input_size[0] / img.shape[0], input_size[1] / img.shape[1])
     resized_img = cv2.resize(
-        img, (int(img.shape[1] * r), int(img.shape[0] * r)), interpolation=cv2.INTER_LINEAR
+        img,
+        (int(img.shape[1] * r), int(img.shape[0] * r)),
+        interpolation=cv2.INTER_LINEAR,
     ).astype(np.float32)
     padded_img[: int(img.shape[0] * r), : int(img.shape[1] * r)] = resized_img
 

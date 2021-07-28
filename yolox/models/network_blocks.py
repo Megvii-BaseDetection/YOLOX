@@ -29,7 +29,9 @@ def get_activation(name="silu", inplace=True):
 class BaseConv(nn.Module):
     """A Conv2d -> Batchnorm -> silu/leaky relu block"""
 
-    def __init__(self, in_channels, out_channels, ksize, stride, groups=1, bias=False, act="silu"):
+    def __init__(
+        self, in_channels, out_channels, ksize, stride, groups=1, bias=False, act="silu"
+    ):
         super().__init__()
         # same padding
         pad = (ksize - 1) // 2
@@ -54,15 +56,19 @@ class BaseConv(nn.Module):
 
 class DWConv(nn.Module):
     """Depthwise Conv + Conv"""
+
     def __init__(self, in_channels, out_channels, ksize, stride=1, act="silu"):
         super().__init__()
         self.dconv = BaseConv(
-            in_channels, in_channels, ksize=ksize,
-            stride=stride, groups=in_channels, act=act
+            in_channels,
+            in_channels,
+            ksize=ksize,
+            stride=stride,
+            groups=in_channels,
+            act=act,
         )
         self.pconv = BaseConv(
-            in_channels, out_channels, ksize=1,
-            stride=1, groups=1, act=act
+            in_channels, out_channels, ksize=1, stride=1, groups=1, act=act
         )
 
     def forward(self, x):
@@ -73,8 +79,13 @@ class DWConv(nn.Module):
 class Bottleneck(nn.Module):
     # Standard bottleneck
     def __init__(
-        self, in_channels, out_channels, shortcut=True,
-        expansion=0.5, depthwise=False, act="silu"
+        self,
+        in_channels,
+        out_channels,
+        shortcut=True,
+        expansion=0.5,
+        depthwise=False,
+        act="silu",
     ):
         super().__init__()
         hidden_channels = int(out_channels * expansion)
@@ -92,11 +103,16 @@ class Bottleneck(nn.Module):
 
 class ResLayer(nn.Module):
     "Residual layer with `in_channels` inputs."
+
     def __init__(self, in_channels: int):
         super().__init__()
         mid_channels = in_channels // 2
-        self.layer1 = BaseConv(in_channels, mid_channels, ksize=1, stride=1, act="lrelu")
-        self.layer2 = BaseConv(mid_channels, in_channels, ksize=3, stride=1, act="lrelu")
+        self.layer1 = BaseConv(
+            in_channels, mid_channels, ksize=1, stride=1, act="lrelu"
+        )
+        self.layer2 = BaseConv(
+            mid_channels, in_channels, ksize=3, stride=1, act="lrelu"
+        )
 
     def forward(self, x):
         out = self.layer2(self.layer1(x))
@@ -105,12 +121,18 @@ class ResLayer(nn.Module):
 
 class SPPBottleneck(nn.Module):
     """Spatial pyramid pooling layer used in YOLOv3-SPP"""
-    def __init__(self, in_channels, out_channels, kernel_sizes=(5, 9, 13), activation="silu"):
+
+    def __init__(
+        self, in_channels, out_channels, kernel_sizes=(5, 9, 13), activation="silu"
+    ):
         super().__init__()
         hidden_channels = in_channels // 2
         self.conv1 = BaseConv(in_channels, hidden_channels, 1, stride=1, act=activation)
         self.m = nn.ModuleList(
-            [nn.MaxPool2d(kernel_size=ks, stride=1, padding=ks // 2) for ks in kernel_sizes]
+            [
+                nn.MaxPool2d(kernel_size=ks, stride=1, padding=ks // 2)
+                for ks in kernel_sizes
+            ]
         )
         conv2_channels = hidden_channels * (len(kernel_sizes) + 1)
         self.conv2 = BaseConv(conv2_channels, out_channels, 1, stride=1, act=activation)
@@ -126,8 +148,14 @@ class CSPLayer(nn.Module):
     """C3 in yolov5, CSP Bottleneck with 3 convolutions"""
 
     def __init__(
-        self, in_channels, out_channels, n=1,
-        shortcut=True, expansion=0.5, depthwise=False, act="silu"
+        self,
+        in_channels,
+        out_channels,
+        n=1,
+        shortcut=True,
+        expansion=0.5,
+        depthwise=False,
+        act="silu",
     ):
         """
         Args:
@@ -142,7 +170,9 @@ class CSPLayer(nn.Module):
         self.conv2 = BaseConv(in_channels, hidden_channels, 1, stride=1, act=act)
         self.conv3 = BaseConv(2 * hidden_channels, out_channels, 1, stride=1, act=act)
         module_list = [
-            Bottleneck(hidden_channels, hidden_channels, shortcut, 1.0, depthwise, act=act)
+            Bottleneck(
+                hidden_channels, hidden_channels, shortcut, 1.0, depthwise, act=act
+            )
             for _ in range(n)
         ]
         self.m = nn.Sequential(*module_list)
@@ -169,6 +199,12 @@ class Focus(nn.Module):
         patch_bot_left = x[..., 1::2, ::2]
         patch_bot_right = x[..., 1::2, 1::2]
         x = torch.cat(
-            (patch_top_left, patch_bot_left, patch_top_right, patch_bot_right,), dim=1,
+            (
+                patch_top_left,
+                patch_bot_left,
+                patch_top_right,
+                patch_bot_right,
+            ),
+            dim=1,
         )
         return self.conv(x)
