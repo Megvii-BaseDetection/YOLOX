@@ -111,7 +111,7 @@ def launch_by_subprocess(
     if 'OMP_NUM_THREADS' not in os.environ and num_gpus_per_machine > 1:
         current_env["OMP_NUM_THREADS"] = str(1)
         logger.info(
-            "*****************************************\n"
+            "\n*****************************************\n"
             "Setting OMP_NUM_THREADS environment variable for each process "
             "to be {} in default, to avoid your system being overloaded, "
             "please further tune the variable for optimal performance in "
