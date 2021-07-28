@@ -18,7 +18,6 @@ import numpy as np
 import torch
 
 from yolox.utils import xyxy2cxcywh
-from memory_profiler import profile
 
 
 def augment_hsv(img, hgain=0.015, sgain=0.7, vgain=0.4):

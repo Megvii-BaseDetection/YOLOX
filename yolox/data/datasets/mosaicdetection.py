@@ -220,4 +220,4 @@ class MosaicDetection(Dataset):
             origin_img = origin_img.astype(np.float32)
             origin_img = 0.5 * origin_img + 0.5 * padded_cropped_img.astype(np.float32)
 
-        return origin_img.astype(np.uint8), origin_labels
+        return origin_img, origin_labels
