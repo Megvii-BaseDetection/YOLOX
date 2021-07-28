@@ -2,9 +2,6 @@
 # -*- coding:utf-8 -*-
 # Copyright (c) Megvii, Inc. and its affiliates.
 
-import argparse
-import os
-import shutil
 from loguru import logger
 
 import tensorrt as trt
@@ -12,6 +9,10 @@ import torch
 from torch2trt import torch2trt
 
 from yolox.exp import get_exp
+
+import argparse
+import os
+import shutil
 
 
 def make_parser():
@@ -61,11 +62,11 @@ def main():
         log_level=trt.Logger.INFO,
         max_workspace_size=(1 << 32),
     )
-    torch.save(model_trt.state_dict(), os.path.join(file_name, 'model_trt.pth'))
+    torch.save(model_trt.state_dict(), os.path.join(file_name, "model_trt.pth"))
     logger.info("Converted TensorRT model done.")
-    engine_file = os.path.join(file_name, 'model_trt.engine')
-    engine_file_demo = os.path.join('demo', 'TensorRT', 'cpp', 'model_trt.engine')
-    with open(engine_file, 'wb') as f:
+    engine_file = os.path.join(file_name, "model_trt.engine")
+    engine_file_demo = os.path.join("demo", "TensorRT", "cpp", "model_trt.engine")
+    with open(engine_file, "wb") as f:
         f.write(model_trt.engine.serialize())
 
     shutil.copyfile(engine_file, engine_file_demo)

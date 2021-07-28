@@ -2,12 +2,12 @@
 # -*- coding:utf-8 -*-
 # Copyright (c) Megvii, Inc. and its affiliates.
 
-import os
-import random
-
 import torch
 from torch.utils.data.dataloader import DataLoader as torchDataLoader
 from torch.utils.data.dataloader import default_collate
+
+import os
+import random
 
 from .samplers import YoloBatchSampler
 
@@ -20,6 +20,7 @@ def get_yolox_datadir():
     yolox_datadir = os.getenv("YOLOX_DATADIR", None)
     if yolox_datadir is None:
         import yolox
+
         yolox_path = os.path.dirname(os.path.dirname(yolox.__file__))
         yolox_datadir = os.path.join(yolox_path, "datasets")
     return yolox_datadir
@@ -120,7 +121,7 @@ class DataLoader(torchDataLoader):
         self.batch_sampler.mosaic = False
 
     def change_input_dim(self, multiple=32, random_range=(10, 19)):
-        """ This function will compute a new size and update it on the next mini_batch.
+        """This function will compute a new size and update it on the next mini_batch.
 
         Args:
             multiple (int or tuple, optional): values to multiply the randomly generated range by.

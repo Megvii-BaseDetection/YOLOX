@@ -2,12 +2,12 @@
 # -*- coding:utf-8 -*-
 # Copyright (c) 2014-2021 Megvii Inc. All rights reserved.
 
-import pickle
-from collections import OrderedDict
-
 import torch
 from torch import distributed as dist
 from torch import nn
+
+import pickle
+from collections import OrderedDict
 
 from .dist import _get_global_gloo_group, get_world_size
 
@@ -21,7 +21,11 @@ ASYNC_NORM = (
 )
 
 __all__ = [
-    "get_async_norm_states", "pyobj2tensor", "tensor2pyobj", "all_reduce", "all_reduce_norm"
+    "get_async_norm_states",
+    "pyobj2tensor",
+    "tensor2pyobj",
+    "all_reduce",
+    "all_reduce_norm",
 ]
 
 
@@ -84,9 +88,8 @@ def all_reduce(py_dict, op="sum", group=None):
         flatten_tensor /= world_size
 
     split_tensors = [
-        x.reshape(shape) for x, shape in zip(
-            torch.split(flatten_tensor, tensor_numels), tensor_shapes
-        )
+        x.reshape(shape)
+        for x, shape in zip(torch.split(flatten_tensor, tensor_numels), tensor_shapes)
     ]
     return OrderedDict({k: v for k, v in zip(py_key, split_tensors)})
 
