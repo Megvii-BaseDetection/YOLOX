@@ -114,6 +114,8 @@ class MeterBuffer(defaultdict):
             values = {}
         values.update(kwargs)
         for k, v in values.items():
+            if isinstance(v, torch.Tensor):
+                v = v.detach()
             self[k].update(v)
 
     def clear_meters(self):

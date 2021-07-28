@@ -69,9 +69,6 @@ class COCODataset(Dataset):
             x2 = np.min((width - 1, x1 + np.max((0, obj["bbox"][2] - 1))))
             y2 = np.min((height - 1, y1 + np.max((0, obj["bbox"][3] - 1))))
             if obj["area"] > 0 and x2 >= x1 and y2 >= y1:
-                #v_obj = {}
-                #v_obj["clean_bbox"] = [x1, y1, x2, y2]
-                #v_obj["category_id"] = obj["category_id"]
                 obj["clean_bbox"] = [x1, y1, x2, y2]
                 objs.append(obj)
 
@@ -84,9 +81,13 @@ class COCODataset(Dataset):
             res[ix, 0:4] = obj["clean_bbox"]
             res[ix, 4] = cls
 
-        img_info = np.array([height, width])
+        img_info = (height, width)
 
-        return (res, img_info)
+        file_name = im_ann["file_name"] if "file_name" in im_ann else "{:012}".format(id_) + ".jpg"
+
+        del im_ann, annotations
+
+        return (res, img_info, file_name)
 
     def load_anno(self, index):
         return self.annotations[index][0]
@@ -94,16 +95,14 @@ class COCODataset(Dataset):
     def pull_item(self, index):
         id_ = self.ids[index]
 
+        res, img_info, file_name = self.annotations[index]
         # load image and preprocess
         img_file = os.path.join(
-            self.data_dir, self.name, "{:012}".format(id_) + ".jpg"
+            self.data_dir, self.name, file_name
         )
 
         img = cv2.imread(img_file)
         assert img is not None
-
-        # load anno
-        res, img_info = self.annotations[index]
 
         return img, res, img_info, np.array([id_])
 
@@ -132,5 +131,5 @@ class COCODataset(Dataset):
         img, target, img_info, img_id = self.pull_item(index)
 
         if self.preproc is not None:
-            img, target = self.preproc(img, res, self.input_dim)
+            img, target = self.preproc(img, target, self.input_dim)
         return img, target, img_info, img_id

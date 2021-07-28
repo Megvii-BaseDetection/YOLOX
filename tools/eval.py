@@ -95,7 +95,7 @@ def make_parser():
 
 
 @logger.catch
-def main(exp, num_gpu, args):
+def main(exp, args, num_gpu):
     if not args.experiment_name:
         args.experiment_name = exp.exp_name
 
@@ -113,8 +113,8 @@ def main(exp, num_gpu, args):
     configure_nccl()
     cudnn.benchmark = True
 
-    # rank = args.local_rank
-    rank = get_local_rank()
+    rank = args.local_rank
+    #rank = get_local_rank()
 
     if rank == 0:
         if os.path.exists("./" + args.experiment_name + "ip_add.txt"):
@@ -192,8 +192,7 @@ if __name__ == "__main__":
     num_gpu = torch.cuda.device_count() if args.devices is None else args.devices
     assert num_gpu <= torch.cuda.device_count()
 
-    dist_url = "auto" if args.dist_url is None else args.dist_url
     launch(
-        main, num_gpu, args.num_machine, backend=args.dist_backend,
-        dist_url=dist_url, args=(exp, num_gpu, args)
+        main, num_gpu, args.num_machine, args.machine_rank, backend=args.dist_backend,
+        dist_url=args.dist_url, args=(exp, args, num_gpu)
     )
