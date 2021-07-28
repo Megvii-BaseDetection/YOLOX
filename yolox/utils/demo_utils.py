@@ -80,7 +80,7 @@ def demo_postprocess(outputs, img_size, p6=False):
     wsizes = [img_size[1]//stride for stride in strides]
 
     for hsize, wsize, stride in zip(hsizes, wsizes, strides):
-        xv, yv = np.meshgrid(np.arange(hsize), np.arange(wsize))
+        xv, yv = np.meshgrid(np.arange(wsize), np.arange(hsize))
         grid = np.stack((xv, yv), 2).reshape(1, -1, 2)
         grids.append(grid)
         shape = grid.shape[:2]
