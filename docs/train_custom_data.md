@@ -1,4 +1,5 @@
-# Train Custom Data.
+# Train Custom Data
+
 This page explains how to train your own custom data with YOLOX.
 
 We take an example of fine-tuning YOLOX-S model on VOC dataset to give a more clear guide.
