@@ -1,17 +1,15 @@
-# Train Custom Data.
-This page explains how to train your own custom data with YOLOX.
+# 自定义数据训练.
+本也介绍如何使用YOLOX训练你自己的数据集.
 
-We take an example of fine-tuning YOLOX-S model on VOC dataset to give a more clear guide.
+我们使用VOC 数据集来微调 YOLOX-S 模型，以给出更加清晰的指导。
 
-## 0. Before you start
-Clone this repo and follow the [README](../README.md) to install YOLOX.
+## 0. 开始之前
+克隆这个仓库 [README](../README.md) 并安装YOLOX.
 
-## 1. Create your own dataset
-**Step 1** Prepare your own dataset with images and labels first. For labeling images, you can use tools like [Labelme](https://github.com/wkentaro/labelme) or [CVAT](https://github.com/openvinotoolkit/cvat).
+## 1. 创建自己的数据集
+**Step 1** 首先准备您自己的带有图像和标签的数据集。对于标记图像，您可以使用 [Labelme](https://github.com/wkentaro/labelme) 或者 [CVAT](https://github.com/openvinotoolkit/cvat).
 
-**Step 2** Then, you should write the corresponding Dataset Class which can load images and labels through `__getitem__` method. We currently support COCO format and VOC format.
-
-You can also write the Dataset by your own. Let's take the [VOC](../yolox/data/datasets/voc.py#L151) Dataset file for example:
+**Step 2** 然后，编写对应的Dataset Class，可以通过`__getitem__`方法加载图片和标签。我们目前支持 COCO 格式和 VOC 格式。您也可以自己编写数据集。我们以 [VOC]数据集文件为例(../yolox/data/datasets/voc.py#L151)
 ```python
     @Dataset.resize_getitem
     def __getitem__(self, index):
@@ -22,29 +20,28 @@ You can also write the Dataset by your own. Let's take the [VOC](../yolox/data/d
 
         return img, target, img_info, img_id
 ```
+ 还有一点值得注意的是你应该实现[pull_item](../yolox/data/datasets/voc.py#L129) 和 [load_anno](../yolox/data/datasets/voc.py#L121) 方法来实现 `Mosiac` and `MixUp` 增强.
 
-One more thing worth noting is that you should also implement [pull_item](../yolox/data/datasets/voc.py#L129) and [load_anno](../yolox/data/datasets/voc.py#L121) method for the `Mosiac` and `MixUp` augmentations.
+**Step 3** 准备评估器。我们目前有[COCO evaluator](../yolox/evaluators/coco_evaluator.py) 和 [VOC evaluator](../yolox/evaluators/voc_evaluator.py).
+如果您有自己的格式数据或评估指标，则可以编写自己的评估器
 
-**Step 3** Prepare the evaluator. We currently have [COCO evaluator](../yolox/evaluators/coco_evaluator.py) and [VOC evaluator](../yolox/evaluators/voc_evaluator.py).
-If you have your own format data or evaluation metric, you can write your own evaluator.
-
-**Step 4** Put your dataset under `$YOLOX_DIR/datasets`, for VOC:
+**Step 4** 将您的数据集放在$YOLOX_DIR/datasets, 对于 VOC：
 
 ```shell
 ln -s /path/to/your/VOCdevkit ./datasets/VOCdevkit
 ```
-* The path "VOCdevkit" will be used in your exp file described in next section. Specifically, in `get_data_loader` and `get_eval_loader` function.
+* 路径“VOCdevkit”将在下一节描述的 exp 文件中使用。具体来说，在get_data_loader和get_eval_loader功能
 
-## 2. Create your Exp file to control everything
-We put everything involved in a model to one single Exp file, including model setting, training setting, and testing setting.
+## 2. 创建你的Exp文件来控制一切
 
-**A complete Exp file is at [yolox_base.py](../yolox/exp/yolox_base.py).** It may be too long to write for every exp, but you can inherit the base Exp file and only overwrite the changed part.
+我们将模型中涉及的所有内容都放在一个单独的 Exp 文件中，包括模型设置、训练设置和测试设置。
+**完整的Exp文件位于[yolox_base.py](../yolox/exp/yolox_base.py).** 可能每个exp都写太长，但是你可以继承基础exp文件，只重写改变的部分.
 
-Let's take the [VOC Exp file](../exps/example/yolox_voc/yolox_voc_s.py) as an example.
+我们以[VOC Exp file](../exps/example/yolox_voc/yolox_voc_s.py) 为例：
 
-We select `YOLOX-S` model here, so we should change the network depth and width. VOC has only 20 classes, so we should also change the `num_classes`.
+我们选择`YOLOX-S` 模型, 所以我们应该改变网络深度和宽度. VOC 只有20个类 ，所以我们也要改变 `num_classes`，如果你的数据集只有10个类，你也应该改为相应的类别数。
 
-These configs are changed in the `init()` method:
+这些配置在`init()`方法中更改
 ```python
 class Exp(MyExp):
     def __init__(self):
@@ -55,38 +52,36 @@ class Exp(MyExp):
         self.exp_name = os.path.split(os.path.realpath(__file__))[1].split(".")[0]
 ```
 
-Besides, you should also overwrite the `dataset` and `evaluator`, prepared before training the model on your own data.
+此外，在使用您自己的数据训练模型之前，您还应该重写dataset和evaluator。
 
-Please see [get_data_loader](../exps/example/yolox_voc/yolox_voc_s.py#L20), [get_eval_loader](../exps/example/yolox_voc/yolox_voc_s.py#L82), and [get_evaluator](../exps/example/yolox_voc/yolox_voc_s.py#L113) for more details.
+有关更多详细信息，请参阅[get_data_loader](../exps/example/yolox_voc/yolox_voc_s.py#L20), [get_eval_loader](../exps/example/yolox_voc/yolox_voc_s.py#L82), and [get_evaluator](../exps/example/yolox_voc/yolox_voc_s.py#L113)
 
-## 3. Train
-Except special cases, we always recommend to use our [COCO pretrained weights](../README.md) for initializing the model.
+## 3.训练
+除特殊情况外，我们始终建议使用我们的[COCO pretrained weights](../README.md) 预训练权重来初始化模型。
 
-Once you get the Exp file and the COCO pretrained weights we provided, you can train your own model by the following below command:
+获得我们提供的 Exp 文件和 COCO 预训练权重后，您可以通过以下命令训练自己的模型：:
 ```bash
 python tools/train.py -f /path/to/your/Exp/file -d 8 -b 64 --fp16 -o -c /path/to/the/pretrained/weights
 ```
 
-or take the `YOLOX-S` VOC training for example:
+或者以`YOLOX-S` VOC 训练为例：
 ```bash
 python tools/train.py -f exps/example/yolox_voc/yolox_voc_s.py -d 8 -b 64 --fp16 -o -c /path/to/yolox_s.pth.tar
 ```
 
-(Don't worry for the different shape of detection head between the pretrained weights and your own model, we will handle it)
+(不用担心预训练权重和您自己的模型之间检测头的形状不同，我们会处理好的)
 
-## 4. Tips for Best Training Results
+## 4.获取最佳训练结果的技巧
 
-As **YOLOX** is an anchor-free detector with only several hyper-parameters, most of the time good results can be obtained with no changes to the models or training settings.
-We thus always recommend you first train with all default training settings.
+由于YOLOX是一个只有几个超参数的无锚检测器，大多数情况下可以在不改变模型或训练设置的情况下获得良好的结果。因此，我们始终建议您首先使用所有默认训练设置进行训练。
 
-If at first you don't get good results, there are steps you could consider to improve the model.
+如果一开始你没有得到好的结果，你可以考虑采取一些步骤来改进模型。
 
-**Model Selection** We provide `YOLOX-Nano`, `YOLOX-Tiny`, and `YOLOX-S` for mobile deployments, while `YOLOX-M`/`L`/`X` for cloud or high performance GPU deployments.
+**模型选择** 我们提供`YOLOX-Nano`, `YOLOX-Tiny`和`YOLOX-S`用于移动端部署，而`YOLOX-M`/`L`/`X`用于云或高性能GPU部署
 
-If your deployment meets any compatibility issues. we recommend `YOLOX-DarkNet53`.
+如果您的部署遇到兼容性问题。我们推荐使用`YOLOX-DarkNet53`.
 
-**Training Configs** If your training overfits early, then you can reduce max\_epochs or decrease the base\_lr and min\_lr\_ratio in your Exp file:
-
+**训练配置** 如果您的训练过早过拟合，那么您可以减少 max_epochs 或减少您的 Exp 文件中的 base_lr 和 min_lr_ratio：
 ```python
 # --------------  training config --------------------- #
     self.warmup_epochs = 5
@@ -102,9 +97,9 @@ If your deployment meets any compatibility issues. we recommend `YOLOX-DarkNet53
     self.momentum = 0.9
 ```
 
-**Aug Configs** You may also change the degree of the augmentations.
+**增强配置** 您还可以更改增强的程度。
 
-Generally, for small models, you should weak the aug, while for large models or small size of dataset, you may enchance the aug in your Exp file:
+一般来说，对于小模型，你应该弱化aug，而对于大模型或小数据集，你可以在exp文件中增强aug：
 ```python
 # --------------- transform config ----------------- #
     self.degrees = 10.0
@@ -116,4 +111,4 @@ Generally, for small models, you should weak the aug, while for large models or 
     self.enable_mixup = True
 ```
 
-**Design your own detector** You may refer to our [Arxiv](https://arxiv.org/abs/2107.08430) paper for details and suggestions for designing your own detector.
+**设计你自己的检测器** 你可以参考我们的 [Arxiv](https://arxiv.org/abs/2107.08430) 论文，希望我们的相关信息和建议可以帮助你设计您自己的检测器。
