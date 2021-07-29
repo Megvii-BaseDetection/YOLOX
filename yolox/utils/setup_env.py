@@ -2,10 +2,10 @@
 # -*- coding:utf-8 -*-
 # Copyright (c) 2014-2021 Megvii Inc. All rights reserved.
 
+import cv2
+
 import os
 import subprocess
-
-import cv2
 
 __all__ = ["configure_nccl", "configure_module"]
 
@@ -32,6 +32,7 @@ def configure_module(ulimit_value=8192):
     # system setting
     try:
         import resource
+
         rlimit = resource.getrlimit(resource.RLIMIT_NOFILE)
         resource.setrlimit(resource.RLIMIT_NOFILE, (ulimit_value, rlimit[1]))
     except Exception:

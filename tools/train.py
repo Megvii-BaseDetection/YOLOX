@@ -2,9 +2,6 @@
 # -*- coding:utf-8 -*-
 # Copyright (c) Megvii, Inc. and its affiliates.
 
-import argparse
-import random
-import warnings
 from loguru import logger
 
 import torch
@@ -13,6 +10,10 @@ import torch.backends.cudnn as cudnn
 from yolox.core import Trainer, launch
 from yolox.exp import get_exp
 from yolox.utils import configure_nccl
+
+import argparse
+import random
+import warnings
 
 
 def make_parser():
@@ -25,7 +26,10 @@ def make_parser():
         "--dist-backend", default="nccl", type=str, help="distributed backend"
     )
     parser.add_argument(
-        "--dist-url", default=None, type=str, help="url used to set up distributed training"
+        "--dist-url",
+        default=None,
+        type=str,
+        help="url used to set up distributed training",
     )
     parser.add_argument("-b", "--batch-size", type=int, default=64, help="batch size")
     parser.add_argument(
@@ -46,7 +50,11 @@ def make_parser():
     )
     parser.add_argument("-c", "--ckpt", default=None, type=str, help="checkpoint file")
     parser.add_argument(
-        "-e", "--start_epoch", default=None, type=int, help="resume training start epoch"
+        "-e",
+        "--start_epoch",
+        default=None,
+        type=int,
+        help="resume training start epoch",
     )
     parser.add_argument(
         "--num_machine", default=1, type=int, help="num of node for training"
@@ -109,8 +117,12 @@ if __name__ == "__main__":
     num_gpu = torch.cuda.device_count() if args.devices is None else args.devices
     assert num_gpu <= torch.cuda.device_count()
 
-    dist_url = "auto" if args.dist_url is None else args.dist_url
     launch(
-        main, num_gpu, args.num_machine, backend=args.dist_backend,
-        dist_url=dist_url, args=(exp, args)
+        main,
+        num_gpu,
+        args.num_machine,
+        args.machine_rank,
+        backend=args.dist_backend,
+        dist_url=args.dist_url,
+        args=(exp, args),
     )

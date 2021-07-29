@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 # -*- coding:utf-8 -*-
 # Copyright (c) 2014-2021 Megvii Inc. All rights reserved.
-import math
-from copy import deepcopy
-
 import torch
 import torch.nn as nn
+
+import math
+from copy import deepcopy
 
 
 def is_parallel(model):
@@ -39,6 +39,7 @@ class ModelEMA:
     This class is sensitive where it is initialized in the sequence of model init,
     GPU assignment and distributed training wrappers.
     """
+
     def __init__(self, model, decay=0.9999, updates=0):
         """
         Args:

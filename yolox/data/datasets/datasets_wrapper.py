@@ -2,11 +2,11 @@
 # -*- coding:utf-8 -*-
 # Copyright (c) Megvii, Inc. and its affiliates.
 
-import bisect
-from functools import wraps
-
 from torch.utils.data.dataset import ConcatDataset as torchConcatDataset
 from torch.utils.data.dataset import Dataset as torchDataset
+
+import bisect
+from functools import wraps
 
 
 class ConcatDataset(torchConcatDataset):
@@ -113,7 +113,7 @@ class Dataset(torchDataset):
             if not isinstance(index, int):
                 has_dim = True
                 self._input_dim = index[0]
-                self._mosaic = index[2]
+                self.enable_mosaic = index[2]
                 index = index[1]
             else:
                 has_dim = False
