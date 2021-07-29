@@ -81,7 +81,7 @@ class COCODataset(Dataset):
             res[ix, 0:4] = obj["clean_bbox"]
             res[ix, 4] = cls
 
-        img_info = (height, width)
+        img_info = (width, height)
 
         file_name = im_ann["file_name"] if "file_name" in im_ann else "{:012}".format(id_) + ".jpg"
 
