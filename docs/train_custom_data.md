@@ -35,6 +35,8 @@ ln -s /path/to/your/VOCdevkit ./datasets/VOCdevkit
 ```
 * The path "VOCdevkit" will be used in your exp file described in next section. Specifically, in `get_data_loader` and `get_eval_loader` function.
 
+✧✧✧ You can download the mini-coco128 dataset by the [link](https://drive.google.com/file/d/16N3u36ycNd70m23IM7vMuRQXejAJY9Fs/view?usp=sharing), and then unzip it to the `datasets` directory. The dataset has been converted from YOLO format to COCO format, and can be used directly as a dataset for testing whether the train environment can be runned successfully.
+
 ## 2. Create your Exp file to control everything
 We put everything involved in a model to one single Exp file, including model setting, training setting, and testing setting.
 
@@ -59,6 +61,8 @@ Besides, you should also overwrite the `dataset` and `evaluator`, prepared befor
 
 Please see [get_data_loader](../exps/example/yolox_voc/yolox_voc_s.py#L20), [get_eval_loader](../exps/example/yolox_voc/yolox_voc_s.py#L82), and [get_evaluator](../exps/example/yolox_voc/yolox_voc_s.py#L113) for more details.
 
+✧✧✧ You can also see the `exps/custom` directory for more details.
+
 ## 3. Train
 Except special cases, we always recommend to use our [COCO pretrained weights](../README.md) for initializing the model.
 
@@ -71,6 +75,12 @@ or take the `YOLOX-S` VOC training for example:
 ```bash
 python tools/train.py -f exps/example/yolox_voc/yolox_voc_s.py -d 8 -b 64 --fp16 -o -c /path/to/yolox_s.pth.tar
 ```
+
+✧✧✧ For specific example:
+- If you download the [mini-coco128](https://drive.google.com/file/d/16N3u36ycNd70m23IM7vMuRQXejAJY9Fs/view?usp=sharing) and unzip it to the `datasets`, you can direct run the following training code.
+    ```bash
+    python tools/train.py -f exps/custom/yolox_s.py -d 8 -b 64 --fp16 -o -c /path/to/yolox_s.pth.tar
+    ```
 
 (Don't worry for the different shape of detection head between the pretrained weights and your own model, we will handle it)
 
