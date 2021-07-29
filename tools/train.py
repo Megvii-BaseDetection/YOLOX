@@ -87,7 +87,6 @@ def make_parser():
 
 @logger.catch
 def main(exp, args):
-
     if exp.seed is not None:
         random.seed(exp.seed)
         torch.manual_seed(exp.seed)
