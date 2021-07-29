@@ -55,11 +55,6 @@ class Trainer:
         self.meter = MeterBuffer(window_size=exp.print_interval)
         self.file_name = os.path.join(exp.output_dir, args.experiment_name)
 
-        if self.rank == 0 and os.path.exists(
-            "./" + args.experiment_name + "ip_add.txt"
-        ):
-            os.remove("./" + args.experiment_name + "ip_add.txt")
-
         if self.rank == 0:
             os.makedirs(self.file_name, exist_ok=True)
 
