@@ -15,6 +15,14 @@ Check the 'model_trt.engine' file generated from Step 1, which will automaticall
 
 Please follow the [TensorRT Installation Guide](https://docs.nvidia.com/deeplearning/tensorrt/install-guide/index.html) to install TensorRT.
 
+And you should set the TensorRT path and Cuda path in CMakeLists.txt.
+
+If you train you custom datasets just one classes ,and you should change the number of your datasets.
+
+```c++
+const int num_class = 80;
+```
+
 Install opencv with ```sudo apt-get install libopencv-dev```.
 
 build the demo:
@@ -37,3 +45,4 @@ or
 ```shell
 ./yolox <path/to/your/engine_file> -i <path/to/image>
 ```
+
