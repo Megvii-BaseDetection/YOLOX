@@ -121,8 +121,6 @@ python tools/train.py -f exps/default/yolox-s.py -d 8 -b 64 --fp16 -o
                          exps/default/yolox-x.py
 ```
 
-
-
 </details>
 
 
