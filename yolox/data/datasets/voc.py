@@ -144,7 +144,7 @@ class VOCDetection(Dataset):
 
         target = self.load_anno(index)
 
-        img_info = (width, height)
+        img_info = (height, width)
 
         return img, target, img_info, index
 

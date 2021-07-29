@@ -41,7 +41,7 @@ def make_parser():
         "--local_rank", default=0, type=int, help="local rank for dist training"
     )
     parser.add_argument(
-        "--num_machine", default=1, type=int, help="num of node for training"
+        "--num_machines", default=1, type=int, help="num of node for training"
     )
     parser.add_argument(
         "--machine_rank", default=0, type=int, help="node rank for multi-node training"
@@ -104,9 +104,6 @@ def make_parser():
 
 @logger.catch
 def main(exp, args, num_gpu):
-    if not args.experiment_name:
-        args.experiment_name = exp.exp_name
-
     if args.seed is not None:
         random.seed(args.seed)
         torch.manual_seed(args.seed)
@@ -118,15 +115,10 @@ def main(exp, args, num_gpu):
     is_distributed = num_gpu > 1
 
     # set environment variables for distributed training
-    configure_nccl()
     cudnn.benchmark = True
 
     rank = args.local_rank
     # rank = get_local_rank()
-
-    if rank == 0:
-        if os.path.exists("./" + args.experiment_name + "ip_add.txt"):
-            os.remove("./" + args.experiment_name + "ip_add.txt")
 
     file_name = os.path.join(exp.output_dir, args.experiment_name)
 
@@ -198,13 +190,16 @@ if __name__ == "__main__":
     exp = get_exp(args.exp_file, args.name)
     exp.merge(args.opts)
 
+    if not args.experiment_name:
+        args.experiment_name = exp.exp_name
+
     num_gpu = torch.cuda.device_count() if args.devices is None else args.devices
     assert num_gpu <= torch.cuda.device_count()
 
     launch(
         main,
         num_gpu,
-        args.num_machine,
+        args.num_machines,
         args.machine_rank,
         backend=args.dist_backend,
         dist_url=args.dist_url,
