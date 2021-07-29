@@ -108,12 +108,11 @@ def launch_by_subprocess(
     num_machines = int(os.getenv("RLAUNCH_REPLICA_TOTAL", num_machines))
 
     if dist_url is None:
-        master_ip = subprocess.check_output(["hostname", "--fqdn"]).decode("utf-8")
-        master_ip = str(master_ip).strip()
-        dist_url = "tcp://{}".format(master_ip)
-
         # ------------------------hack for multi-machine training -------------------- #
         if num_machines > 1:
+            master_ip = subprocess.check_output(["hostname", "--fqdn"]).decode("utf-8")
+            master_ip = str(master_ip).strip()
+            dist_url = "tcp://{}".format(master_ip)
             ip_add_file = "./" + args[1].experiment_name + "_ip_add.txt"
             if machine_rank == 0:
                 port = _find_free_port()
