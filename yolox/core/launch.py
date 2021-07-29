@@ -12,6 +12,7 @@ import torch.distributed as dist
 import torch.multiprocessing as mp
 
 import yolox.utils.dist as comm
+from yolox.utils import configure_nccl
 
 import os
 import subprocess
@@ -55,6 +56,7 @@ def launch(
                        Can be set to auto to automatically select a free port on localhost
         args (tuple): arguments passed to main_func
     """
+    num_machines = int(os.getenv("RLAUNCH_REPLICA_TOTAL", num_machines))
     world_size = num_machines * num_gpus_per_machine
     if world_size > 1:
         if int(os.environ.get("WORLD_SIZE", "1")) > 1:
@@ -63,11 +65,14 @@ def launch(
                 os.environ.get("MASTER_PORT", "None"),
             )
             local_rank = int(os.environ.get("LOCAL_RANK", "0"))
+            machine_rank = int(os.environ.get("RLAUNCH_REPLICA", machine_rank))
+            world_size = int(os.environ.get("WORLD_SIZE", "1"))
             _distributed_worker(
                 local_rank,
                 main_func,
                 world_size,
                 num_gpus_per_machine,
+                num_machines,
                 machine_rank,
                 backend,
                 dist_url,
@@ -100,6 +105,7 @@ def launch_by_subprocess(
         world_size > 1
     ), "subprocess mode doesn't support single GPU, use spawn mode instead"
     machine_rank = int(os.getenv("RLAUNCH_REPLICA", machine_rank))
+    num_machines = int(os.getenv("RLAUNCH_REPLICA_TOTAL", num_machines))
 
     if dist_url is None:
         master_ip = subprocess.check_output(["hostname", "--fqdn"]).decode("utf-8")
@@ -108,20 +114,23 @@ def launch_by_subprocess(
 
         # ------------------------hack for multi-machine training -------------------- #
         if num_machines > 1:
-            ip_add_file = "./" + args[1].experiment_name + "ip_add.txt"
+            ip_add_file = "./" + args[1].experiment_name + "_ip_add.txt"
             if machine_rank == 0:
+                port = _find_free_port()
                 with open(ip_add_file, "w") as ip_add:
-                    ip_add.write(dist_url)
+                    ip_add.write(dist_url+'\n')
+                    ip_add.write(str(port))
             else:
                 while not os.path.exists(ip_add_file):
                     time.sleep(0.5)
 
                 with open(ip_add_file, "r") as ip_add:
-                    dist_url = ip_add.readline()
+                    dist_url = ip_add.readline().strip()
+                    port = ip_add.readline()
         else:
             dist_url = "tcp://127.0.0.1"
+            port = _find_free_port()
 
-    port = _find_free_port()
     # set PyTorch distributed related environmental variables
     current_env = os.environ.copy()
     current_env["MASTER_ADDR"] = dist_url
@@ -166,6 +175,7 @@ def _distributed_worker(
     main_func,
     world_size,
     num_gpus_per_machine,
+    num_machines,
     machine_rank,
     backend,
     dist_url,
@@ -174,6 +184,7 @@ def _distributed_worker(
     assert (
         torch.cuda.is_available()
     ), "cuda is not available. Please check your installation."
+    configure_nccl()
     global_rank = machine_rank * num_gpus_per_machine + local_rank
     logger.info("Rank {} initialization finished.".format(global_rank))
     try:
@@ -190,10 +201,16 @@ def _distributed_worker(
     # See: https://github.com/facebookresearch/maskrcnn-benchmark/issues/172
     comm.synchronize()
 
+    if global_rank == 0 and os.path.exists(
+        "./" + args[1].experiment_name + "_ip_add.txt"
+    ):
+        os.remove("./" + args[1].experiment_name + "_ip_add.txt")
+
     assert num_gpus_per_machine <= torch.cuda.device_count()
     torch.cuda.set_device(local_rank)
 
     args[1].local_rank = local_rank
+    args[1].num_machines = num_machines
 
     # Setup the local process group (which contains ranks within the same machine)
     # assert comm._LOCAL_PROCESS_GROUP is None
