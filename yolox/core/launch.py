@@ -56,7 +56,6 @@ def launch(
                        Can be set to auto to automatically select a free port on localhost
         args (tuple): arguments passed to main_func
     """
-    num_machines = int(os.getenv("RLAUNCH_REPLICA_TOTAL", num_machines))
     world_size = num_machines * num_gpus_per_machine
     if world_size > 1:
         if int(os.environ.get("WORLD_SIZE", "1")) > 1:
@@ -65,7 +64,6 @@ def launch(
                 os.environ.get("MASTER_PORT", "None"),
             )
             local_rank = int(os.environ.get("LOCAL_RANK", "0"))
-            machine_rank = int(os.environ.get("RLAUNCH_REPLICA", machine_rank))
             world_size = int(os.environ.get("WORLD_SIZE", "1"))
             _distributed_worker(
                 local_rank,
@@ -104,8 +102,6 @@ def launch_by_subprocess(
     assert (
         world_size > 1
     ), "subprocess mode doesn't support single GPU, use spawn mode instead"
-    machine_rank = int(os.getenv("RLAUNCH_REPLICA", machine_rank))
-    num_machines = int(os.getenv("RLAUNCH_REPLICA_TOTAL", num_machines))
 
     if dist_url is None:
         # ------------------------hack for multi-machine training -------------------- #
