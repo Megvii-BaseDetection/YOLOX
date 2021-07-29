@@ -172,9 +172,9 @@ def _distort(image):
     return image
 
 
-def _mirror(image, boxes):
+def _mirror(image, boxes, p=0.5):
     _, width, _ = image.shape
-    if random.randrange(2):
+    if random.uniform() < p:
         image = image[:, ::-1]
         boxes = boxes.copy()
         boxes[:, 0::2] = width - boxes[:, 2::-2]
@@ -207,10 +207,11 @@ def preproc(image, input_size, mean, std, swap=(2, 0, 1)):
 
 
 class TrainTransform:
-    def __init__(self, p=0.5, rgb_means=None, std=None, max_labels=50):
+    def __init__(self, p=0.5, rgb_means=None, std=None, mirror=0.5, max_labels=50):
         self.means = rgb_means
         self.std = std
         self.p = p
+        self.mirror = mirror
         self.max_labels = max_labels
 
     def __call__(self, image, targets, input_dim):
@@ -231,7 +232,8 @@ class TrainTransform:
         boxes_o = xyxy2cxcywh(boxes_o)
 
         image_t = _distort(image)
-        image_t, boxes = _mirror(image_t, boxes)
+        if self.mirror > 0:
+            image_t, boxes = _mirror(image_t, boxes, self.mirror)
         height, width, _ = image_t.shape
         image_t, r_ = preproc(image_t, input_dim, self.means, self.std)
         # boxes [xyxy] 2 [cx,cy,w,h]

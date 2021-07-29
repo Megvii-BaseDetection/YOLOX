@@ -15,6 +15,7 @@ class Exp(MyExp):
         self.depth = 1.0
         self.width = 1.0
         self.exp_name = os.path.split(os.path.realpath(__file__))[1].split(".")[0]
+        self.mirror = 0.5
 
     def get_model(self, sublinear=False):
         def init_yolo(M):
@@ -46,6 +47,7 @@ class Exp(MyExp):
                 preproc=TrainTransform(
                     rgb_means=(0.485, 0.456, 0.406),
                     std=(0.229, 0.224, 0.225),
+                    mirror=self.mirror,
                     max_labels=50
                 ),
         )
@@ -57,6 +59,7 @@ class Exp(MyExp):
             preproc=TrainTransform(
                 rgb_means=(0.485, 0.456, 0.406),
                 std=(0.229, 0.224, 0.225),
+                mirror=self.mirror,
                 max_labels=120
             ),
             degrees=self.degrees,

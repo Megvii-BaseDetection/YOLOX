@@ -30,6 +30,7 @@ class Exp(BaseExp):
         self.val_ann = "instances_val2017.json"
 
         # --------------- transform config ----------------- #
+        self.mirror = 0.5
         self.degrees = 10.0
         self.translate = 0.1
         self.scale = (0.1, 2)
@@ -95,6 +96,7 @@ class Exp(BaseExp):
             preproc=TrainTransform(
                 rgb_means=(0.485, 0.456, 0.406),
                 std=(0.229, 0.224, 0.225),
+                mirror=self.mirror,
                 max_labels=50,
             ),
         )
@@ -106,6 +108,7 @@ class Exp(BaseExp):
             preproc=TrainTransform(
                 rgb_means=(0.485, 0.456, 0.406),
                 std=(0.229, 0.224, 0.225),
+                mirror=self.mirror,
                 max_labels=120,
             ),
             degrees=self.degrees,
