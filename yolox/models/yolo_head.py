@@ -616,7 +616,7 @@ class YOLOXHead(nn.Module):
         matching_matrix = torch.zeros_like(cost)
 
         ious_in_boxes_matrix = pair_wise_ious
-        n_candidate_k = 10
+        n_candidate_k = min(10, ious_in_boxes_matrix.size(1))
         topk_ious, _ = torch.topk(ious_in_boxes_matrix, n_candidate_k, dim=1)
         dynamic_ks = torch.clamp(topk_ious.sum(1).int(), min=1)
         for gt_idx in range(num_gt):
