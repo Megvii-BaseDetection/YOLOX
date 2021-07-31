@@ -17,7 +17,7 @@ Please follow the [TensorRT Installation Guide](https://docs.nvidia.com/deeplear
 
 And you should set the TensorRT path and Cuda path in CMakeLists.txt.
 
-If you train you custom datasets just one classes ,and you should change the number of your datasets.
+If you train you custom datasets with just one class, you should change the number of your datasets.
 
 ```c++
 const int num_class = 80;
