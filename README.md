@@ -8,6 +8,7 @@ For more details, please refer to our [report on Arxiv](https://arxiv.org/abs/21
 <img src="assets/git_fig.png" width="1000" >
 
 ## Updates!!
+* 【2021/07/28】 We fix the fatal error of [memory leak](https://github.com/Megvii-BaseDetection/YOLOX/issues/103)
 * 【2021/07/26】 We now support [MegEngine](https://github.com/Megvii-BaseDetection/YOLOX/tree/main/demo/MegEngine) deployment.
 * 【2021/07/20】 We have released our technical report on [Arxiv](https://arxiv.org/abs/2107.08430).
 
@@ -104,6 +105,12 @@ python tools/train.py -n yolox-s -d 8 -b 64 --fp16 -o
 * -d: number of gpu devices
 * -b: total batch size, the recommended number for -b is num-gpu * 8
 * --fp16: mixed precision training
+
+**Multi Machine Training**
+
+We also support multi-nodes training. Just add the following args:
+* --num\_machines: num of your total training nodes
+* --machine\_rank: specify the rank of each node
 
 When using -f, the above commands are equivalent to:
 

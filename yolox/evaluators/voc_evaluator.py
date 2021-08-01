@@ -2,10 +2,6 @@
 # -*- coding:utf-8 -*-
 # Copyright (c) Megvii, Inc. and its affiliates.
 
-import sys
-import tempfile
-import time
-from collections import ChainMap
 from loguru import logger
 from tqdm import tqdm
 
@@ -15,6 +11,11 @@ import torch
 
 from yolox.utils import gather, is_main_process, postprocess, synchronize, time_synchronized
 
+import sys
+import tempfile
+import time
+from collections import ChainMap
+
 
 class VOCEvaluator:
     """
@@ -22,7 +23,12 @@ class VOCEvaluator:
     """
 
     def __init__(
-        self, dataloader, img_size, confthre, nmsthre, num_classes,
+        self,
+        dataloader,
+        img_size,
+        confthre,
+        nmsthre,
+        num_classes,
     ):
         """
         Args:
@@ -41,7 +47,13 @@ class VOCEvaluator:
         self.num_images = len(dataloader.dataset)
 
     def evaluate(
-        self, model, distributed=False, half=False, trt_file=None, decoder=None, test_size=None
+        self,
+        model,
+        distributed=False,
+        half=False,
+        trt_file=None,
+        decoder=None,
+        test_size=None,
     ):
         """
         VOC average precision (AP) Evaluation. Iterate inference on the test dataset
@@ -72,6 +84,7 @@ class VOCEvaluator:
 
         if trt_file is not None:
             from torch2trt import TRTModule
+
             model_trt = TRTModule()
             model_trt.load_state_dict(torch.load(trt_file))
 
@@ -79,7 +92,9 @@ class VOCEvaluator:
             model(x)
             model = model_trt
 
-        for cur_iter, (imgs, _, info_imgs, ids) in enumerate(progress_bar(self.dataloader)):
+        for cur_iter, (imgs, _, info_imgs, ids) in enumerate(
+            progress_bar(self.dataloader)
+        ):
             with torch.no_grad():
                 imgs = imgs.type(tensor_type)
 
@@ -117,7 +132,9 @@ class VOCEvaluator:
 
     def convert_to_voc_format(self, outputs, info_imgs, ids):
         predictions = {}
-        for (output, img_h, img_w, img_id) in zip(outputs, info_imgs[0], info_imgs[1], ids):
+        for (output, img_h, img_w, img_id) in zip(
+            outputs, info_imgs[0], info_imgs[1], ids
+        ):
             if output is None:
                 predictions[int(img_id)] = (None, None, None)
                 continue
@@ -126,7 +143,9 @@ class VOCEvaluator:
             bboxes = output[:, 0:4]
 
             # preprocessing: resize
-            scale = min(self.img_size[0] / float(img_h), self.img_size[1] / float(img_w))
+            scale = min(
+                self.img_size[0] / float(img_h), self.img_size[1] / float(img_w)
+            )
             bboxes /= scale
 
             cls = output[:, 6]
@@ -149,15 +168,20 @@ class VOCEvaluator:
         a_nms_time = 1000 * nms_time / (n_samples * self.dataloader.batch_size)
 
         time_info = ", ".join(
-            ["Average {} time: {:.2f} ms".format(k, v) for k, v in zip(
-                ["forward", "NMS", "inference"],
-                [a_infer_time, a_nms_time, (a_infer_time + a_nms_time)]
-            )]
+            [
+                "Average {} time: {:.2f} ms".format(k, v)
+                for k, v in zip(
+                    ["forward", "NMS", "inference"],
+                    [a_infer_time, a_nms_time, (a_infer_time + a_nms_time)],
+                )
+            ]
         )
 
         info = time_info + "\n"
 
-        all_boxes = [[[] for _ in range(self.num_images)] for _ in range(self.num_classes)]
+        all_boxes = [
+            [[] for _ in range(self.num_images)] for _ in range(self.num_classes)
+        ]
         for img_num in range(self.num_images):
             bboxes, cls, scores = data_dict[img_num]
             if bboxes is None:
@@ -179,5 +203,7 @@ class VOCEvaluator:
             sys.stdout.flush()
 
         with tempfile.TemporaryDirectory() as tempdir:
-            mAP50, mAP70 = self.dataloader.dataset.evaluate_detections(all_boxes, tempdir)
+            mAP50, mAP70 = self.dataloader.dataset.evaluate_detections(
+                all_boxes, tempdir
+            )
             return mAP50, mAP70, info

@@ -2,12 +2,12 @@
 # -*- coding:utf-8 -*-
 # Copyright (c) Megvii, Inc. and its affiliates.
 
-import random
-
 import cv2
 import numpy as np
 
 from yolox.utils import adjust_box_anns
+
+import random
 
 from ..data_augment import box_candidates, random_perspective
 from .datasets_wrapper import Dataset
@@ -142,13 +142,13 @@ class MosaicDetection(Dataset):
             mix_img, padded_labels = self.preproc(mosaic_img, mosaic_labels, self.input_dim)
             img_info = (mix_img.shape[1], mix_img.shape[0])
 
-            return mix_img, padded_labels, img_info, int(idx)
+            return mix_img, padded_labels, img_info, np.array([idx])
 
         else:
             self._dataset._input_dim = self.input_dim
-            img, label, img_info, idx = self._dataset.pull_item(idx)
+            img, label, img_info, id_ = self._dataset.pull_item(idx)
             img, label = self.preproc(img, label, self.input_dim)
-            return img, label, img_info, int(idx)
+            return img, label, img_info, id_
 
     def mixup(self, origin_img, origin_labels, input_dim):
         jit_factor = random.uniform(*self.mixup_scale)
@@ -197,7 +197,7 @@ class MosaicDetection(Dataset):
         ]
 
         cp_bboxes_origin_np = adjust_box_anns(
-            cp_labels[:, :4], cp_scale_ratio, 0, 0, origin_w, origin_h
+            cp_labels[:, :4].copy(), cp_scale_ratio, 0, 0, origin_w, origin_h
         )
         if FLIP:
             cp_bboxes_origin_np[:, 0::2] = (
@@ -213,11 +213,11 @@ class MosaicDetection(Dataset):
         keep_list = box_candidates(cp_bboxes_origin_np.T, cp_bboxes_transformed_np.T, 5)
 
         if keep_list.sum() >= 1.0:
-            cls_labels = cp_labels[keep_list, 4:5]
+            cls_labels = cp_labels[keep_list, 4:5].copy()
             box_labels = cp_bboxes_transformed_np[keep_list]
             labels = np.hstack((box_labels, cls_labels))
             origin_labels = np.vstack((origin_labels, labels))
             origin_img = origin_img.astype(np.float32)
             origin_img = 0.5 * origin_img + 0.5 * padded_cropped_img.astype(np.float32)
 
-        return origin_img.astype(np.uint8), origin_labels
+        return origin_img, origin_labels

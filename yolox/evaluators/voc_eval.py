@@ -5,11 +5,11 @@
 # Copyright (c) Bharath Hariharan.
 # Copyright (c) Megvii, Inc. and its affiliates.
 
+import numpy as np
+
 import os
 import pickle
 import xml.etree.ElementTree as ET
-
-import numpy as np
 
 
 def parse_rec(filename):
@@ -35,7 +35,7 @@ def parse_rec(filename):
 
 
 def voc_ap(rec, prec, use_07_metric=False):
-    """ ap = voc_ap(rec, prec, [use_07_metric])
+    """ap = voc_ap(rec, prec, [use_07_metric])
     Compute VOC AP given precision and recall.
     If use_07_metric is true, uses the
     VOC 07 11 point method (default:False).

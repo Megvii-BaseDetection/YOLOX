@@ -2,9 +2,6 @@
 # -*- coding:utf-8 -*-
 # Copyright (c) Megvii, Inc. and its affiliates.
 
-import datetime
-import os
-import time
 from loguru import logger
 
 import apex
@@ -17,7 +14,6 @@ from yolox.utils import (
     MeterBuffer,
     ModelEMA,
     all_reduce_norm,
-    get_local_rank,
     get_model_info,
     get_rank,
     get_world_size,
@@ -29,9 +25,12 @@ from yolox.utils import (
     synchronize
 )
 
+import datetime
+import os
+import time
+
 
 class Trainer:
-
     def __init__(self, exp, args):
         # init function only defines some basic attr, other attrs like model, optimizer are built in
         # before_train methods.
@@ -43,7 +42,7 @@ class Trainer:
         self.amp_training = args.fp16
         self.is_distributed = get_world_size() > 1
         self.rank = get_rank()
-        self.local_rank = get_local_rank()
+        self.local_rank = args.local_rank
         self.device = "cuda:{}".format(self.local_rank)
         self.use_model_ema = exp.ema
 
@@ -56,13 +55,15 @@ class Trainer:
         self.meter = MeterBuffer(window_size=exp.print_interval)
         self.file_name = os.path.join(exp.output_dir, args.experiment_name)
 
-        if self.rank == 0 and os.path.exists("./" + args.experiment_name + "ip_add.txt"):
-            os.remove("./" + args.experiment_name + "ip_add.txt")
-
         if self.rank == 0:
             os.makedirs(self.file_name, exist_ok=True)
 
-        setup_logger(self.file_name, distributed_rank=self.rank, filename="train_log.txt", mode="a")
+        setup_logger(
+            self.file_name,
+            distributed_rank=self.rank,
+            filename="train_log.txt",
+            mode="a",
+        )
 
     def train(self):
         self.before_train()
@@ -127,7 +128,9 @@ class Trainer:
         # model related init
         torch.cuda.set_device(self.local_rank)
         model = self.exp.get_model()
-        logger.info("Model Summary: {}".format(get_model_info(model, self.exp.test_size)))
+        logger.info(
+            "Model Summary: {}".format(get_model_info(model, self.exp.test_size))
+        )
         model.to(self.device)
 
         # solver related init
@@ -144,7 +147,7 @@ class Trainer:
         self.train_loader = self.exp.get_data_loader(
             batch_size=self.args.batch_size,
             is_distributed=self.is_distributed,
-            no_aug=self.no_aug
+            no_aug=self.no_aug,
         )
         logger.info("init prefetcher, this might take one minute or less...")
         self.prefetcher = DataPrefetcher(self.train_loader)
@@ -181,7 +184,9 @@ class Trainer:
 
     def after_train(self):
         logger.info(
-            "Training of experiment is done and the best AP is {:.2f}".format(self.best_ap * 100)
+            "Training of experiment is done and the best AP is {:.2f}".format(
+                self.best_ap * 100
+            )
         )
 
     def before_epoch(self):
@@ -229,10 +234,14 @@ class Trainer:
                 self.epoch + 1, self.max_epoch, self.iter + 1, self.max_iter
             )
             loss_meter = self.meter.get_filtered_meter("loss")
-            loss_str = ", ".join(["{}: {:.1f}".format(k, v.latest) for k, v in loss_meter.items()])
+            loss_str = ", ".join(
+                ["{}: {:.1f}".format(k, v.latest) for k, v in loss_meter.items()]
+            )
 
             time_meter = self.meter.get_filtered_meter("time")
-            time_str = ", ".join(["{}: {:.3f}s".format(k, v.avg) for k, v in time_meter.items()])
+            time_str = ", ".join(
+                ["{}: {:.3f}s".format(k, v.avg) for k, v in time_meter.items()]
+            )
 
             logger.info(
                 "{}, mem: {:.0f}Mb, {}, {}, lr: {:.3e}".format(
@@ -277,7 +286,11 @@ class Trainer:
                 else ckpt["start_epoch"]
             )
             self.start_epoch = start_epoch
-            logger.info("loaded checkpoint '{}' (epoch {})".format(self.args.resume, self.start_epoch))  # noqa
+            logger.info(
+                "loaded checkpoint '{}' (epoch {})".format(
+                    self.args.resume, self.start_epoch
+                )
+            )  # noqa
         else:
             if self.args.ckpt is not None:
                 logger.info("loading checkpoint for fine tuning")
@@ -290,7 +303,9 @@ class Trainer:
 
     def evaluate_and_save_model(self):
         evalmodel = self.ema_model.ema if self.use_model_ema else self.model
-        ap50_95, ap50, summary = self.exp.eval(evalmodel, self.evaluator, self.is_distributed)
+        ap50_95, ap50, summary = self.exp.eval(
+            evalmodel, self.evaluator, self.is_distributed
+        )
         self.model.train()
         if self.rank == 0:
             self.tblogger.add_scalar("val/COCOAP50", ap50, self.epoch + 1)
