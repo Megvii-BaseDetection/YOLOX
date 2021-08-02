@@ -106,6 +106,12 @@ python tools/train.py -n yolox-s -d 8 -b 64 --fp16 -o
 * -b: total batch size, the recommended number for -b is num-gpu * 8
 * --fp16: mixed precision training
 
+**Multi Machine Training**
+
+We also support multi-nodes training. Just add the following args:
+* --num\_machines: num of your total training nodes
+* --machine\_rank: specify the rank of each node
+
 When using -f, the above commands are equivalent to:
 
 ```shell

@@ -123,7 +123,6 @@ class YOLOXHead(M.Module):
         self.use_l1 = False
         self.strides = strides
         self.grids = [F.zeros(1)] * len(in_channels)
-        self.expanded_strides = [None] * len(in_channels)
 
     def forward(self, xin, labels=None, imgs=None):
         outputs = []
