@@ -206,7 +206,7 @@ class COCOEvaluator:
             try:
                 from yolox.layers import COCOeval_opt as COCOeval
             except ImportError:
-                from pycocotools import cocoeval as COCOeval
+                from pycocotools.cocoeval import COCOeval
 
                 logger.warning("Use standard COCOeval.")
 
