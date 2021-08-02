@@ -83,7 +83,11 @@ class COCOEvaluator:
 
         inference_time = 0
         nms_time = 0
-        n_samples = len(self.dataloader) - 1
+
+        if len(self.dataloader) > 1:
+            n_samples = len(self.dataloader) - 1
+        else:
+            n_samples = len(self.dataloader)
 
         if trt_file is not None:
             from torch2trt import TRTModule
