@@ -17,7 +17,8 @@ class Exp(MyExp):
         self.random_size = (10, 20)
         self.test_size = (416, 416)
         self.exp_name = os.path.split(os.path.realpath(__file__))[1].split(".")[0]
-        self.enable_mixup = False
+        self.mixup = 1.0
+        self.mosaic = 1.0
 
         # Define yourself dataset path
         self.data_dir = "datasets/coco128"

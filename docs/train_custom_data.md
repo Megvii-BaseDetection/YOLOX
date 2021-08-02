@@ -123,7 +123,9 @@ Generally, for small models, you should weak the aug, while for large models or 
     self.mscale = (0.8, 1.6)
     self.shear = 2.0
     self.perspective = 0.0
-    self.enable_mixup = True
+    self.mixup = 1.0
+    self.mirror = 0.5
+    self.mosaic = 1.0
 ```
 
 **Design your own detector** You may refer to our [Arxiv](https://arxiv.org/abs/2107.08430) paper for details and suggestions for designing your own detector.

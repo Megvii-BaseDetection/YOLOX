@@ -38,16 +38,16 @@ class MosaicDetection(Dataset):
     """Detection dataset wrapper that performs mixup for normal dataset."""
 
     def __init__(
-        self, dataset, img_size, mosaic=True, preproc=None,
+        self, dataset, img_size, mosaic=1.0, preproc=None,
         degrees=10.0, translate=0.1, scale=(0.5, 1.5), mscale=(0.5, 1.5),
-        shear=2.0, perspective=0.0, enable_mixup=True, *args
+        shear=2.0, perspective=0.0, mixup=1.0, mirror=0.5, *args
     ):
         """
 
         Args:
             dataset(Dataset) : Pytorch dataset object.
             img_size (tuple):
-            mosaic (bool): enable mosaic augmentation or not.
+            mosaic (bool): probablity to apply mosaic
             preproc (func):
             degrees (float):
             translate (float):
@@ -55,7 +55,8 @@ class MosaicDetection(Dataset):
             mscale (tuple):
             shear (float):
             perspective (float):
-            enable_mixup (bool):
+            mixup (float): probablity to apply mixup
+            mirror (float): probablity to apply mirroring
             *args(tuple) : Additional arguments for mixup random sampler.
         """
         super().__init__(img_size, mosaic=mosaic)
@@ -67,15 +68,16 @@ class MosaicDetection(Dataset):
         self.shear = shear
         self.perspective = perspective
         self.mixup_scale = mscale
-        self.enable_mosaic = mosaic
-        self.enable_mixup = enable_mixup
+        self.mosaic = mosaic
+        self.mixup = mixup
+        self.mirror = mirror
 
     def __len__(self):
         return len(self._dataset)
 
     @Dataset.resize_getitem
     def __getitem__(self, idx):
-        if self.enable_mosaic:
+        if random.random() < self.mosaic:
             mosaic_labels = []
             input_dim = self._dataset.input_dim
             input_h, input_w = input_dim[0], input_dim[1]
@@ -137,8 +139,9 @@ class MosaicDetection(Dataset):
             # -----------------------------------------------------------------
             # CopyPaste: https://arxiv.org/abs/2012.07177
             # -----------------------------------------------------------------
-            if self.enable_mixup and not len(mosaic_labels) == 0:
-                mosaic_img, mosaic_labels = self.mixup(mosaic_img, mosaic_labels, self.input_dim)
+            enable_mixup = random.random() < self.mixup
+            if enable_mixup and not len(mosaic_labels) == 0:
+                mosaic_img, mosaic_labels = self.do_mixup(mosaic_img, mosaic_labels, self.input_dim)
             mix_img, padded_labels = self.preproc(mosaic_img, mosaic_labels, self.input_dim)
             img_info = (mix_img.shape[1], mix_img.shape[0])
 
@@ -150,9 +153,9 @@ class MosaicDetection(Dataset):
             img, label = self.preproc(img, label, self.input_dim)
             return img, label, img_info, id_
 
-    def mixup(self, origin_img, origin_labels, input_dim):
+    def do_mixup(self, origin_img, origin_labels, input_dim):
         jit_factor = random.uniform(*self.mixup_scale)
-        FLIP = random.uniform(0, 1) > 0.5
+        FLIP = random.random() < self.mirror
         cp_labels = []
         while len(cp_labels) == 0:
             cp_index = random.randint(0, self.__len__() - 1)

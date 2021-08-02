@@ -174,7 +174,7 @@ def _distort(image):
 
 def _mirror(image, boxes, p=0.5):
     _, width, _ = image.shape
-    if random.uniform() < p:
+    if random.random() < p:
         image = image[:, ::-1]
         boxes = boxes.copy()
         boxes[:, 0::2] = width - boxes[:, 2::-2]

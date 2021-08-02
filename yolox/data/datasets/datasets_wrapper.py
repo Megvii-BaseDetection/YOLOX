@@ -65,12 +65,13 @@ class Dataset(torchDataset):
 
     Args:
         input_dimension (tuple): (width,height) tuple with default dimensions of the network
+        mosaic (float): probability to apply mosaic
     """
 
-    def __init__(self, input_dimension, mosaic=True):
+    def __init__(self, input_dimension, mosaic=1.0):
         super().__init__()
         self.__input_dim = input_dimension[:2]
-        self.enable_mosaic = mosaic
+        self.mosaic = mosaic
 
     @property
     def input_dim(self):
@@ -113,7 +114,7 @@ class Dataset(torchDataset):
             if not isinstance(index, int):
                 has_dim = True
                 self._input_dim = index[0]
-                self.enable_mosaic = index[2]
+                self.mosaic = index[2]
                 index = index[1]
             else:
                 has_dim = False

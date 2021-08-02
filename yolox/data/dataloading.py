@@ -118,7 +118,7 @@ class DataLoader(torchDataLoader):
         self.__initialized = True
 
     def close_mosaic(self):
-        self.batch_sampler.mosaic = False
+        self.batch_sampler.mosaic = 0.0
 
     def change_input_dim(self, multiple=32, random_range=(10, 19)):
         """This function will compute a new size and update it on the next mini_batch.

@@ -40,7 +40,7 @@ class Exp(MyExp):
 
         dataset = MosaicDetection(
             dataset,
-            mosaic=not no_aug,
+            mosaic=self.mosaic * int(not no_aug),
             img_size=self.input_size,
             preproc=TrainTransform(
                 rgb_means=(0.485, 0.456, 0.406),
@@ -53,7 +53,8 @@ class Exp(MyExp):
             scale=self.scale,
             shear=self.shear,
             perspective=self.perspective,
-            enable_mixup=self.enable_mixup,
+            mixup=self.mixup,
+            mirror=self.mirror # Mirror when performing mixup
         )
 
         self.dataset = dataset
@@ -70,7 +71,7 @@ class Exp(MyExp):
             batch_size=batch_size,
             drop_last=False,
             input_dimension=self.input_size,
-            mosaic=not no_aug,
+            mosaic=self.mosaic * int(not no_aug),
         )
 
         dataloader_kwargs = {"num_workers": self.data_num_workers, "pin_memory": True}

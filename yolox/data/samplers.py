@@ -18,7 +18,7 @@ class YoloBatchSampler(torchBatchSampler):
     but it will prepend a dimension, whilst ensuring it stays the same across one mini-batch.
     """
 
-    def __init__(self, *args, input_dimension=None, mosaic=True, **kwargs):
+    def __init__(self, *args, input_dimension=None, mosaic=1.0, **kwargs):
         super().__init__(*args, **kwargs)
         self.input_dim = input_dimension
         self.new_input_dim = None
