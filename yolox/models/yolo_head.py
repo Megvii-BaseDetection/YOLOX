@@ -129,7 +129,6 @@ class YOLOXHead(nn.Module):
         self.iou_loss = IOUloss(reduction="none")
         self.strides = strides
         self.grids = [torch.zeros(1)] * len(in_channels)
-        self.expanded_strides = [None] * len(in_channels)
 
     def initialize_biases(self, prior_prob):
         for conv in self.cls_preds:

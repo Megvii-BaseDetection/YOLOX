@@ -64,7 +64,7 @@ def make_parser():
     parser.add_argument(
         "--fp16",
         dest="fp16",
-        default=True,
+        default=False,
         action="store_true",
         help="Adopting mix precision training.",
     )
