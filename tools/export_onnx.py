@@ -63,7 +63,7 @@ def main():
     model = exp.get_model()
     if args.ckpt is None:
         file_name = os.path.join(exp.output_dir, args.experiment_name)
-        ckpt_file = os.path.join(file_name, "best_ckpt.pth.tar")
+        ckpt_file = os.path.join(file_name, "best_ckpt.pth")
     else:
         ckpt_file = args.ckpt
 

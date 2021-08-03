@@ -269,7 +269,7 @@ class Trainer:
         if self.args.resume:
             logger.info("resume training")
             if self.args.ckpt is None:
-                ckpt_file = os.path.join(self.file_name, "latest" + "_ckpt.pth.tar")
+                ckpt_file = os.path.join(self.file_name, "latest" + "_ckpt.pth")
             else:
                 ckpt_file = self.args.ckpt
 
