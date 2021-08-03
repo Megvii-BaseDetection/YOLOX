@@ -13,7 +13,7 @@ python3 -m pip install megengine -f https://megengine.org.cn/whl/mge.html
 ### Step2: convert checkpoint weights from torch's path file
 
 ```
-python3 convert_weights.py -w yolox_s.pth.tar -o yolox_s_mge.pkl
+python3 convert_weights.py -w yolox_s.pth -o yolox_s_mge.pkl
 ```
 
 ### Step3: run demo

@@ -73,13 +73,13 @@ python tools/train.py -f /path/to/your/Exp/file -d 8 -b 64 --fp16 -o -c /path/to
 
 or take the `YOLOX-S` VOC training for example:
 ```bash
-python tools/train.py -f exps/example/yolox_voc/yolox_voc_s.py -d 8 -b 64 --fp16 -o -c /path/to/yolox_s.pth.tar
+python tools/train.py -f exps/example/yolox_voc/yolox_voc_s.py -d 8 -b 64 --fp16 -o -c /path/to/yolox_s.pth
 ```
 
 ✧✧✧ For example:
 - If you download the [mini-coco128](https://drive.google.com/file/d/16N3u36ycNd70m23IM7vMuRQXejAJY9Fs/view?usp=sharing) and unzip it to the `datasets`, you can direct run the following training code.
     ```bash
-    python tools/train.py -f exps/example/custom/yolox_s.py -d 8 -b 64 --fp16 -o -c /path/to/yolox_s.pth.tar
+    python tools/train.py -f exps/example/custom/yolox_s.py -d 8 -b 64 --fp16 -o -c /path/to/yolox_s.pth
     ```
 
 (Don't worry for the different shape of detection head between the pretrained weights and your own model, we will handle it)

@@ -42,7 +42,7 @@ def main():
     file_name = os.path.join(exp.output_dir, args.experiment_name)
     os.makedirs(file_name, exist_ok=True)
     if args.ckpt is None:
-        ckpt_file = os.path.join(file_name, "best_ckpt.pth.tar")
+        ckpt_file = os.path.join(file_name, "best_ckpt.pth")
     else:
         ckpt_file = args.ckpt
 
