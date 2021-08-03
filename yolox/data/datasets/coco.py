@@ -66,8 +66,8 @@ class COCODataset(Dataset):
         for obj in annotations:
             x1 = np.max((0, obj["bbox"][0]))
             y1 = np.max((0, obj["bbox"][1]))
-            x2 = np.min((width - 1, x1 + np.max((0, obj["bbox"][2] - 1))))
-            y2 = np.min((height - 1, y1 + np.max((0, obj["bbox"][3] - 1))))
+            x2 = np.min((width, x1 + np.max((0, obj["bbox"][2]))))
+            y2 = np.min((height, y1 + np.max((0, obj["bbox"][3]))))
             if obj["area"] > 0 and x2 >= x1 and y2 >= y1:
                 obj["clean_bbox"] = [x1, y1, x2, y2]
                 objs.append(obj)
