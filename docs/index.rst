@@ -2,17 +2,14 @@
 Welcome to YOLOX's documentation!
 ======================================
 
-.. toctree::
-   :maxdepth: 2
-   :caption: Get Started
-
-   train_cinustom_data
+.. image:: ../assets/logo.png
 
 .. toctree::
    :maxdepth: 2
    :caption: Quick Run
    
-   train_custom_data
+   quick_run
+   model_zoo
 
 .. toctree::
    :maxdepth: 2
