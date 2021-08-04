@@ -137,7 +137,7 @@ class Trainer:
         self.optimizer = self.exp.get_optimizer(self.args.batch_size)
 
         if self.amp_training:
-            model, optimizer = amp.initialize(model, self.optimizer, opt_level="O1")
+            model, self.optimizer = amp.initialize(model, self.optimizer, opt_level="O1")
 
         # value of epoch will be set in `resume_train`
         model = self.resume_train(model)
