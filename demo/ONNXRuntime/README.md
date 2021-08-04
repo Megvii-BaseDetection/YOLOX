@@ -3,6 +3,7 @@
 This doc introduces how to convert your pytorch model into onnx, and how to run an onnxruntime demo to verify your convertion.
 
 ### Download ONNX models.
+
 | Model | Parameters | GFLOPs | Test Size | mAP | Weights |
 |:------| :----: | :----: | :---: | :---: | :---: |
 |  YOLOX-Nano |  0.91M  | 1.08 | 416x416 | 25.3 | [onedrive](https://megvii-my.sharepoint.cn/:u:/g/personal/gezheng_megvii_com/EfAGwvevU-lNhW5OqFAyHbwBJdI_7EaKu5yU04fgF5BU7w?e=gvq4hf)/[github](https://github.com/Megvii-BaseDetection/storage/releases/download/0.0.1/yolox_nano.onnx) |
@@ -29,7 +30,7 @@ python3 tools/export_onnx.py --output-name yolox_s.onnx -n yolox-s -c yolox_s.pt
 Notes:
 * -n: specify a model name. The model name must be one of the [yolox-s,m,l,x and yolox-nane, yolox-tiny, yolov3]
 * -c: the model you have trained
-* -o: opset version, default 11. **However, if you will further convert your onnx model to [OpenVINO](../OpenVINO/), please specify the opset version to 10.**
+* -o: opset version, default 11. **However, if you will further convert your onnx model to [OpenVINO](https://github.com/Megvii-BaseDetection/YOLOX/demo/OpenVINO/), please specify the opset version to 10.**
 * --no-onnxsim: disable onnxsim
 * To customize an input shape for onnx model,  modify the following code in tools/export.py:
 

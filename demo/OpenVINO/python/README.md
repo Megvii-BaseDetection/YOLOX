@@ -3,6 +3,7 @@
 This toturial includes a Python demo for OpenVINO, as well as some converted models.
 
 ### Download OpenVINO models.
+
 | Model | Parameters | GFLOPs | Test Size | mAP | Weights |
 |:------| :----: | :----: | :---: | :---: | :---: |
 |  [YOLOX-Nano](../../../exps/default/nano.py) |  0.91M  | 1.08 | 416x416 | 25.3 | [onedrive](https://megvii-my.sharepoint.cn/:u:/g/personal/gezheng_megvii_com/EeWY57o5wQZFtXYd1KJw6Z8B4vxZru649XxQHYIFgio3Qw?e=ZS81ce)/[github](https://github.com/Megvii-BaseDetection/storage/releases/download/0.0.1/yolox_nano_openvino.tar.gz) |
@@ -51,7 +52,7 @@ source ~/.bashrc
 
 1. Export ONNX model
 
-   Please refer to the [ONNX toturial](../../ONNXRuntime). **Note that you should set --opset to 10, otherwise your next step will fail.**
+   Please refer to the [ONNX toturial](https://github.com/Megvii-BaseDetection/YOLOX/demo/ONNXRuntime). **Note that you should set --opset to 10, otherwise your next step will fail.**
 
 2. Convert ONNX to OpenVINO
 
