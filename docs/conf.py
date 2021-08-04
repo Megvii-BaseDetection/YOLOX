@@ -250,7 +250,7 @@ latex_documents = [
 
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
-man_pages = [(master_doc, "yolox", "yolox Documentation", [author], 1)]
+man_pages = [(master_doc, "YOLOX", "YOLOX Documentation", [author], 1)]
 
 
 # -- Options for Texinfo output ----------------------------------------------
@@ -261,10 +261,10 @@ man_pages = [(master_doc, "yolox", "yolox Documentation", [author], 1)]
 texinfo_documents = [
     (
         master_doc,
-        "yolox",
-        "yolox Documentation",
+        "YOLOX",
+        "YOLOX Documentation",
         author,
-        "yolox",
+        "YOLOX",
         "One line description of project.",
         "Miscellaneous",
     )
