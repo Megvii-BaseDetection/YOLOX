@@ -184,7 +184,8 @@ static void generate_grids_and_stride(const int target_size, std::vector<int>& s
         {
             for (int g0 = 0; g0 < num_grid; g0++)
             {
-                grid_strides.push_back((GridAndStride){g0, g1, stride});
+				GridAndStride item = { g0, g1, stride };
+                grid_strides.push_back(item);
             }
         }
     }
