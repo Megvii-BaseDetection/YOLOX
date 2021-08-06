@@ -2,10 +2,10 @@
 # -*- coding:utf-8 -*-
 # Copyright (c) 2014-2021 Megvii Inc. All rights reserved.
 
-import cv2
-
 import os
 import subprocess
+
+import cv2
 
 __all__ = ["configure_nccl", "configure_module"]
 

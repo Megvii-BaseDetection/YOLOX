@@ -2,12 +2,12 @@
 # -*- coding:utf-8 -*-
 # Copyright (c) Megvii, Inc. and its affiliates.
 
+import random
+
 import cv2
 import numpy as np
 
 from yolox.utils import adjust_box_anns
-
-import random
 
 from ..data_augment import box_candidates, random_perspective
 from .datasets_wrapper import Dataset

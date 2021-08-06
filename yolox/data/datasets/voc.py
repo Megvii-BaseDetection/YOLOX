@@ -6,15 +6,15 @@
 # Copyright (c) Ellis Brown, Max deGroot.
 # Copyright (c) Megvii, Inc. and its affiliates.
 
-import cv2
-import numpy as np
-
-from yolox.evaluators.voc_eval import voc_eval
-
 import os
 import os.path
 import pickle
 import xml.etree.ElementTree as ET
+
+import cv2
+import numpy as np
+
+from yolox.evaluators.voc_eval import voc_eval
 
 from .datasets_wrapper import Dataset
 from .voc_classes import VOC_CLASSES

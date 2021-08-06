@@ -2,6 +2,12 @@
 # -*- coding:utf-8 -*-
 # Copyright (c) Megvii, Inc. and its affiliates.
 
+import contextlib
+import io
+import itertools
+import json
+import tempfile
+import time
 from loguru import logger
 from tqdm import tqdm
 
@@ -15,13 +21,6 @@ from yolox.utils import (
     time_synchronized,
     xyxy2xywh
 )
-
-import contextlib
-import io
-import itertools
-import json
-import tempfile
-import time
 
 
 class COCOEvaluator:
