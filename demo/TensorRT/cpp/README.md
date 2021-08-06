@@ -15,9 +15,9 @@ Check the 'model_trt.engine' file generated from Step 1, which will automaticall
 
 Please follow the [TensorRT Installation Guide](https://docs.nvidia.com/deeplearning/tensorrt/install-guide/index.html) to install TensorRT.
 
-And you should set the TensorRT path and Cuda path in CMakeLists.txt.
+And you should set the TensorRT path and CUDA path in CMakeLists.txt.
 
-If you train you custom datasets with just one class, you should change the number of your datasets.
+If you train your custom dataset, you should modify the value of `num_class`.
 
 ```c++
 const int num_class = 80;
