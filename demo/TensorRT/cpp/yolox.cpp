@@ -173,7 +173,7 @@ static void generate_yolox_proposals(std::vector<GridAndStride> grid_strides, fl
         const int grid1 = grid_strides[anchor_idx].grid1;
         const int stride = grid_strides[anchor_idx].stride;
 
-        const int basic_pos = anchor_idx * (num_class+5);
+        const int basic_pos = anchor_idx * (num_class + 5);
 
         // yolox/models/yolo_head.py decode logic
         float x_center = (feat_blob[basic_pos+0] + grid0) * stride;
