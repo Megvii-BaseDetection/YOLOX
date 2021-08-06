@@ -525,6 +525,7 @@ int main(int argc, char** argv) {
     draw_objects(img, objects, input_image_path);
 
     // destroy the engine
+    delete blob;
     context->destroy();
     engine->destroy();
     runtime->destroy();
