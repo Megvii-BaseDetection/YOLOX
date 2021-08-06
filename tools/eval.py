@@ -179,10 +179,11 @@ def main(exp, args, num_gpu):
         decoder = None
 
     # start evaluate
-    *_, summary = evaluator.evaluate(
+    *_, summary, per_category_summary = evaluator.evaluate(
         model, is_distributed, args.fp16, trt_file, decoder, exp.test_size
     )
     logger.info("\n" + summary)
+    logger.info("\n" + per_category_summary)
 
 
 if __name__ == "__main__":
