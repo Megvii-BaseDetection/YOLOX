@@ -9,15 +9,15 @@ This file contains primitives for multi-gpu communication.
 This is useful when doing distributed training.
 """
 
-import numpy as np
-
-import torch
-from torch import distributed as dist
-
 import functools
 import logging
 import pickle
 import time
+
+import numpy as np
+
+import torch
+from torch import distributed as dist
 
 __all__ = [
     "is_main_process",

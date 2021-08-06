@@ -2,11 +2,11 @@
 # -*- coding:utf-8 -*-
 # Copyright (c) Megvii, Inc. and its affiliates.
 
-from torch.utils.data.dataset import ConcatDataset as torchConcatDataset
-from torch.utils.data.dataset import Dataset as torchDataset
-
 import bisect
 from functools import wraps
+
+from torch.utils.data.dataset import ConcatDataset as torchConcatDataset
+from torch.utils.data.dataset import Dataset as torchDataset
 
 
 class ConcatDataset(torchConcatDataset):

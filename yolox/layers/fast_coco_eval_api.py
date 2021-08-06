@@ -5,15 +5,15 @@
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 # Copyright (c) 2014-2021 Megvii Inc. All rights reserved.
 
+import copy
+import time
+
 import numpy as np
 from pycocotools.cocoeval import COCOeval
 
 # import torch first to make yolox._C work without ImportError of libc10.so
 # in YOLOX, env is already set in __init__.py.
 from yolox import _C
-
-import copy
-import time
 
 
 class COCOeval_opt(COCOeval):
