@@ -2,6 +2,9 @@
 # -*- coding:utf-8 -*-
 # Copyright (c) Megvii, Inc. and its affiliates.
 
+import argparse
+import random
+import warnings
 from loguru import logger
 
 import torch
@@ -9,10 +12,6 @@ import torch.backends.cudnn as cudnn
 
 from yolox.core import Trainer, launch
 from yolox.exp import get_exp
-
-import argparse
-import random
-import warnings
 
 
 def make_parser():
@@ -64,7 +63,7 @@ def make_parser():
     parser.add_argument(
         "--fp16",
         dest="fp16",
-        default=True,
+        default=False,
         action="store_true",
         help="Adopting mix precision training.",
     )

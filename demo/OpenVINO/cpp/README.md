@@ -3,6 +3,7 @@
 This toturial includes a C++ demo for OpenVINO, as well as some converted models.
 
 ### Download OpenVINO models.
+
 | Model | Parameters | GFLOPs | Test Size | mAP | Weights |
 |:------| :----: | :----: | :---: | :---: | :---: |
 |  [YOLOX-Nano](../../../exps/nano.py) |  0.91M  | 1.08 | 416x416 | 25.3 | [Download](https://megvii-my.sharepoint.cn/:u:/g/personal/gezheng_megvii_com/EeWY57o5wQZFtXYd1KJw6Z8B4vxZru649XxQHYIFgio3Qw?e=ZS81ce)/[github](https://github.com/Megvii-BaseDetection/storage/releases/download/0.0.1/yolox_nano_openvino.tar.gz) |

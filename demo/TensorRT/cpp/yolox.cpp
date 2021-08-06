@@ -211,8 +211,8 @@ float* blobFromImage(cv::Mat& img){
 
     float* blob = new float[img.total()*3];
     int channels = 3;
-    int img_h = 640;
-    int img_w = 640;
+    int img_h = img.rows;
+    int img_w = img.cols;
     std::vector<float> mean = {0.485, 0.456, 0.406};
     std::vector<float> std = {0.229, 0.224, 0.225};
     for (size_t c = 0; c < channels; c++) 

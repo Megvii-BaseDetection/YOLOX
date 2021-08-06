@@ -9,15 +9,13 @@ The data augmentation procedures were interpreted from @weiliu89's SSD paper
 http://arxiv.org/abs/1512.02325
 """
 
+import math
+import random
+
 import cv2
 import numpy as np
 
-import torch
-
 from yolox.utils import xyxy2cxcywh
-
-import math
-import random
 
 
 def augment_hsv(img, hgain=0.015, sgain=0.7, vgain=0.4):

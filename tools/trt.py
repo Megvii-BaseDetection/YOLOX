@@ -2,6 +2,9 @@
 # -*- coding:utf-8 -*-
 # Copyright (c) Megvii, Inc. and its affiliates.
 
+import argparse
+import os
+import shutil
 from loguru import logger
 
 import tensorrt as trt
@@ -9,10 +12,6 @@ import torch
 from torch2trt import torch2trt
 
 from yolox.exp import get_exp
-
-import argparse
-import os
-import shutil
 
 
 def make_parser():
@@ -42,7 +41,7 @@ def main():
     file_name = os.path.join(exp.output_dir, args.experiment_name)
     os.makedirs(file_name, exist_ok=True)
     if args.ckpt is None:
-        ckpt_file = os.path.join(file_name, "best_ckpt.pth.tar")
+        ckpt_file = os.path.join(file_name, "best_ckpt.pth")
     else:
         ckpt_file = args.ckpt
 

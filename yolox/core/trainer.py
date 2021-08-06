@@ -2,6 +2,9 @@
 # -*- coding:utf-8 -*-
 # Copyright (c) Megvii, Inc. and its affiliates.
 
+import datetime
+import os
+import time
 from loguru import logger
 
 import apex
@@ -24,10 +27,6 @@ from yolox.utils import (
     setup_logger,
     synchronize
 )
-
-import datetime
-import os
-import time
 
 
 class Trainer:
@@ -205,8 +204,6 @@ class Trainer:
                 self.save_ckpt(ckpt_name="last_mosaic_epoch")
 
     def after_epoch(self):
-        if self.use_model_ema:
-            self.ema_model.update_attr(self.model)
 
         self.save_ckpt(ckpt_name="latest")
 
@@ -269,7 +266,7 @@ class Trainer:
         if self.args.resume:
             logger.info("resume training")
             if self.args.ckpt is None:
-                ckpt_file = os.path.join(self.file_name, "latest" + "_ckpt.pth.tar")
+                ckpt_file = os.path.join(self.file_name, "latest" + "_ckpt.pth")
             else:
                 ckpt_file = self.args.ckpt
 

@@ -2,6 +2,12 @@
 # -*- coding:utf-8 -*-
 # Copyright (c) Megvii, Inc. and its affiliates.
 
+import contextlib
+import io
+import itertools
+import json
+import tempfile
+import time
 from loguru import logger
 from tqdm import tqdm
 
@@ -15,13 +21,6 @@ from yolox.utils import (
     time_synchronized,
     xyxy2xywh
 )
-
-import contextlib
-import io
-import itertools
-import json
-import tempfile
-import time
 
 
 class COCOEvaluator:
@@ -83,7 +82,7 @@ class COCOEvaluator:
 
         inference_time = 0
         nms_time = 0
-        n_samples = len(self.dataloader) - 1
+        n_samples = max(len(self.dataloader) - 1, 1)
 
         if trt_file is not None:
             from torch2trt import TRTModule
@@ -206,7 +205,7 @@ class COCOEvaluator:
             try:
                 from yolox.layers import COCOeval_opt as COCOeval
             except ImportError:
-                from pycocotools import cocoeval as COCOeval
+                from pycocotools.cocoeval import COCOeval
 
                 logger.warning("Use standard COCOeval.")
 
