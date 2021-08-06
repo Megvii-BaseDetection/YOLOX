@@ -205,8 +205,6 @@ class Trainer:
                 self.save_ckpt(ckpt_name="last_mosaic_epoch")
 
     def after_epoch(self):
-        if self.use_model_ema:
-            self.ema_model.update_attr(self.model)
 
         self.save_ckpt(ckpt_name="latest")
 
