@@ -216,3 +216,7 @@ events.out.tfevents*
 
 # vim
 .vim
+
+model
+input
+.idea

@@ -1,1 +1,0 @@
-../../demo/OpenVINO/python/README.md

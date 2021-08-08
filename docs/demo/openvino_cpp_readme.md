@@ -1,1 +1,0 @@
-../../demo/OpenVINO/cpp/README.md

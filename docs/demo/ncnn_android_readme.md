@@ -1,1 +1,0 @@
-../../demo/ncnn/android/README.md

@@ -1,1 +1,0 @@
-../../demo/ONNXRuntime/README.md
