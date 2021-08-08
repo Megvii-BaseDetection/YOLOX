@@ -1,5 +1,5 @@
-<div align="center"><img src="YOLO/assets/logo.png" width="350"></div>
-<img src="YOLO/assets/demo.png" >
+<div align="center"><img src="YOLOX/assets/logo.png" width="350"></div>
+<img src="YOLOX/assets/demo.png" >
 
 ## Introduction
 YOLOX is an anchor-free version of YOLO, with a simpler design but better performance! It aims to bridge the gap between research and industrial communities.
@@ -7,7 +7,7 @@ For more details, please refer to our [report on Arxiv](https://arxiv.org/abs/21
 
 This repo is an implementation of PyTorch version YOLOX, there is also a [MegEngine implementation](https://github.com/MegEngine/YOLOX).
 
-<img src="YOLO/assets/git_fig.png" width="1000" >
+<img src="YOLOX/assets/git_fig.png" width="1000" >
 
 ## Updates!!
 * 【2021/08/05】 We release [MegEngine version YOLOX](https://github.com/MegEngine/YOLOX).
