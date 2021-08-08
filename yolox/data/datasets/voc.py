@@ -51,7 +51,7 @@ class AnnotationTransform(object):
             difficult = int(obj.find("difficult").text) == 1
             if not self.keep_difficult and difficult:
                 continue
-            name = obj.find("name").text.lower().strip()
+            name = obj.find("name").text.strip()
             bbox = obj.find("bndbox")
 
             pts = ["xmin", "ymin", "xmax", "ymax"]
