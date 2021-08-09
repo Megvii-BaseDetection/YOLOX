@@ -9,7 +9,6 @@ from YOLOX.yolox.data.datasets import COCO_CLASSES
 from yolox.exp import get_exp
 from YOLOX.yolox.utils import postprocess
 from yolox.utils import get_model_info, postprocess, vis
-
 import argparse
 import os
 import time
@@ -31,6 +30,7 @@ def make_parser():
     tsize = 640
     device = "gpu"
     save_result = True
+    radar_data_path = "input/8th_20210615/radar_20210615_144541_XY_2.mat"
 
     parser = argparse.ArgumentParser("YOLOX Demo!")
     parser.add_argument("--demo", default=video_or_image, help="demo type, eg. image video")
@@ -41,6 +41,7 @@ def make_parser():
                         action="store_true",
                         help="whether to save the inference result of image/video",
                         )
+    parser.add_argument('--radar_data_path', default=radar_data_path)
 
     # exp file
     parser.add_argument("-c", "--ckpt", default=ckpt, type=str, help="ckpt for eval")
@@ -242,13 +243,14 @@ def imageflow_demo(predictor, vis_folder, current_time, args):
             break
     cv2.destroyAllWindows()
 
+
 if __name__ == '__main__':
     args = make_parser().parse_args()
     model, exp, decoder, vis_folder = args_analysis(args)
 
     predictor = Predictor(model, exp, COCO_CLASSES, decoder, args.device)
-    current_time = time.localtime()
-    if args.demo == "image":
-        image_demo(predictor, vis_folder, args.path, current_time, args.save_result)
-    elif args.demo == "video":
-        imageflow_demo(predictor, vis_folder, current_time, args)
+    # current_time = time.localtime()
+    # if args.demo == "image":
+    #     image_demo(predictor, vis_folder, args.path, current_time, args.save_result)
+    # elif args.demo == "video":
+    #     imageflow_demo(predictor, vis_folder, current_time, args)
