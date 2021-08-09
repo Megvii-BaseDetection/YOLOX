@@ -12,7 +12,7 @@ import torch.backends.cudnn as cudnn
 
 from yolox.core import Trainer, launch
 from yolox.exp import get_exp
-from yolox.utils import configure_nccl
+from yolox.utils import configure_nccl, configure_omp
 
 
 def make_parser():
@@ -96,6 +96,7 @@ def main(exp, args):
 
     # set environment variables for distributed training
     configure_nccl()
+    configure_omp()
     cudnn.benchmark = True
 
     trainer = Trainer(exp, args)
