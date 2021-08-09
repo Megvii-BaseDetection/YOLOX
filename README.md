@@ -118,10 +118,10 @@ We also support multi-nodes training. Just add the following args:
 When using -f, the above commands are equivalent to:
 
 ```shell
-python tools/train.py -f exps/default/yolox-s.py -d 8 -b 64 --fp16 -o
-                         exps/default/yolox-m.py
-                         exps/default/yolox-l.py
-                         exps/default/yolox-x.py
+python tools/train.py -f exps/default/yolox_s.py -d 8 -b 64 --fp16 -o
+                         exps/default/yolox_m.py
+                         exps/default/yolox_l.py
+                         exps/default/yolox_x.py
 ```
 
 </details>
