@@ -12,6 +12,7 @@ import torch.backends.cudnn as cudnn
 
 from yolox.core import Trainer, launch
 from yolox.exp import get_exp
+from yolox.utils import configure_nccl
 
 
 def make_parser():
@@ -32,9 +33,6 @@ def make_parser():
     parser.add_argument("-b", "--batch-size", type=int, default=64, help="batch size")
     parser.add_argument(
         "-d", "--devices", default=None, type=int, help="device for training"
-    )
-    parser.add_argument(
-        "--local_rank", default=0, type=int, help="local rank for dist training"
     )
     parser.add_argument(
         "-f",
@@ -97,6 +95,7 @@ def main(exp, args):
         )
 
     # set environment variables for distributed training
+    configure_nccl()
     cudnn.benchmark = True
 
     trainer = Trainer(exp, args)
@@ -114,12 +113,13 @@ if __name__ == "__main__":
     num_gpu = torch.cuda.device_count() if args.devices is None else args.devices
     assert num_gpu <= torch.cuda.device_count()
 
+    dist_url = "auto" if args.dist_url is None else args.dist_url
     launch(
         main,
         num_gpu,
         args.num_machines,
         args.machine_rank,
         backend=args.dist_backend,
-        dist_url=args.dist_url,
+        dist_url=dist_url,
         args=(exp, args),
     )
