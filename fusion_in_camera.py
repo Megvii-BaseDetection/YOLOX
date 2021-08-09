@@ -11,9 +11,9 @@ from loguru import logger
 
 
 def process_camera(predictor, frame):
-    outputs, img_info = predictor.inference(frame)
-    result_frame = predictor.visual(outputs[0], img_info, predictor.confthre)
-    return outputs, img_info, result_frame
+    img_outputs, img_info = predictor.inference(frame)
+    img_result, _ = predictor.visual(img_outputs[0], img_info, predictor.confthre)
+    return img_outputs, img_info, img_result
 
 
 def process_radar(read_data, time_factor, cnt):
@@ -24,18 +24,18 @@ def process_radar(read_data, time_factor, cnt):
     if len(radar_frame) > 0:
         for index in range(len(radar_frame)):
             radar_xyz = np.mat(radar_frame[index, 0:3])
-            print('radar_xyz: ')
-            print(radar_xyz)
+            # print('radar_xyz: ')
+            # print(radar_xyz)
 
             # get world
             redar_xyz_in_world = convert_to_world(radar_xyz)
-            print('redar_xyz_in_world: ')
-            print(redar_xyz_in_world)
+            # print('redar_xyz_in_world: ')
+            # print(redar_xyz_in_world)
 
             # get uv
             radar_uv = convert_to_uv(redar_xyz_in_world)
-            print('radar_uv: ')
-            print(radar_uv)
+            # print('radar_uv: ')
+            # print(radar_uv)
             radar_frame_uv.append(radar_uv)
 
     return np.array(radar_frame_uv)
@@ -51,7 +51,7 @@ def get_time_factor(radar_len, video_len):
 
 
 def fusion(outputs, img_info, camera_frame, radar_frame_uv):
-    # FUSION TODO
+    # TODO
 
     # draw
     width = img_info["width"]
@@ -100,15 +100,15 @@ def fusion_in_camera(predictor, radar, vis_folder, args):
         cnt += 1
         ret_val, frame = cap.read()
         if ret_val:
-            outputs, img_info, camera_frame = process_camera(predictor, frame)
+            img_outputs, img_info, img_result = process_camera(predictor, frame)
 
             radar_frame_uv = process_radar(read_data, time_factor, cnt)
 
-            result_frame = fusion(outputs, img_info, camera_frame, radar_frame_uv)
+            img = fusion(img_outputs, img_info, img_result, radar_frame_uv)
 
-            cv2.imshow("Fusion", result_frame)
+            cv2.imshow("Fusion", img)
             if args.save_result:
-                vid_writer.write(result_frame)
+                vid_writer.write(img)
             ch = cv2.waitKey(1)
             if ch == 27 or ch == ord("q") or ch == ord("Q"):
                 break
