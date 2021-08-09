@@ -2,9 +2,9 @@
 # -*- coding:utf-8 -*-
 # Copyright (c) 2014-2021 Megvii Inc. All rights reserved.
 
-import numpy as np
-
 import os
+
+import numpy as np
 
 __all__ = ["mkdir", "nms", "multiclass_nms", "demo_postprocess"]
 

@@ -5,19 +5,20 @@
 # Copyright (c) Facebook, Inc. and its affiliates.
 # Copyright (c) Megvii, Inc. and its affiliates.
 
-from loguru import logger
-
-import torch
-import torch.distributed as dist
-import torch.multiprocessing as mp
-
-import yolox.utils.dist as comm
-from yolox.utils import configure_nccl
-
 import os
 import subprocess
 import sys
 import time
+from loguru import logger
+
+import torch
+import torch.distributed as dist
+
+import yolox.utils.dist as comm
+from yolox.utils import configure_nccl
+
+# import torch.multiprocessing as mp
+
 
 __all__ = ["launch"]
 

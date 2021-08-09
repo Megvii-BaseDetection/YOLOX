@@ -5,9 +5,12 @@
 YOLOX is an anchor-free version of YOLO, with a simpler design but better performance! It aims to bridge the gap between research and industrial communities.
 For more details, please refer to our [report on Arxiv](https://arxiv.org/abs/2107.08430).
 
+This repo is an implementation of PyTorch version YOLOX, there is also a [MegEngine implementation](https://github.com/MegEngine/YOLOX).
+
 <img src="assets/git_fig.png" width="1000" >
 
 ## Updates!!
+* 【2021/08/05】 We release [MegEngine version YOLOX](https://github.com/MegEngine/YOLOX).
 * 【2021/07/28】 We fix the fatal error of [memory leak](https://github.com/Megvii-BaseDetection/YOLOX/issues/103)
 * 【2021/07/26】 We now support [MegEngine](https://github.com/Megvii-BaseDetection/YOLOX/tree/main/demo/MegEngine) deployment.
 * 【2021/07/20】 We have released our technical report on [Arxiv](https://arxiv.org/abs/2107.08430).
@@ -115,10 +118,10 @@ We also support multi-nodes training. Just add the following args:
 When using -f, the above commands are equivalent to:
 
 ```shell
-python tools/train.py -f exps/default/yolox-s.py -d 8 -b 64 --fp16 -o
-                         exps/default/yolox-m.py
-                         exps/default/yolox-l.py
-                         exps/default/yolox-x.py
+python tools/train.py -f exps/default/yolox_s.py -d 8 -b 64 --fp16 -o
+                         exps/default/yolox_m.py
+                         exps/default/yolox_l.py
+                         exps/default/yolox_x.py
 ```
 
 </details>

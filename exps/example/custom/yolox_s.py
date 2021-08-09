@@ -2,7 +2,6 @@
 # -*- coding:utf-8 -*-
 # Copyright (c) Megvii, Inc. and its affiliates.
 import os
-from pathlib import Path
 
 from yolox.exp import Exp as MyExp
 

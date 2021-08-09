@@ -2,12 +2,12 @@
 # -*- coding:utf-8 -*-
 # Copyright (c) Megvii, Inc. and its affiliates.
 
+import os
+import random
+
 import torch
 from torch.utils.data.dataloader import DataLoader as torchDataLoader
 from torch.utils.data.dataloader import default_collate
-
-import os
-import random
 
 from .samplers import YoloBatchSampler
 
