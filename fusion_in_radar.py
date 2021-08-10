@@ -2,6 +2,7 @@ from Fusion.init.args_init import make_parser, args_analysis
 from Fusion.yolox.predictor import Predictor
 from Fusion.radar.radar import Radar
 from Fusion.utils.convert import calculate_depth, convert_to_world
+from Fusion.utils.visualize import draw_distance, draw_in_radar
 from YOLOX.yolox.data.datasets import COCO_CLASSES
 import matplotlib.pyplot as plt
 import cv2
@@ -9,19 +10,6 @@ import time
 import os
 import numpy as np
 from loguru import logger
-
-
-def draw_distance(im, left, top, right, bottom, distance):
-    # 绘制bbox下沿中心坐标
-    y = int(bottom)
-    x = (left + right) // 2
-    cv2.circle(im, (x, y), 4, (255, 178, 50), thickness=-1)
-
-    # 绘制竖直线
-    cv2.line(im, (960, 0), (960, 1080), (0, 0, 255), thickness=1)
-
-    # 绘制distance
-    cv2.putText(im, distance + 'm', (left, bottom + 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 0), 2)
 
 
 def process_camera(predictor, frame):
@@ -73,21 +61,7 @@ def fusion(img_outputs, img_info, img_result, camera_frame, radar_frame):
     # TODO
 
     # draw
-    plt.cla()
-    plt.xlabel('x')
-    plt.ylabel('z')
-    plt.xlim(xmax=50, xmin=-50)
-    plt.ylim(ymax=300, ymin=0)
-    plt.title('Fusion In Radar Coordinate', fontsize='large', fontweight='bold', verticalalignment='center')
-    colors1 = '#00CED1'  # 点的颜色
-    colors2 = '#DC143C'
-    area = np.pi * 4 ** 2  # 点面积
-    if len(camera_frame) > 0:
-        plt.scatter(camera_frame[:, 0], camera_frame[:, 2], s=area, c=colors2, alpha=0.4, label='camera')
-    if len(radar_frame) > 0:
-        plt.scatter(radar_frame[:, 0], radar_frame[:, 2], s=area, c=colors1, alpha=0.4, label='radar')
-    plt.legend()
-    plt.pause(0.0001)
+    draw_in_radar(camera_frame, radar_frame)
 
 
 def fusion_in_radar(predictor, radar, vis_folder, args):
