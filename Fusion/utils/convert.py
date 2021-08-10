@@ -1,10 +1,11 @@
 import math
-
+from scipy import interpolate
 import numpy as np
+import pylab as pl
 
-out_t = [1, 0, 0]  # tx，ty,tz
+out_t = [4, 0, 0]  # tx，ty,tz
 out_angle = [0, 0, 0]  # angle_x，angle_y,angle_z
-in_matrix = [960, 540, 3000, 5500]  # cx,cy,fx,fy
+in_matrix = [960, 540, 3000, 3000]  # cx,cy,fx,fy
 car_height = -4
 camera_height = 9  # 相机地面高度
 camera_angle_a = 5  # 相机光抽和水平线夹角
@@ -92,14 +93,48 @@ def calculate_depth(rect_roi, intrinsics_array=in_matrix):
     x_in_cam = z_in_cam * (x - u0) / fx
     y_in_cam = z_in_cam * (y - v0) / fy
 
-    print('op_img', op_img)
-    print('angle_a', camera_angle_a * pi / 180)
-    print('angle_b', angle_b)
-    print('angle_c', angle_c)
-    print('z_in_cam', z_in_cam)
+    # print('op_img', op_img)
+    # print('angle_a', camera_angle_a * pi / 180)
+    # print('angle_b', angle_b)
+    # print('angle_c', angle_c)
+    # print('z_in_cam', z_in_cam)
 
     # 注意，这里的距离是相机到地面投影的点O距离目标的距离
     # 如果是相机到目标的距离，还需要考虑H
     distance = '%.1f' % z_in_cam
 
     return np.mat([x_in_cam, y_in_cam, z_in_cam]), distance
+
+
+def get_distance(rect_roi):
+    y = np.linspace(0, 900, 10)
+    y_result = [22, 24, 30, 40, 55, 70, 95, 160, 240, 350]
+    ynew = np.linspace(0, 899, 900)
+    f = interpolate.interp1d(y, y_result, kind="quadratic")
+    ynew_result = f(ynew)
+
+    bbox_y = 1080 - int(rect_roi[3])
+    bbox_x = (rect_roi[0] + rect_roi[2]) // 2
+    if bbox_y > 899:
+        bbox_y = 899
+
+    z_in_cam = ynew_result[bbox_y]
+    x_in_cam = (bbox_x - 960) / 1920 * 28
+    y_in_cam = 0
+
+    distance = '%.1f' % z_in_cam
+
+    return np.mat([x_in_cam, y_in_cam, z_in_cam]), distance
+
+
+def nonlinear():
+    y = np.linspace(0, 900, 10)
+    y_result = [0, 5, 12, 20, 30, 45, 70, 100, 160, 300]
+    ynew = np.linspace(0, 899, 900)
+    f = interpolate.interp1d(y, y_result, kind="quadratic")
+    ynew_result = f(ynew)
+    for i in range(len(ynew)):
+        print('ynew', ynew[i], '  ', 'ynew_result', ynew_result[i])
+    # pl.plot(y, y_result, "ro")
+    # pl.plot(ynew, ynew_result, label=str("quadratic"))
+    # pl.show()
