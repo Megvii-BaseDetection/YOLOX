@@ -303,7 +303,7 @@ class Trainer:
 
     def evaluate_and_save_model(self):
         evalmodel = self.ema_model.ema if self.use_model_ema else self.model
-        ap50_95, ap50, summary, per_category_summary = self.exp.eval(
+        ap50_95, ap50, summary = self.exp.eval(
             evalmodel, self.evaluator, self.is_distributed
         )
         self.model.train()
@@ -311,7 +311,6 @@ class Trainer:
             self.tblogger.add_scalar("val/COCOAP50", ap50, self.epoch + 1)
             self.tblogger.add_scalar("val/COCOAP50_95", ap50_95, self.epoch + 1)
             logger.info("\n" + summary)
-            logger.info("\n" + per_category_summary)
         synchronize()
 
         self.save_ckpt("last_epoch", ap50_95 > self.best_ap)
