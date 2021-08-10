@@ -43,6 +43,7 @@ def draw_distance(im, left, top, right, bottom, distance):
     cv2.circle(im, (x, y), 4, (255, 178, 50), thickness=-1)
 
     # 绘制竖直线
+    # cv2.line(im, (990, 295), (550, 1080), (0, 0, 255), thickness=1)
     cv2.line(im, (960, 0), (960, 1080), (0, 0, 255), thickness=1)
 
     # 绘制distance
@@ -53,7 +54,7 @@ def draw_in_radar(camera_frame, radar_frame):
     plt.cla()
     plt.xlabel('x')
     plt.ylabel('z')
-    plt.xlim(xmax=50, xmin=-50)
+    plt.xlim(xmax=30, xmin=-30)
     plt.ylim(ymax=300, ymin=0)
     plt.title('Fusion In Radar Coordinate', fontsize='large', fontweight='bold', verticalalignment='center')
     colors1 = '#00CED1'  # 点的颜色
@@ -64,7 +65,7 @@ def draw_in_radar(camera_frame, radar_frame):
     if len(radar_frame) > 0:
         plt.scatter(radar_frame[:, 0], radar_frame[:, 2], s=area, c=colors1, alpha=0.4, label='radar')
     plt.legend()
-    plt.pause(0.0001)
+    plt.pause(0.01)
 
 
 _COLORS = np.array(

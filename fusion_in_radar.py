@@ -1,7 +1,7 @@
 from Fusion.init.args_init import make_parser, args_analysis
 from Fusion.yolox.predictor import Predictor
 from Fusion.radar.radar import Radar
-from Fusion.utils.convert import calculate_depth, convert_to_world, get_distance
+from Fusion.utils.convert import calculate_depth, convert_to_world
 from Fusion.utils.visualize import draw_distance, draw_in_radar
 from YOLOX.yolox.data.datasets import COCO_CLASSES
 import matplotlib.pyplot as plt
@@ -25,8 +25,7 @@ def process_camera(predictor, frame):
 
             # get camera
             rect_roi = [left, top, right, bottom]
-            # camera_xyz, distance = calculate_depth(rect_roi)
-            camera_xyz, distance = get_distance(rect_roi)
+            camera_xyz, distance = calculate_depth(rect_roi)
             # print('camera_xyz: ')
             # print(camera_xyz)
 
