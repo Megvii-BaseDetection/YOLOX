@@ -7,6 +7,8 @@ from copy import deepcopy
 import torch
 import torch.nn as nn
 
+__all__ = ["ModelEMA", "is_parallel"]
+
 
 def is_parallel(model):
     """check if model is in parallel mode."""

@@ -109,19 +109,28 @@ python tools/train.py -n yolox-s -d 8 -b 64 --fp16 -o
 * -b: total batch size, the recommended number for -b is num-gpu * 8
 * --fp16: mixed precision training
 
+When using -f, the above commands are equivalent to:
+```shell
+python tools/train.py -f exps/default/yolox_s.py -d 8 -b 64 --fp16 -o
+                         exps/default/yolox_m.py
+                         exps/default/yolox_l.py
+                         exps/default/yolox_x.py
+```
+  
 **Multi Machine Training**
 
 We also support multi-nodes training. Just add the following args:
 * --num\_machines: num of your total training nodes
 * --machine\_rank: specify the rank of each node
 
-When using -f, the above commands are equivalent to:
-
+Suppose you want to train YOLOX on 2 machines, and your master machines's IP is 123.123.123.123, use port 12312 and TCP.  
+On master machine, run
 ```shell
-python tools/train.py -f exps/default/yolox_s.py -d 8 -b 64 --fp16 -o
-                         exps/default/yolox_m.py
-                         exps/default/yolox_l.py
-                         exps/default/yolox_x.py
+python tools/train.py -n yolox-s -b 128 --dist-url tcp://123.123.123.123:12312 --num-machines 2 --machine-rank 0
+```
+On the second machine, run
+```shell
+python tools/train.py -n yolox-s -b 128 --dist-url tcp://123.123.123.123:12312 --num-machines 2 --machine-rank 1
 ```
 
 </details>
@@ -153,7 +162,7 @@ python tools/eval.py -n  yolox-s -c yolox_s.pth -b 1 -d 1 --conf 0.001 --fp16 --
 </details>
 
 
-<details open>
+<details>
 <summary>Tutorials</summary>
 
 *  [Training on custom data](docs/train_custom_data.md).
