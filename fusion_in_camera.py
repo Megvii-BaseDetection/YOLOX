@@ -75,7 +75,7 @@ def fusion_in_camera(predictor, radar, vis_folder, args):
 
     # save
     save_folder = os.path.join(
-        vis_folder, time.strftime("%Y_%m_%d_%H_%M_%S", current_time)
+        vis_folder, time.strftime("fusion_in_camera/%Y_%m_%d_%H_%M_%S", current_time)
     )
     os.makedirs(save_folder, exist_ok=True)
     save_path = os.path.join(save_folder, args.path.split("/")[-1])
