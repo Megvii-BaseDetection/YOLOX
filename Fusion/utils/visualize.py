@@ -61,9 +61,9 @@ def draw_in_radar(camera_frame, radar_frame):
     colors2 = '#DC143C'
     area = np.pi * 4 ** 2  # 点面积
     if len(camera_frame) > 0:
-        plt.scatter(camera_frame[:, 0], camera_frame[:, 2], s=area, c=colors2, alpha=0.4, label='camera')
+        plt.scatter(camera_frame[:, 0], camera_frame[:, 2], s=area, c=colors1, alpha=0.4, label='camera')
     if len(radar_frame) > 0:
-        plt.scatter(radar_frame[:, 0], radar_frame[:, 2], s=area, c=colors1, alpha=0.4, label='radar')
+        plt.scatter(radar_frame[:, 0], radar_frame[:, 2], s=area, c=colors2, alpha=0.4, label='radar')
     plt.legend()
     plt.pause(0.01)
 

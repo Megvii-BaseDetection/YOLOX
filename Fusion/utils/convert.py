@@ -107,11 +107,11 @@ def convert_to_uv(xyz_in_camera, intrinsics_array=in_matrix):
 
 
 def calculate_depth(rect_roi, intrinsics_array=in_matrix):
-    y = np.linspace(0, 900, 10)
-    y_result = [22, 24, 30, 40, 52, 67, 85, 180, 400, 700]
-    ynew = np.linspace(0, 899, 900)
-    fy = interpolate.interp1d(y, y_result, kind="quadratic")
-    ynew_result = fy(ynew)
+    y_in = np.linspace(0, 900, 10)
+    y_result = [22, 25, 32, 42, 55, 70, 100, 200, 470, 800]
+    y_new = np.linspace(0, 899, 900)
+    fy = interpolate.interp1d(y_in, y_result, kind="quadratic")
+    y_new_result = fy(y_new)
 
     u0 = intrinsics_array[0]
     v0 = intrinsics_array[1]
@@ -124,7 +124,7 @@ def calculate_depth(rect_roi, intrinsics_array=in_matrix):
     if y > 899:
         y = 899
 
-    z_in_cam = ynew_result[2 * v0 - y]
+    z_in_cam = y_new_result[2 * v0 - y]
     x_in_cam = z_in_cam * (x - u0) / fx
     y_in_cam = z_in_cam * (y - v0) / fy
 
