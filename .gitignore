@@ -208,6 +208,7 @@ docs/api
 *.npy
 *.pth
 *.onnx
+*.engine
 events.out.tfevents*
 
 # vscode
