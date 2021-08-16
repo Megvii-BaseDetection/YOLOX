@@ -2,7 +2,8 @@ from Fusion.init.args_init import make_parser, args_analysis
 from Fusion.yolox.predictor import Predictor
 from Fusion.radar.radar import Radar
 from Fusion.utils.convert import calculate_depth, convert_to_world
-from Fusion.utils.visualize import draw_distance, draw_in_radar
+from Fusion.utils.visualize import draw_distance
+from Fusion.fusion_in_radar.fusion import porcess_fusion
 from YOLOX.yolox.data.datasets import COCO_CLASSES
 import matplotlib.pyplot as plt
 import cv2
@@ -14,10 +15,18 @@ from loguru import logger
 
 def process_camera(predictor, frame):
     img_outputs, img_info = predictor.inference(frame)
-    img_result, bboxes = predictor.visual(img_outputs[0], img_info, predictor.confthre)
-    camera_frame = []
+    img_result, bboxes, cls, scores = predictor.visual(img_outputs[0], img_info, predictor.confthre)
+    camera_frame, camera_class, camera_scores = [], [], []
     if len(bboxes) > 0:
         for index in range(len(bboxes)):
+
+            score = scores[index]
+            if score < predictor.confthre:
+                continue
+
+            cls_id = int(cls[index])
+            class_name = COCO_CLASSES[cls_id]
+
             left = int(bboxes[index, 0])
             top = int(bboxes[index, 1])
             right = int(bboxes[index, 2])
@@ -26,20 +35,21 @@ def process_camera(predictor, frame):
             # get camera
             rect_roi = [left, top, right, bottom]
             camera_xyz, distance = calculate_depth(rect_roi)
-            # print('camera_xyz: ')
-            # print(camera_xyz)
 
             # get world
             camera_xyz_in_world = convert_to_world(camera_xyz)
-            # print('camera_xyz_in_world: ')
-            # print(camera_xyz_in_world)
 
+            # append
             camera_frame.append([camera_xyz_in_world[0, 0],
                                  camera_xyz_in_world[0, 1],
                                  camera_xyz_in_world[0, 2]])
+            camera_scores.append(score)
+            camera_class.append(class_name)
+
+            # draw
             draw_distance(img_result, left, top, right, bottom, distance)
 
-    return img_outputs, img_info, img_result, np.array(camera_frame)
+    return img_result, np.array(camera_frame), np.array(camera_scores), np.array(camera_class)
 
 
 def process_radar(read_data, time_factor, cnt):
@@ -55,13 +65,6 @@ def get_time_factor(radar_len, video_len):
         return 0
     factor = (video_len + 1) / radar_len
     return factor
-
-
-def fusion(img_outputs, img_info, img_result, camera_frame, radar_frame):
-    # TODO
-
-    # draw
-    draw_in_radar(camera_frame, radar_frame)
 
 
 def fusion_in_radar(predictor, radar, vis_folder, args):
@@ -100,11 +103,11 @@ def fusion_in_radar(predictor, radar, vis_folder, args):
         cnt += 1
         ret_val, frame = cap.read()
         if ret_val:
-            img_outputs, img_info, img_result, camera_frame = process_camera(predictor, frame)
+            img_result, camera_frame, camera_scores, camera_class = process_camera(predictor, frame)
 
             radar_frame = process_radar(read_data, time_factor, cnt)
 
-            fusion(img_outputs, img_info, img_result, camera_frame, radar_frame)
+            porcess_fusion(camera_frame, camera_scores, camera_class, radar_frame)
 
             cv2.imshow("Fusion", img_result)
             if args.save_result:

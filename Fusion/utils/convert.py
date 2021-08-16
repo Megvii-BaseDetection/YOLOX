@@ -3,7 +3,7 @@ from scipy import interpolate
 import numpy as np
 import pylab as pl
 
-out_t = [-3, 0, 0]  # tx，ty,tz
+out_t = [3, 0, 0]  # tx，ty,tz
 out_angle = [0, 0, 0]  # angle_x，angle_y,angle_z
 in_matrix = [960, 540, 3500, 3000]  # cx,cy,fx,fy
 

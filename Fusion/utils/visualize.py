@@ -50,23 +50,68 @@ def draw_distance(im, left, top, right, bottom, distance):
     cv2.putText(im, distance + 'm', (left, bottom + 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 0), 2)
 
 
-def draw_in_radar(camera_frame, radar_frame):
+def draw_in_radar(camera_frame, camera_class, radar_frame, fusion_frame, fusion_class):
+    xmax = 40
+    xmin = -40
+    ymax = 200
+    ymin = 0
+    factor = (ymax - ymin) / (xmax - xmin)
     plt.cla()
     plt.xlabel('x')
     plt.ylabel('z')
-    plt.xlim(xmax=30, xmin=-30)
-    plt.ylim(ymax=300, ymin=0)
+    plt.xlim(xmax=xmax, xmin=xmin)
+    plt.ylim(ymax=ymax, ymin=ymin)
     plt.title('Fusion In Radar Coordinate', fontsize='large', fontweight='bold', verticalalignment='center')
-    colors1 = '#00CED1'  # 点的颜色
-    colors2 = '#DC143C'
+    colors0 = '#DC143C'
+    colors1 = '#00CED1'
+    colors2 = '#001531'
     area = np.pi * 4 ** 2  # 点面积
-    if len(camera_frame) > 0:
-        plt.scatter(camera_frame[:, 0], camera_frame[:, 2], s=area, c=colors1, alpha=0.4, label='camera')
+
     if len(radar_frame) > 0:
-        plt.scatter(radar_frame[:, 0], radar_frame[:, 2], s=area, c=colors2, alpha=0.4, label='radar')
+        plt.scatter(radar_frame[:, 0], radar_frame[:, 2], s=area, c=colors0, alpha=0.4, label='radar')
+    if len(camera_frame) > 0:
+        draw_rectangle(camera_frame, camera_class, factor, colors1, 'camera')
+    if len(fusion_frame) > 0:
+        draw_rectangle(fusion_frame, fusion_class, factor, colors2, 'fusion')
+
     plt.legend()
     plt.pause(0.01)
 
+
+def draw_rectangle(frame, classes, factor, color, label):
+    for index in range(len(frame)):
+        x = frame[index, 0]
+        z = frame[index, 2]
+        class_name = classes[index]
+
+        if class_name in _CLASS_SIZE:
+            width = _CLASS_SIZE.get(class_name)[0]
+            height = _CLASS_SIZE.get(class_name)[1]
+            left_down_x = x - width / 2
+            left_down_z = z - height / 2
+            if z < 60:
+                width, height = height, width
+            if index == 0:
+                plt.gca().add_patch(plt.Rectangle(xy=(left_down_x, left_down_z),
+                                                  width=width,
+                                                  height=height * factor,
+                                                  edgecolor=color,
+                                                  fill=False, linewidth=1, label=label))
+            else:
+                plt.gca().add_patch(plt.Rectangle(xy=(left_down_x, left_down_z),
+                                                  width=width,
+                                                  height=height * factor,
+                                                  edgecolor=color,
+                                                  fill=False, linewidth=1))
+
+
+_CLASS_SIZE = {
+    'car': [2, 4],
+    'truck': [3, 6],
+    'bus': [4, 10],
+    'people': [1, 1.5],
+    'motorcycle': [1, 1.5]
+}
 
 _COLORS = np.array(
     [
