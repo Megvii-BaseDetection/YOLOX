@@ -84,7 +84,7 @@ def fusion(related_data, camera_class, camera_scores, camera_frame):
     return np.array(fusion_frame), np.array(fusion_class)
 
 
-def porcess_fusion(camera_frame, camera_scores, camera_class, radar_frame):
+def process_fusion(camera_frame, camera_scores, camera_class, radar_frame):
     # filter,only save two car line
     camera_frame, camera_scores, camera_class, radar_frame, roi = filter_two_line(
         camera_frame, camera_scores, camera_class, radar_frame)

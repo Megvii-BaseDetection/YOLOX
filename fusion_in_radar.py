@@ -3,7 +3,7 @@ from Fusion.yolox.predictor import Predictor
 from Fusion.radar.radar import Radar
 from Fusion.utils.convert import calculate_depth, convert_to_world
 from Fusion.utils.visualize import draw_distance
-from Fusion.fusion_in_radar.fusion import porcess_fusion
+from Fusion.fusion_in_radar.fusion import process_fusion
 from YOLOX.yolox.data.datasets import COCO_CLASSES
 import matplotlib.pyplot as plt
 import cv2
@@ -107,7 +107,7 @@ def fusion_in_radar(predictor, radar, vis_folder, args):
 
             radar_frame = process_radar(read_data, time_factor, cnt)
 
-            porcess_fusion(camera_frame, camera_scores, camera_class, radar_frame)
+            process_fusion(camera_frame, camera_scores, camera_class, radar_frame)
 
             cv2.imshow("Fusion", img_result)
             if args.save_result:
