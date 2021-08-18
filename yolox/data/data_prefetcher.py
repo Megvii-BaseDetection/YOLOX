@@ -4,6 +4,7 @@
 
 import torch
 
+
 class DataPrefetcher:
     """
     DataPrefetcher is inspired by code of following file:

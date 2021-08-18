@@ -6,7 +6,6 @@ import random
 
 import cv2
 import numpy as np
-import datetime
 
 from yolox.utils import adjust_box_anns, get_local_rank
 
@@ -41,7 +40,7 @@ class MosaicDetection(Dataset):
     def __init__(
         self, dataset, img_size, mosaic=True, preproc=None,
         degrees=10.0, translate=0.1, scale=(0.5, 1.5), mscale=(0.5, 1.5),
-        shear=2.0, perspective=0.0, enable_mixup=True, 
+        shear=2.0, perspective=0.0, enable_mixup=True,
         mosaic_prob=1.0, mixup_prob=1.0, *args
     ):
         """

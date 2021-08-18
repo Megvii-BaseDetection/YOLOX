@@ -526,7 +526,7 @@ class YOLOXHead(nn.Module):
             cv2.circle(img, (int(coord[0]), int(coord[1])), 3, (255,0,0), -1)
         for bbox in gt_bboxes_per_image:
             cv2.rectangle(
-                img, 
+                img,
                 (int(bbox[0]-bbox[2]/2),int(bbox[1]-bbox[3]/2)),
                 (int(bbox[0]+bbox[2]/2),int(bbox[1]+bbox[3]/2)),
                 (0,255,0), 2
