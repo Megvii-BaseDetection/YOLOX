@@ -1,6 +1,6 @@
 # YOLOX-OpenVINO in Python
 
-This toturial includes a Python demo for OpenVINO, as well as some converted models.
+This tutorial includes a Python demo for OpenVINO, as well as some converted models.
 
 ### Download OpenVINO models.
 

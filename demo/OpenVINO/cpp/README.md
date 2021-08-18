@@ -1,6 +1,6 @@
 # YOLOX-OpenVINO in C++
 
-This toturial includes a C++ demo for OpenVINO, as well as some converted models.
+This tutorial includes a C++ demo for OpenVINO, as well as some converted models.
 
 ### Download OpenVINO models.
 
