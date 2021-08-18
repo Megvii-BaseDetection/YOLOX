@@ -9,10 +9,12 @@ This file contains primitives for multi-gpu communication.
 This is useful when doing distributed training.
 """
 
+import os
 import functools
-import logging
 import pickle
 import time
+from contextlib import contextmanager
+from loguru import logger
 
 import numpy as np
 
@@ -20,6 +22,8 @@ import torch
 from torch import distributed as dist
 
 __all__ = [
+    "get_num_devices",
+    "torch_distributed_zero_first",
     "is_main_process",
     "synchronize",
     "get_world_size",
@@ -32,6 +36,33 @@ __all__ = [
 ]
 
 _LOCAL_PROCESS_GROUP = None
+
+
+def get_num_devices():
+    gpu_list = os.getenv('CUDA_VISIBLE_DEVICES', None)
+    if gpu_list is not None:
+        return len(gpu_list.split(','))
+    else:
+        devices_list_info = os.popen("nvidia-smi -L")
+        devices_list_info = devices_list_info.read().strip().split("\n")
+        return len(devices_list_info)
+
+
+@contextmanager
+def torch_distributed_zero_first(local_rank: int):
+    """
+    Decorator to make all processes in distributed training wait for each local_master to do something.
+    """
+    if local_rank not in [-1, 0]:
+        dist.barrier()
+    yield
+    if local_rank == 0:
+        if not dist.is_available():
+            return
+        if not dist.is_initialized():
+            return
+        else:
+            dist.barrier()
 
 
 def synchronize():
@@ -112,7 +143,6 @@ def _serialize_to_tensor(data, group):
 
     buffer = pickle.dumps(data)
     if len(buffer) > 1024 ** 3:
-        logger = logging.getLogger(__name__)
         logger.warning(
             "Rank {} trying to all-gather {:.2f} GB of data on device {}".format(
                 get_rank(), len(buffer) / (1024 ** 3), device

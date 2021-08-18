@@ -107,8 +107,6 @@ class Predictor(object):
         self.confthre = confthre
         self.nmsthre = nmsthre
         self.test_size = test_size
-        self.rgb_means = (0.485, 0.456, 0.406)
-        self.std = (0.229, 0.224, 0.225)
 
     def inference(self, img):
         img_info = {"id": 0}
@@ -125,7 +123,7 @@ class Predictor(object):
         img_info["width"] = width
         img_info["raw_img"] = img
 
-        img, ratio = preprocess(img, self.test_size, self.rgb_means, self.std)
+        img, ratio = preprocess(img, self.test_size)
         img_info["ratio"] = ratio
         img = F.expand_dims(mge.tensor(img), 0)
 

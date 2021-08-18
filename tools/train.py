@@ -12,7 +12,7 @@ import torch.backends.cudnn as cudnn
 
 from yolox.core import Trainer, launch
 from yolox.exp import get_exp
-from yolox.utils import configure_nccl, configure_omp
+from yolox.utils import configure_nccl, configure_omp, get_num_devices
 
 
 def make_parser():
@@ -66,6 +66,13 @@ def make_parser():
         help="Adopting mix precision training.",
     )
     parser.add_argument(
+        "--cache",
+        dest="cache",
+        default=False,
+        action="store_true",
+        help="Caching imgs to RAM for fast training.",
+    )
+    parser.add_argument(
         "-o",
         "--occupy",
         dest="occupy",
@@ -111,8 +118,8 @@ if __name__ == "__main__":
     if not args.experiment_name:
         args.experiment_name = exp.exp_name
 
-    num_gpu = torch.cuda.device_count() if args.devices is None else args.devices
-    assert num_gpu <= torch.cuda.device_count()
+    num_gpu = get_num_devices() if args.devices is None else args.devices
+    assert num_gpu <= get_num_devices()
 
     dist_url = "auto" if args.dist_url is None else args.dist_url
     launch(

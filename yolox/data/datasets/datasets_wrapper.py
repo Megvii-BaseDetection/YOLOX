@@ -87,41 +87,27 @@ class Dataset(torchDataset):
         return self.__input_dim
 
     @staticmethod
-    def resize_getitem(getitem_fn):
+    def mosaic_getitem(getitem_fn):
         """
         Decorator method that needs to be used around the ``__getitem__`` method. |br|
-        This decorator enables the on the fly resizing of
-        the ``input_dim`` with our :class:`~lightnet.data.DataLoader` class.
+        This decorator enables the closing mosaic
 
         Example:
             >>> class CustomSet(ln.data.Dataset):
             ...     def __len__(self):
             ...         return 10
-            ...     @ln.data.Dataset.resize_getitem
+            ...     @ln.data.Dataset.mosaic_getitem
             ...     def __getitem__(self, index):
-            ...         # Should return (image, anno) but here we return input_dim
-            ...         return self.input_dim
-            >>> data = CustomSet((200,200))
-            >>> data[0]
-            (200, 200)
-            >>> data[(480,320), 0]
-            (480, 320)
+            ...         return self.enable_mosaic
         """
 
         @wraps(getitem_fn)
         def wrapper(self, index):
             if not isinstance(index, int):
-                has_dim = True
-                self._input_dim = index[0]
-                self.enable_mosaic = index[2]
+                self.enable_mosaic = index[0]
                 index = index[1]
-            else:
-                has_dim = False
 
             ret_val = getitem_fn(self, index)
-
-            if has_dim:
-                del self._input_dim
 
             return ret_val
 

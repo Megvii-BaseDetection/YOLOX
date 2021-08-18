@@ -10,15 +10,7 @@ cd YOLOX
 pip3 install -U pip && pip3 install -r requirements.txt
 pip3 install -v -e .  # or  python3 setup.py develop
 ```
-Step2. Install [apex](https://github.com/NVIDIA/apex).
-
-```shell
-# skip this step if you don't want to train model.
-git clone https://github.com/NVIDIA/apex
-cd apex
-pip3 install -v --disable-pip-version-check --no-cache-dir --global-option="--cpp_ext" --global-option="--cuda_ext" ./
-```
-Step3. Install [pycocotools](https://github.com/cocodataset/cocoapi).
+Step2. Install [pycocotools](https://github.com/cocodataset/cocoapi).
 
 ```shell
 pip3 install cython; pip3 install 'git+https://github.com/cocodataset/cocoapi.git#subdirectory=PythonAPI'
@@ -54,7 +46,7 @@ ln -s /path/to/your/COCO ./datasets/COCO
 Step2. Reproduce our results on COCO by specifying -n:
 
 ```shell
-python tools/train.py -n yolox-s -d 8 -b 64 --fp16 -o
+python tools/train.py -n yolox-s -d 8 -b 64 --fp16 -o [--cache]
                          yolox-m
                          yolox-l
                          yolox-x
@@ -62,6 +54,7 @@ python tools/train.py -n yolox-s -d 8 -b 64 --fp16 -o
 * -d: number of gpu devices
 * -b: total batch size, the recommended number for -b is num-gpu * 8
 * --fp16: mixed precision training
+* --cache: caching imgs into RAM to accelarate training, which need large system RAM.
 
 **Multi Machine Training**
 
@@ -72,7 +65,7 @@ We also support multi-nodes training. Just add the following args:
 When using -f, the above commands are equivalent to:
 
 ```shell
-python tools/train.py -f exps/default/yolox-s.py -d 8 -b 64 --fp16 -o
+python tools/train.py -f exps/default/yolox-s.py -d 8 -b 64 --fp16 -o [--cache]
                          exps/default/yolox-m.py
                          exps/default/yolox-l.py
                          exps/default/yolox-x.py

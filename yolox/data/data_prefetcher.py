@@ -54,24 +54,3 @@ class DataPrefetcher:
     @staticmethod
     def _record_stream_for_image(input):
         input.record_stream(torch.cuda.current_stream())
-
-
-def random_resize(data_loader, exp, epoch, rank, is_distributed):
-    tensor = torch.LongTensor(1).cuda()
-    if is_distributed:
-        synchronize()
-
-    if rank == 0:
-        if epoch > exp.max_epoch - 10:
-            size = exp.input_size
-        else:
-            size = random.randint(*exp.random_size)
-            size = int(32 * size)
-        tensor.fill_(size)
-
-    if is_distributed:
-        synchronize()
-        dist.broadcast(tensor, 0)
-
-    input_size = data_loader.change_input_dim(multiple=tensor.item(), random_range=None)
-    return input_size

@@ -76,6 +76,13 @@ def make_parser():
         help="Using TensorRT model for testing.",
     )
     parser.add_argument(
+        "--legacy",
+        dest="legacy",
+        default=False,
+        action="store_true",
+        help="To be compatible with older versions",
+    )
+    parser.add_argument(
         "--test",
         dest="test",
         default=False,
@@ -135,7 +142,7 @@ def main(exp, args, num_gpu):
     logger.info("Model Summary: {}".format(get_model_info(model, exp.test_size)))
     logger.info("Model Structure:\n{}".format(str(model)))
 
-    evaluator = exp.get_evaluator(args.batch_size, is_distributed, args.test)
+    evaluator = exp.get_evaluator(args.batch_size, is_distributed, args.test, args.legacy)
 
     torch.cuda.set_device(rank)
     model.cuda(rank)
