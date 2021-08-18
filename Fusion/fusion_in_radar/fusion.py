@@ -84,16 +84,18 @@ def fusion(related_data, camera_class, camera_scores, camera_frame):
     return np.array(fusion_frame), np.array(fusion_class)
 
 
-def process_fusion(camera_frame, camera_scores, camera_class, radar_frame):
+def process_fusion(camera_frame, camera_scores, camera_class, radar_frame, mode):
     # filter,only save two car line
-    camera_frame, camera_scores, camera_class, radar_frame, roi = filter_two_line(
+    c_frame, c_scores, c_class, r_frame, roi = filter_two_line(
         camera_frame, camera_scores, camera_class, radar_frame)
 
     # association
-    related_data = association(camera_frame, camera_class, radar_frame, 0)
+    related_data = association(c_frame, c_class, r_frame, mode)
 
     # fusion
-    fusion_frame, fusion_class = fusion(related_data, camera_class, camera_scores, camera_frame)
+    fusion_frame, fusion_class = fusion(related_data, c_class, c_scores, c_frame)
 
     # draw
-    draw_in_radar(camera_frame, camera_class, radar_frame, fusion_frame, fusion_class, roi)
+    draw_in_radar(c_frame, c_class, r_frame, fusion_frame, fusion_class, roi)
+
+    return fusion_frame, fusion_class

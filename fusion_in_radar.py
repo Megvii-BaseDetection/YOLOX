@@ -4,6 +4,7 @@ from Fusion.radar.radar import Radar
 from Fusion.utils.convert import calculate_depth, convert_to_world
 from Fusion.utils.visualize import draw_distance
 from Fusion.fusion_in_radar.fusion import process_fusion
+from Fusion.save.save import Saver
 from YOLOX.yolox.data.datasets import COCO_CLASSES
 import matplotlib.pyplot as plt
 import cv2
@@ -75,7 +76,7 @@ def fusion_in_radar(predictor, radar, vis_folder, args):
     height = cap.get(cv2.CAP_PROP_FRAME_HEIGHT)  # float
     fps = cap.get(cv2.CAP_PROP_FPS)
 
-    # save
+    # save mp4
     save_folder = os.path.join(
         vis_folder, time.strftime("fusion_in_radar/%Y_%m_%d_%H_%M_%S", current_time)
     )
@@ -87,6 +88,12 @@ def fusion_in_radar(predictor, radar, vis_folder, args):
     vid_writer = cv2.VideoWriter(
         save_path, cv2.VideoWriter_fourcc(*"mp4v"), fps, (int(width), int(height))
     )
+
+    # we or euclidean_distance or ...(0,1...)
+    mode = 0
+
+    # save_init
+    saver = Saver(current_time, mode)
 
     # radar
     read_data = radar.read_data()
@@ -107,7 +114,10 @@ def fusion_in_radar(predictor, radar, vis_folder, args):
 
             radar_frame = process_radar(read_data, time_factor, cnt)
 
-            process_fusion(camera_frame, camera_scores, camera_class, radar_frame)
+            fusion_frame, fusion_class = process_fusion(
+                camera_frame, camera_scores, camera_class, radar_frame, mode)
+
+            saver.fusion_save(fusion_frame, fusion_class, cnt)
 
             cv2.imshow("Fusion", img_result)
             if args.save_result:
@@ -120,6 +130,7 @@ def fusion_in_radar(predictor, radar, vis_folder, args):
             break
     cap.release()
     cv2.destroyAllWindows()
+    saver.fusion_csv_f.close()
 
 
 if __name__ == '__main__':
