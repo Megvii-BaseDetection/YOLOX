@@ -2,6 +2,7 @@ import numpy as np
 import math
 from Fusion.utils.visualize import draw_in_radar
 from Fusion.utils.visualize import _CLASS_SIZE
+from Fusion.fusion_in_radar.filter import filter_two_line
 
 
 def get_euclidean_distance(x, y):
@@ -9,7 +10,7 @@ def get_euclidean_distance(x, y):
     return d
 
 
-def association(camera_frame, camera_class, radar_frame):
+def association(camera_frame, camera_class, radar_frame, mode):
     euclidean_threshold = 5
     euclidean_distance = np.zeros((len(camera_frame), len(radar_frame)))
     related_data = np.zeros((4, len(camera_frame), len(radar_frame)))  # x,z,v,e
@@ -34,19 +35,21 @@ def association(camera_frame, camera_class, radar_frame):
                     np.array([radar_x, radar_z])
                 )
                 # we
-                if math.fabs(x - radar_x) < width and math.fabs(z - radar_z) < height:
-                    related_data[0][c][r] = radar_x
-                    related_data[1][c][r] = radar_z
-                    related_data[2][c][r] = radar_v
-                    related_data[3][c][r] = radar_e
+                if mode == 0:
+                    if math.fabs(x - radar_x) < width and math.fabs(z - radar_z) < height:
+                        related_data[0][c][r] = radar_x
+                        related_data[1][c][r] = radar_z
+                        related_data[2][c][r] = radar_v
+                        related_data[3][c][r] = radar_e
 
                 # euclidean_distance
-                # dis = euclidean_distance[c][r]
-                # if 0 < dis < euclidean_threshold:
-                #     related_data[0][c][r] = radar_x
-                #     related_data[1][c][r] = radar_z
-                #     related_data[2][c][r] = radar_v
-                #     related_data[3][c][r] = radar_e
+                elif mode == 1:
+                    dis = euclidean_distance[c][r]
+                    if 0 < dis < euclidean_threshold:
+                        related_data[0][c][r] = radar_x
+                        related_data[1][c][r] = radar_z
+                        related_data[2][c][r] = radar_v
+                        related_data[3][c][r] = radar_e
 
     return related_data
 
@@ -82,11 +85,15 @@ def fusion(related_data, camera_class, camera_scores, camera_frame):
 
 
 def porcess_fusion(camera_frame, camera_scores, camera_class, radar_frame):
+    # filter,only save two car line
+    camera_frame, camera_scores, camera_class, radar_frame, roi = filter_two_line(
+        camera_frame, camera_scores, camera_class, radar_frame)
+
     # association
-    related_data = association(camera_frame, camera_class, radar_frame)
+    related_data = association(camera_frame, camera_class, radar_frame, 0)
 
     # fusion
     fusion_frame, fusion_class = fusion(related_data, camera_class, camera_scores, camera_frame)
 
     # draw
-    draw_in_radar(camera_frame, camera_class, radar_frame, fusion_frame, fusion_class)
+    draw_in_radar(camera_frame, camera_class, radar_frame, fusion_frame, fusion_class, roi)

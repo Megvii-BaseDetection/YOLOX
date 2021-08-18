@@ -44,13 +44,13 @@ def draw_distance(im, left, top, right, bottom, distance):
 
     # 绘制竖直线
     # cv2.line(im, (990, 295), (550, 1080), (0, 0, 255), thickness=1)
-    cv2.line(im, (960, 0), (960, 1080), (0, 0, 255), thickness=1)
+    # cv2.line(im, (960, 0), (960, 1080), (0, 0, 255), thickness=1)
 
     # 绘制distance
     cv2.putText(im, distance + 'm', (left, bottom + 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 0), 2)
 
 
-def draw_in_radar(camera_frame, camera_class, radar_frame, fusion_frame, fusion_class):
+def draw_in_radar(camera_frame, camera_class, radar_frame, fusion_frame, fusion_class, roi):
     xmax = 40
     xmin = -40
     ymax = 200
@@ -64,8 +64,11 @@ def draw_in_radar(camera_frame, camera_class, radar_frame, fusion_frame, fusion_
     plt.title('Fusion In Radar Coordinate', fontsize='large', fontweight='bold', verticalalignment='center')
     colors0 = '#DC143C'
     colors1 = '#00CED1'
-    colors2 = '#001531'
+    colors2 = '#800000'
+    colors3 = '#000000'
     area = np.pi * 4 ** 2  # 点面积
+
+    draw_roi(roi, colors3)
 
     if len(radar_frame) > 0:
         plt.scatter(radar_frame[:, 0], radar_frame[:, 2], s=area, c=colors0, alpha=0.4, label='radar')
@@ -76,6 +79,20 @@ def draw_in_radar(camera_frame, camera_class, radar_frame, fusion_frame, fusion_
 
     plt.legend()
     plt.pause(0.01)
+
+
+def draw_roi(roi, color):
+    x0, z0 = roi[0], roi[1]
+    x1, z1 = roi[2], roi[3]
+    left_down_x = x0
+    left_down_z = z1
+    width = x1 - x0
+    height = z0 - z1
+    plt.gca().add_patch(plt.Rectangle(xy=(left_down_x, left_down_z),
+                                      width=width,
+                                      height=height,
+                                      edgecolor=color,
+                                      fill=False, linewidth=1, linestyle='--'))
 
 
 def draw_rectangle(frame, classes, factor, color, label):

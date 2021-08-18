@@ -15,8 +15,8 @@ def make_parser():
     ckpt = 'model/yolox_s.pth'
     video_or_image = "video"
     video_path = "input/8th_20210615/radar_20210615_144541.mp4"
-    conf = 0.3
-    nms = 0.5
+    conf = 0.5
+    nms = 0.2
     tsize = 640
     device = "gpu"
     save_result = True
