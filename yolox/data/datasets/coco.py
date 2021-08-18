@@ -3,10 +3,10 @@
 # Copyright (c) Megvii, Inc. and its affiliates.
 
 import os
+from loguru import logger
 
 import cv2
 import numpy as np
-from loguru import logger
 from pycocotools.coco import COCO
 
 from ..dataloading import get_yolox_datadir

@@ -9,8 +9,8 @@ This file contains primitives for multi-gpu communication.
 This is useful when doing distributed training.
 """
 
-import os
 import functools
+import os
 import pickle
 import time
 from contextlib import contextmanager
