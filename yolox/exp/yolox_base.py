@@ -13,7 +13,6 @@ from .base_exp import BaseExp
 
 
 class Exp(BaseExp):
-
     def __init__(self):
         super().__init__()
 
@@ -82,7 +81,9 @@ class Exp(BaseExp):
         self.model.head.initialize_biases(1e-2)
         return self.model
 
-    def get_data_loader(self, batch_size, is_distributed, no_aug=False, cache_img=False):
+    def get_data_loader(
+        self, batch_size, is_distributed, no_aug=False, cache_img=False
+    ):
         from yolox.data import (
             COCODataset,
             TrainTransform,
@@ -128,9 +129,7 @@ class Exp(BaseExp):
         if is_distributed:
             batch_size = batch_size // dist.get_world_size()
 
-        sampler = InfiniteSampler(
-            len(self.dataset), seed=self.seed if self.seed else 0
-        )
+        sampler = InfiniteSampler(len(self.dataset), seed=self.seed if self.seed else 0)
 
         batch_sampler = YoloBatchSampler(
             sampler=sampler,
@@ -153,7 +152,7 @@ class Exp(BaseExp):
         tensor = torch.LongTensor(2).cuda()
 
         if rank == 0:
-            size_factor = self.input_size[1] * 1. / self.input_size[0]
+            size_factor = self.input_size[1] * 1.0 / self.input_size[0]
             size = random.randint(*self.random_size)
             size = (int(32 * size), 32 * int(size * size_factor))
             tensor[0] = size[0]
@@ -169,7 +168,9 @@ class Exp(BaseExp):
     def preprocess(self, inputs, targets, tsize):
         scale = tsize[0] / self.input_size[0]
         if scale != 1:
-            inputs = nn.functional.interpolate(inputs, size=tsize, mode='bilinear', align_corners=False)
+            inputs = nn.functional.interpolate(
+                inputs, size=tsize, mode="bilinear", align_corners=False
+            )
             targets[..., 1:] = targets[..., 1:] * scale
         return inputs, targets
 
@@ -203,6 +204,7 @@ class Exp(BaseExp):
 
     def get_lr_scheduler(self, lr, iters_per_epoch):
         from yolox.utils import LRScheduler
+
         scheduler = LRScheduler(
             self.scheduler,
             lr,

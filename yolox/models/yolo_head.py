@@ -518,13 +518,19 @@ class YOLOXHead(nn.Module):
         img = (imgs[batch_idx].cpu().numpy().transpose(1,2,0))
         img = img.astype(np.uint8)
         img = np.clip(img.copy(),0,255)
-        coords = np.stack([(x_shifts*expanded_strides)[0][fg_mask].cpu().numpy(),(y_shifts*expanded_strides)[0][fg_mask].cpu().numpy()], 1)
+        coords = np.stack([(x_shifts*expanded_strides)[0][fg_mask].cpu().numpy(),
+                           (y_shifts*expanded_strides)[0][fg_mask].cpu().numpy()], 1)
         coords[:,0] = (x_shifts*expanded_strides+0.5*expanded_strides)[0][fg_mask].cpu().numpy()
         coords[:,1] = (y_shifts*expanded_strides+0.5*expanded_strides)[0][fg_mask].cpu().numpy()
         for coord in coords:
             cv2.circle(img, (int(coord[0]), int(coord[1])), 3, (255,0,0), -1)
         for bbox in gt_bboxes_per_image:
-            cv2.rectangle(img, (int(bbox[0]-bbox[2]/2),int(bbox[1]-bbox[3]/2)),(int(bbox[0]+bbox[2]/2),int(bbox[1]+bbox[3]/2)),  (0,255,0),2)
+            cv2.rectangle(
+                img, 
+                (int(bbox[0]-bbox[2]/2),int(bbox[1]-bbox[3]/2)),
+                (int(bbox[0]+bbox[2]/2),int(bbox[1]+bbox[3]/2)),
+                (0,255,0), 2
+            )
         cv2.imwrite('/data/debug_vis/'+str(random.randint(0,1000))+'.png', img[:,:,::-1])
         """
 

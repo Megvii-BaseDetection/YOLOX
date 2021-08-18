@@ -2,13 +2,7 @@
 # -*- coding:utf-8 -*-
 # Copyright (c) Megvii, Inc. and its affiliates.
 
-import random
-
 import torch
-import torch.distributed as dist
-
-from yolox.utils import synchronize
-
 
 class DataPrefetcher:
     """

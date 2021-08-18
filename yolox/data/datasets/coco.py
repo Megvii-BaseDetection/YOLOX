@@ -74,36 +74,41 @@ class COCODataset(Dataset):
         )
         max_h = self.img_size[0]
         max_w = self.img_size[1]
-        cache_file = self.data_dir + '/img_resized_cache_' + self.name + '.array'
-        if not os.path.exists(cache_file): 
-            logger.info("Caching images for the frist time. This might take about 20 minutes for COCO")
+        cache_file = self.data_dir + "/img_resized_cache_" + self.name + ".array"
+        if not os.path.exists(cache_file):
+            logger.info(
+                "Caching images for the frist time. This might take about 20 minutes for COCO"
+            )
             self.imgs = np.memmap(
                 cache_file,
-                shape=(len(self.ids), max_h, max_w, 3), 
-                dtype=np.uint8, 
-                mode='w+',
+                shape=(len(self.ids), max_h, max_w, 3),
+                dtype=np.uint8,
+                mode="w+",
             )
             from tqdm import tqdm
             from multiprocessing.pool import ThreadPool
+
             NUM_THREADs = min(8, os.cpu_count())
             loaded_images = ThreadPool(NUM_THREADs).imap(
-                                lambda x: self.load_resized_img(x),
-                                range(len(self.annotations)),
-                            )
+                lambda x: self.load_resized_img(x),
+                range(len(self.annotations)),
+            )
             pbar = tqdm(enumerate(loaded_images), total=len(self.annotations))
             for k, out in pbar:
-                self.imgs[k][:out.shape[0], :out.shape[1], :] = out.copy()
+                self.imgs[k][: out.shape[0], : out.shape[1], :] = out.copy()
             self.imgs.flush()
             pbar.close()
         else:
-            logger.warning('You are using cached imgs! Make sure your dataset is not changed!!')
+            logger.warning(
+                "You are using cached imgs! Make sure your dataset is not changed!!"
+            )
 
-        logger.info('Loading cached imgs...')
+        logger.info("Loading cached imgs...")
         self.imgs = np.memmap(
             cache_file,
-            shape=(len(self.ids), max_h, max_w, 3), 
-            dtype=np.uint8, 
-            mode='r+',
+            shape=(len(self.ids), max_h, max_w, 3),
+            dtype=np.uint8,
+            mode="r+",
         )
 
     def load_anno_from_ids(self, id_):
@@ -137,7 +142,11 @@ class COCODataset(Dataset):
         img_info = (height, width)
         resized_info = (int(height * r), int(width * r))
 
-        file_name = im_ann["file_name"] if "file_name" in im_ann else "{:012}".format(id_) + ".jpg"
+        file_name = (
+            im_ann["file_name"]
+            if "file_name" in im_ann
+            else "{:012}".format(id_) + ".jpg"
+        )
 
         return (res, img_info, resized_info, file_name)
 
@@ -157,9 +166,7 @@ class COCODataset(Dataset):
     def load_image(self, index):
         file_name = self.annotations[index][3]
 
-        img_file = os.path.join(
-            self.data_dir, self.name, file_name
-        )
+        img_file = os.path.join(self.data_dir, self.name, file_name)
 
         img = cv2.imread(img_file)
         assert img is not None
@@ -169,10 +176,10 @@ class COCODataset(Dataset):
     def pull_item(self, index):
         id_ = self.ids[index]
 
-        res, img_info, resized_info, _= self.annotations[index]
+        res, img_info, resized_info, _ = self.annotations[index]
         if self.imgs is not None:
             pad_img = self.imgs[index]
-            img = pad_img[:resized_info[0], :resized_info[1], :].copy()
+            img = pad_img[: resized_info[0], : resized_info[1], :].copy()
         else:
             img = self.load_resized_img(index)
 

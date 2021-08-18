@@ -7,9 +7,7 @@ import os
 import time
 from loguru import logger
 
-import apex
 import torch
-from apex import amp
 from torch.utils.tensorboard import SummaryWriter
 
 from yolox.data import DataPrefetcher

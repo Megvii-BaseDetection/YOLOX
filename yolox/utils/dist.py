@@ -51,7 +51,7 @@ def get_num_devices():
 @contextmanager
 def torch_distributed_zero_first(local_rank: int):
     """
-    Decorator to make all processes in distributed training wait for each local_master to do something.
+    Decorator to make all processes in distributed training wait for local_master to do something.
     """
     if local_rank not in [-1, 0]:
         dist.barrier()

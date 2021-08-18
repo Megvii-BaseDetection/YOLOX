@@ -36,7 +36,9 @@ class AnnotationTransform(object):
     """
 
     def __init__(self, class_to_ind=None, keep_difficult=True):
-        self.class_to_ind = class_to_ind or dict(zip(VOC_CLASSES, range(len(VOC_CLASSES))))
+        self.class_to_ind = class_to_ind or dict(
+            zip(VOC_CLASSES, range(len(VOC_CLASSES)))
+        )
         self.keep_difficult = keep_difficult
 
     def __call__(self, target):
@@ -96,7 +98,7 @@ class VOCDetection(Dataset):
     def __init__(
         self,
         data_dir,
-        image_sets=[('2007', 'trainval'), ('2012', 'trainval')],
+        image_sets=[("2007", "trainval"), ("2012", "trainval")],
         img_size=(416, 416),
         preproc=None,
         target_transform=AnnotationTransform(),
@@ -143,36 +145,41 @@ class VOCDetection(Dataset):
         )
         max_h = self.img_size[0]
         max_w = self.img_size[1]
-        cache_file = self.root + '/img_resized_cache_' + self.name + '.array'
-        if not os.path.exists(cache_file): 
-            logger.info("Caching images for the frist time. This might take about 3 minutes for VOC")
+        cache_file = self.root + "/img_resized_cache_" + self.name + ".array"
+        if not os.path.exists(cache_file):
+            logger.info(
+                "Caching images for the frist time. This might take about 3 minutes for VOC"
+            )
             self.imgs = np.memmap(
                 cache_file,
-                shape=(len(self.ids), max_h, max_w, 3), 
-                dtype=np.uint8, 
-                mode='w+',
+                shape=(len(self.ids), max_h, max_w, 3),
+                dtype=np.uint8,
+                mode="w+",
             )
             from tqdm import tqdm
             from multiprocessing.pool import ThreadPool
+
             NUM_THREADs = min(8, os.cpu_count())
             loaded_images = ThreadPool(NUM_THREADs).imap(
-                                lambda x: self.load_resized_img(x),
-                                range(len(self.annotations)),
-                            )
+                lambda x: self.load_resized_img(x),
+                range(len(self.annotations)),
+            )
             pbar = tqdm(enumerate(loaded_images), total=len(self.annotations))
             for k, out in pbar:
-                self.imgs[k][:out.shape[0], :out.shape[1], :] = out.copy()
+                self.imgs[k][: out.shape[0], : out.shape[1], :] = out.copy()
             self.imgs.flush()
             pbar.close()
         else:
-            logger.warning('You are using cached imgs! Make sure your dataset is not changed!!')
+            logger.warning(
+                "You are using cached imgs! Make sure your dataset is not changed!!"
+            )
 
-        logger.info('Loading cached imgs...')
+        logger.info("Loading cached imgs...")
         self.imgs = np.memmap(
             cache_file,
-            shape=(len(self.ids), max_h, max_w, 3), 
-            dtype=np.uint8, 
-            mode='r+',
+            shape=(len(self.ids), max_h, max_w, 3),
+            dtype=np.uint8,
+            mode="r+",
         )
 
     def load_anno_from_ids(self, index):
@@ -224,7 +231,7 @@ class VOCDetection(Dataset):
         if self.imgs is not None:
             target, img_info, resized_info = self.annotations[index]
             pad_img = self.imgs[index]
-            img = pad_img[:resized_info[0], :resized_info[1], :].copy()
+            img = pad_img[: resized_info[0], : resized_info[1], :].copy()
         else:
             img = self.load_resized_img(index)
             target, img_info, _ = self.annotations[index]
@@ -250,7 +257,9 @@ class VOCDetection(Dataset):
         all_boxes[class][image] = [] or np.array of shape #dets x 5
         """
         self._write_voc_results_file(all_boxes)
-        IouTh = np.linspace(0.5, 0.95, int(np.round((0.95 - 0.5) / 0.05)) + 1, endpoint=True)
+        IouTh = np.linspace(
+            0.5, 0.95, int(np.round((0.95 - 0.5) / 0.05)) + 1, endpoint=True
+        )
         mAPs = []
         for iou in IouTh:
             mAP = self._do_python_eval(output_dir, iou)
