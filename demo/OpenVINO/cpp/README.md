@@ -6,13 +6,13 @@ This toturial includes a C++ demo for OpenVINO, as well as some converted models
 
 | Model | Parameters | GFLOPs | Test Size | mAP | Weights |
 |:------| :----: | :----: | :---: | :---: | :---: |
-|  [YOLOX-Nano](../../../exps/nano.py) |  0.91M  | 1.08 | 416x416 | 25.3 | [Download](https://megvii-my.sharepoint.cn/:u:/g/personal/gezheng_megvii_com/EeWY57o5wQZFtXYd1KJw6Z8B4vxZru649XxQHYIFgio3Qw?e=ZS81ce)/[github](https://github.com/Megvii-BaseDetection/storage/releases/download/0.0.1/yolox_nano_openvino.tar.gz) |
-|  [YOLOX-Tiny](../../../exps/yolox_tiny.py) | 5.06M     | 6.45 | 416x416 |31.7 | [Download](https://megvii-my.sharepoint.cn/:u:/g/personal/gezheng_megvii_com/ETfvOoCXdVZNinoSpKA_sEYBIQVqfjjF5_M6VvHRnLVcsA?e=STL1pi)/[github](https://github.com/Megvii-BaseDetection/storage/releases/download/0.0.1/yolox_tiny_openvino.tar.gz) |
-|  [YOLOX-S](../../../exps/yolox_s.py) | 9.0M | 26.8 | 640x640 |39.6 | [Download](https://megvii-my.sharepoint.cn/:u:/g/personal/gezheng_megvii_com/EXUjf3PQnbBLrxNrXPueqaIBzVZOrYQOnJpLK1Fytj5ssA?e=GK0LOM)/[github](https://github.com/Megvii-BaseDetection/storage/releases/download/0.0.1/yolox_s_openvino.tar.gz) |
-|  [YOLOX-M](../../../exps/yolox_m.py) | 25.3M | 73.8 | 640x640 |46.4 | [Download](https://megvii-my.sharepoint.cn/:u:/g/personal/gezheng_megvii_com/EcoT1BPpeRpLvE_4c441zn8BVNCQ2naxDH3rho7WqdlgLQ?e=95VaM9)/[github](https://github.com/Megvii-BaseDetection/storage/releases/download/0.0.1/yolox_m_openvino.tar.gz) |
-|  [YOLOX-L](../../../exps/yolox_l.py) | 54.2M | 155.6 | 640x640 |50.0 | [Download](https://megvii-my.sharepoint.cn/:u:/g/personal/gezheng_megvii_com/EZvmn-YLRuVPh0GAP_w3xHMB2VGvrKqQXyK_Cv5yi_DXUg?e=YRh6Eq)/[github](https://github.com/Megvii-BaseDetection/storage/releases/download/0.0.1/yolox_l_openvino.tar.gz) |
-|  [YOLOX-Darknet53](../../../exps/yolov3.py) | 63.72M | 185.3 | 640x640 |47.3 | [Download](https://megvii-my.sharepoint.cn/:u:/g/personal/gezheng_megvii_com/EQP8LSroikFHuwX0jFRetmcBOCDWSFmylHxolV7ezUPXGw?e=bEw5iq)/[github](https://github.com/Megvii-BaseDetection/storage/releases/download/0.0.1/yolox_darknet53_openvino.tar.gz) |
-|  [YOLOX-X](../../../exps/yolox_x.py) | 99.1M | 281.9 | 640x640 |51.2 | [Download](https://megvii-my.sharepoint.cn/:u:/g/personal/gezheng_megvii_com/EZFPnLqiD-xIlt7rcZYDjQgB4YXE9wnq1qaSXQwJrsKbdg?e=83nwEz)/[github](https://github.com/Megvii-BaseDetection/storage/releases/download/0.0.1/yolox_x_openvino.tar.gz) |
+|  [YOLOX-Nano](../../../exps/default/nano.py) |  0.91M  | 1.08 | 416x416 | 25.8 | [github](https://github.com/Megvii-BaseDetection/YOLOX/releases/download/0.1.1rc0/yolox_nano_openvino.tar.gz) |
+|  [YOLOX-Tiny](../../../exps/default/yolox_tiny.py) | 5.06M     | 6.45 | 416x416 |32.8 | [github](https://github.com/Megvii-BaseDetection/YOLOX/releases/download/0.1.1rc0/yolox_tiny_openvino.tar.gz) |
+|  [YOLOX-S](../../../exps/default/yolox_s.py) | 9.0M | 26.8 | 640x640 |40.5 | [github](https://github.com/Megvii-BaseDetection/YOLOX/releases/download/0.1.1rc0/yolox_s_openvino.tar.gz) |
+|  [YOLOX-M](../../../exps/default/yolox_m.py) | 25.3M | 73.8 | 640x640 |47.2 | [github](https://github.com/Megvii-BaseDetection/YOLOX/releases/download/0.1.1rc0/yolox_m_openvino.tar.gz) |
+|  [YOLOX-L](../../../exps/default/yolox_l.py) | 54.2M | 155.6 | 640x640 |50.1 | [github](https://github.com/Megvii-BaseDetection/YOLOX/releases/download/0.1.1rc0/yolox_l_openvino.tar.gz) |
+|  [YOLOX-Darknet53](../../../exps/default/yolov3.py) | 63.72M | 185.3 | 640x640 |48.0 | [github](https://github.com/Megvii-BaseDetection/YOLOX/releases/download/0.1.1rc0/yolox_dark_openvino.tar.gz) | 
+|  [YOLOX-X](../../../exps/default/yolox_x.py) | 99.1M | 281.9 | 640x640 |51.5 | [github](https://github.com/Megvii-BaseDetection/YOLOX/releases/download/0.1.1rc0/yolox_x_openvino.tar.gz) |
 
 ## Install OpenVINO Toolkit
 
@@ -72,8 +72,10 @@ source ~/.bashrc
    ```
    For example:
    ```shell
-   python3 mo.py --input_model yolox.onnx --input_shape (1,3,640,640) --data_type FP16
+   python3 mo.py --input_model yolox_tiny.onnx --input_shape [1,3,416,416] --data_type FP16
    ```  
+
+   Make sure the input shape is consistent with [those](yolox_openvino.cpp#L24-L25) in cpp file. 
 
 ## Build 
 

@@ -17,8 +17,9 @@ class Exp(MyExp):
         self.scale = (0.5, 1.5)
         self.random_size = (10, 20)
         self.test_size = (416, 416)
-        self.exp_name = os.path.split(os.path.realpath(__file__))[1].split(".")[0]
+        self.mosaic_prob = 0.5
         self.enable_mixup = False
+        self.exp_name = os.path.split(os.path.realpath(__file__))[1].split(".")[0]
 
     def get_model(self, sublinear=False):
 

@@ -279,7 +279,7 @@ static int detect_yolox(const cv::Mat& bgr, std::vector<Object>& objects)
         h = YOLOX_TARGET_SIZE;
         w = w * scale;
     }
-    ncnn::Mat in = ncnn::Mat::from_pixels_resize(bgr.data, ncnn::Mat::PIXEL_BGR2RGB, img_w, img_h, w, h);
+    ncnn::Mat in = ncnn::Mat::from_pixels_resize(bgr.data, ncnn::Mat::PIXEL_BGR, img_w, img_h, w, h);
 
     // pad to YOLOX_TARGET_SIZE rectangle
     int wpad = YOLOX_TARGET_SIZE - w;
@@ -288,13 +288,6 @@ static int detect_yolox(const cv::Mat& bgr, std::vector<Object>& objects)
     // different from yolov5, yolox only pad on bottom and right side,
     // which means users don't need to extra padding info to decode boxes coordinate.
     ncnn::copy_make_border(in, in_pad, 0, hpad, 0, wpad, ncnn::BORDER_CONSTANT, 114.f);
-
-    // python 0-1 input tensor with rgb_means = (0.485, 0.456, 0.406), std = (0.229, 0.224, 0.225)
-    // so for 0-255 input image, rgb_mean should multiply 255 and norm should div by std.
-    const float mean_vals[3] = {255.f * 0.485f, 255.f * 0.456, 255.f * 0.406f};
-    const float norm_vals[3] = {1 / (255.f * 0.229f), 1 / (255.f * 0.224f), 1 / (255.f * 0.225f)};
-
-    in_pad.substract_mean_normalize(mean_vals, norm_vals);
 
     ncnn::Extractor ex = yolox.create_extractor();
 

@@ -140,36 +140,6 @@ def random_perspective(
     return img, targets
 
 
-def _distort(image):
-    def _convert(image, alpha=1, beta=0):
-        tmp = image.astype(float) * alpha + beta
-        tmp[tmp < 0] = 0
-        tmp[tmp > 255] = 255
-        image[:] = tmp
-
-    image = image.copy()
-
-    if random.randrange(2):
-        _convert(image, beta=random.uniform(-32, 32))
-
-    if random.randrange(2):
-        _convert(image, alpha=random.uniform(0.5, 1.5))
-
-    image = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
-
-    if random.randrange(2):
-        tmp = image[:, :, 0].astype(int) + random.randint(-18, 18)
-        tmp %= 180
-        image[:, :, 0] = tmp
-
-    if random.randrange(2):
-        _convert(image[:, :, 1], alpha=random.uniform(0.5, 1.5))
-
-    image = cv2.cvtColor(image, cv2.COLOR_HSV2BGR)
-
-    return image
-
-
 def _mirror(image, boxes):
     _, width, _ = image.shape
     if random.randrange(2):
@@ -179,36 +149,27 @@ def _mirror(image, boxes):
     return image, boxes
 
 
-def preproc(image, input_size, mean, std, swap=(2, 0, 1)):
-    if len(image.shape) == 3:
-        padded_img = np.ones((input_size[0], input_size[1], 3)) * 114.0
+def preproc(img, input_size, swap=(2, 0, 1)):
+    if len(img.shape) == 3:
+        padded_img = np.ones((input_size[0], input_size[1], 3), dtype=np.uint8) * 114
     else:
-        padded_img = np.ones(input_size) * 114.0
-    img = np.array(image)
+        padded_img = np.ones(input_size, dtype=np.uint8) * 114
+
     r = min(input_size[0] / img.shape[0], input_size[1] / img.shape[1])
     resized_img = cv2.resize(
         img,
         (int(img.shape[1] * r), int(img.shape[0] * r)),
         interpolation=cv2.INTER_LINEAR,
-    ).astype(np.float32)
+    ).astype(np.uint8)
     padded_img[: int(img.shape[0] * r), : int(img.shape[1] * r)] = resized_img
 
-    padded_img = padded_img[:, :, ::-1]
-    padded_img /= 255.0
-    if mean is not None:
-        padded_img -= mean
-    if std is not None:
-        padded_img /= std
     padded_img = padded_img.transpose(swap)
     padded_img = np.ascontiguousarray(padded_img, dtype=np.float32)
     return padded_img, r
 
 
 class TrainTransform:
-    def __init__(self, p=0.5, rgb_means=None, std=None, max_labels=50):
-        self.means = rgb_means
-        self.std = std
-        self.p = p
+    def __init__(self, max_labels=50):
         self.max_labels = max_labels
 
     def __call__(self, image, targets, input_dim):
@@ -216,8 +177,7 @@ class TrainTransform:
         labels = targets[:, 4].copy()
         if len(boxes) == 0:
             targets = np.zeros((self.max_labels, 5), dtype=np.float32)
-            image, r_o = preproc(image, input_dim, self.means, self.std)
-            image = np.ascontiguousarray(image, dtype=np.float32)
+            image, r_o = preproc(image, input_dim)
             return image, targets
 
         image_o = image.copy()
@@ -228,10 +188,10 @@ class TrainTransform:
         # bbox_o: [xyxy] to [c_x,c_y,w,h]
         boxes_o = xyxy2cxcywh(boxes_o)
 
-        image_t = _distort(image)
-        image_t, boxes = _mirror(image_t, boxes)
+        augment_hsv(image)
+        image_t, boxes = _mirror(image, boxes)
         height, width, _ = image_t.shape
-        image_t, r_ = preproc(image_t, input_dim, self.means, self.std)
+        image_t, r_ = preproc(image_t, input_dim)
         # boxes [xyxy] 2 [cx,cy,w,h]
         boxes = xyxy2cxcywh(boxes)
         boxes *= r_
@@ -241,7 +201,7 @@ class TrainTransform:
         labels_t = labels[mask_b]
 
         if len(boxes_t) == 0:
-            image_t, r_o = preproc(image_o, input_dim, self.means, self.std)
+            image_t, r_o = preproc(image_o, input_dim)
             boxes_o *= r_o
             boxes_t = boxes_o
             labels_t = labels_o
@@ -254,7 +214,6 @@ class TrainTransform:
             : self.max_labels
         ]
         padded_labels = np.ascontiguousarray(padded_labels, dtype=np.float32)
-        image_t = np.ascontiguousarray(image_t, dtype=np.float32)
         return image_t, padded_labels
 
 
@@ -276,12 +235,16 @@ class ValTransform:
         data
     """
 
-    def __init__(self, rgb_means=None, std=None, swap=(2, 0, 1)):
-        self.means = rgb_means
+    def __init__(self, swap=(2, 0, 1), legacy=False):
         self.swap = swap
-        self.std = std
+        self.legacy = legacy
 
     # assume input is cv2 img for now
     def __call__(self, img, res, input_size):
-        img, _ = preproc(img, input_size, self.means, self.std, self.swap)
+        img, _ = preproc(img, input_size, self.swap)
+        if self.legacy:
+            img = img[::-1, :, :].copy()
+            img /= 255.0
+            img -= np.array([0.485, 0.456, 0.406]).reshape(3, 1, 1)
+            img /= np.array([0.229, 0.224, 0.225]).reshape(3, 1, 1)
         return img, np.zeros((1, 5))

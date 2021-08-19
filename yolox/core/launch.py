@@ -5,6 +5,7 @@
 # Copyright (c) Facebook, Inc. and its affiliates.
 # Copyright (c) Megvii, Inc. and its affiliates.
 
+import sys
 from datetime import timedelta
 from loguru import logger
 
@@ -61,18 +62,37 @@ def launch(
         # TODO prctl in spawned processes
 
         if dist_url == "auto":
-            assert num_machines == 1, "dist_url=auto cannot work with distributed training."
+            assert (
+                num_machines == 1
+            ), "dist_url=auto cannot work with distributed training."
             port = _find_free_port()
             dist_url = f"tcp://127.0.0.1:{port}"
 
-        mp.spawn(
+        start_method = "spawn"
+        cache = vars(args[1]).get("cache", False)
+
+        # To use numpy memmap for caching image into RAM, we have to use fork method
+        if cache:
+            assert sys.platform != "win32", (
+                "As Windows platform doesn't support fork method, "
+                "do not add --cache in your training command."
+            )
+            start_method = "fork"
+
+        mp.start_processes(
             _distributed_worker,
             nprocs=num_gpus_per_machine,
             args=(
-                main_func, world_size, num_gpus_per_machine,
-                machine_rank, backend, dist_url, args
+                main_func,
+                world_size,
+                num_gpus_per_machine,
+                machine_rank,
+                backend,
+                dist_url,
+                args,
             ),
             daemon=False,
+            start_method=start_method,
         )
     else:
         main_func(*args)
@@ -89,7 +109,9 @@ def _distributed_worker(
     args,
     timeout=DEFAULT_TIMEOUT,
 ):
-    assert torch.cuda.is_available(), "cuda is not available. Please check your installation."
+    assert (
+        torch.cuda.is_available()
+    ), "cuda is not available. Please check your installation."
     global_rank = machine_rank * num_gpus_per_machine + local_rank
     logger.info("Rank {} initialization finished.".format(global_rank))
     try:
@@ -108,7 +130,9 @@ def _distributed_worker(
     assert comm._LOCAL_PROCESS_GROUP is None
     num_machines = world_size // num_gpus_per_machine
     for i in range(num_machines):
-        ranks_on_i = list(range(i * num_gpus_per_machine, (i + 1) * num_gpus_per_machine))
+        ranks_on_i = list(
+            range(i * num_gpus_per_machine, (i + 1) * num_gpus_per_machine)
+        )
         pg = dist.new_group(ranks_on_i)
         if i == machine_rank:
             comm._LOCAL_PROCESS_GROUP = pg

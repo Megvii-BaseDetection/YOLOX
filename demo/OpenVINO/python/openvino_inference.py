@@ -119,9 +119,7 @@ def main():
     # ---------------------------Step 6. Prepare input---------------------------------------------------------------------
     origin_img = cv2.imread(args.input)
     _, _, h, w = net.input_info[input_blob].input_data.shape
-    mean = (0.485, 0.456, 0.406)
-    std = (0.229, 0.224, 0.225)
-    image, ratio = preprocess(origin_img, (h, w), mean, std)
+    image, ratio = preprocess(origin_img, (h, w))
 
     # ---------------------------Step 7. Do inference----------------------------------------------------------------------
     log.info('Starting inference in synchronous mode')

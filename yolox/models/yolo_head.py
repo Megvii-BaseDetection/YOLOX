@@ -486,13 +486,14 @@ class YOLOXHead(nn.Module):
         if mode == "cpu":
             cls_preds_, obj_preds_ = cls_preds_.cpu(), obj_preds_.cpu()
 
-        cls_preds_ = (
-            cls_preds_.float().unsqueeze(0).repeat(num_gt, 1, 1).sigmoid_()
-            * obj_preds_.unsqueeze(0).repeat(num_gt, 1, 1).sigmoid_()
-        )
-        pair_wise_cls_loss = F.binary_cross_entropy(
-            cls_preds_.sqrt_(), gt_cls_per_image, reduction="none"
-        ).sum(-1)
+        with torch.cuda.amp.autocast(enabled=False):
+            cls_preds_ = (
+                cls_preds_.float().unsqueeze(0).repeat(num_gt, 1, 1).sigmoid_()
+                * obj_preds_.unsqueeze(0).repeat(num_gt, 1, 1).sigmoid_()
+            )
+            pair_wise_cls_loss = F.binary_cross_entropy(
+                cls_preds_.sqrt_(), gt_cls_per_image, reduction="none"
+            ).sum(-1)
         del cls_preds_
 
         cost = (
