@@ -37,6 +37,11 @@ class Trainer:
         # before_train methods.
         self.exp = exp
         self.args = args
+        
+        # todo:reserved for extending accumulated training
+        self.gradient_accumulation_steps = getattr(args, "gradient_accumulation_steps", 1)
+        self.print_interval = self.exp.print_interval = exp.print_interval*self.gradient_accumulation_steps 
+        #todo
 
         # training related attr
         self.max_epoch = exp.max_epoch
@@ -53,7 +58,7 @@ class Trainer:
         self.best_ap = 0
 
         # metric record
-        self.meter = MeterBuffer(window_size=exp.print_interval)
+        self.meter = MeterBuffer(window_size=self.exp.print_interval)
         self.file_name = os.path.join(exp.output_dir, args.experiment_name)
 
         if self.rank == 0:
@@ -209,6 +214,9 @@ class Trainer:
         if (self.epoch + 1) % self.exp.eval_interval == 0:
             all_reduce_norm(self.model)
             self.evaluate_and_save_model()
+        #todo: for the last iter in one epcho (self.iter+1 == self.max_iter), don't clear_meters. so we can still get meters to log in self.after_epoch()
+        if self.iter+1 == self.max_iter:
+            self.meter.clear_meters() # guarantee clear_meters ;
 
     def before_iter(self):
         pass
@@ -249,7 +257,12 @@ class Trainer:
                 )
                 + (", size: {:d}, {}".format(self.input_size[0], eta_str))
             )
-            self.meter.clear_meters()
+            self.tbl_write_traning_metrics_helper('iteration')
+            #  for the last iter in one epcho (self.iter+1 == self.max_iter), don't clear_meters. so we can still get meters to log in self.after_epoch()
+            if self.iter+1 < self.max_iter:
+                self.meter.clear_meters()
+            else:
+                logger.warning(f"the last iter {self.iter+1} in {self.epoch+1} finished. max_iter/epoch ={self.max_iter}")
 
         # random resizing
         if self.exp.random_size is not None and (self.progress_in_iter + 1) % 10 == 0:
@@ -310,8 +323,10 @@ class Trainer:
         )
         self.model.train()
         if self.rank == 0:
-            self.tblogger.add_scalar("val/COCOAP50", ap50, self.epoch + 1)
-            self.tblogger.add_scalar("val/COCOAP50_95", ap50_95, self.epoch + 1)
+            # tblogging in the same gragh for comparing
+            self.tblogger.add_scalars(f"val/COCOAP_every_{self.exp.eval_interval}_epoch", {"AP50":ap50,"COCOAP50_95":ap50_95}, self.epoch + 1)
+            #self.tblogger.add_scalar("val/COCOAP50", ap50, self.epoch + 1)
+            #self.tblogger.add_scalar("val/COCOAP50_95", ap50_95, self.epoch + 1)
             logger.info("\n" + summary)
         synchronize()
 
@@ -337,3 +352,33 @@ class Trainer:
                 self.file_name,
                 ckpt_name,
             )
+            
+    def tbl_write_traning_metrics_helper(self,step_type:str='epoch',metrics:list = ['total_loss','lr'],metric_types:list = ['avg', 'global_avg', 'latest', 'median']):
+        '''
+        write training 'loss', 'lr' to tensorboard every n 'epoch's or 'iteration's
+        '''
+
+        # validate inputs
+        assert step_type in ['epoch','iteration'],"step_type must be 'epoch' or 'iteration'"
+        assert len(metrics), "metrics should not be None and len(metrics)>=1"
+        assert len(metric_types), "metric_types should not be None and len(metrics)>=1"
+        
+        # get steps and metric title_string for tblogger
+        if step_type == 'epoch':
+            steps = self.epoch + 1
+            title_string =f"{self.exp.eval_interval}_{step_type}"
+        else:
+            steps = self.progress_in_iter + 1
+            title_string = f"{self.exp.print_interval}_{step_type}"
+
+        for metric_key in metrics:
+            metric = self.meter[metric_key]
+            metric_dict = {metric_type: getattr(metric, metric_type, None) for metric_type in metric_types}
+            # filter out None values
+            valid_metric_dict = {k:v for k,v in metric_dict.items() if v}
+            if len(valid_metric_dict)>0:
+                self.tblogger.add_scalars(f"train/{metric_key}_every_{title_string}", valid_metric_dict, steps)
+            else:
+                logger.warning(
+                    f"{step_type} tblogger: Can't write '{metric_dict}'-->'{valid_metric_dict}' to tensorboard.")
+
