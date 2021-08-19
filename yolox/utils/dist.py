@@ -23,7 +23,7 @@ from torch import distributed as dist
 
 __all__ = [
     "get_num_devices",
-    "torch_distributed_zero_first",
+    "wait_for_the_master",
     "is_main_process",
     "synchronize",
     "get_world_size",
@@ -49,11 +49,11 @@ def get_num_devices():
 
 
 @contextmanager
-def torch_distributed_zero_first(local_rank: int):
+def wait_for_the_master(local_rank: int):
     """
-    Decorator to make all processes in distributed training wait for local_master to do something.
+    Make all processes waiting for the master to do some task.
     """
-    if local_rank not in [-1, 0]:
+    if local_rank > 0:
         dist.barrier()
     yield
     if local_rank == 0:

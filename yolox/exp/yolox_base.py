@@ -94,13 +94,13 @@ class Exp(BaseExp):
             worker_init_reset_seed,
         )
         from yolox.utils import (
-            torch_distributed_zero_first,
+            wait_for_the_master,
             get_local_rank,
         )
 
         local_rank = get_local_rank()
 
-        with torch_distributed_zero_first(local_rank):
+        with wait_for_the_master(local_rank):
             dataset = COCODataset(
                 data_dir=self.data_dir,
                 json_file=self.train_ann,

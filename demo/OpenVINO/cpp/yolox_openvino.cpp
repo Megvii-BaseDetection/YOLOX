@@ -510,7 +510,6 @@ int main(int argc, char* argv[]) {
         auto moutputHolder = moutput->rmap();
         const float* net_pred = moutputHolder.as<const PrecisionTrait<Precision::FP32>::value_type*>();
         
-        const int image_size = 416;
 	    int img_w = image.cols;
         int img_h = image.rows;
 	    float scale = std::min(INPUT_W / (image.cols*1.0), INPUT_H / (image.rows*1.0));

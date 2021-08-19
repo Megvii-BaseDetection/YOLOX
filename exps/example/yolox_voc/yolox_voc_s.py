@@ -27,12 +27,12 @@ class Exp(MyExp):
             worker_init_reset_seed,
         )
         from yolox.utils import (
-            torch_distributed_zero_first,
+            wait_for_the_master,
             get_local_rank,
         )
         local_rank = get_local_rank()
 
-        with torch_distributed_zero_first(local_rank):
+        with wait_for_the_master(local_rank):
             dataset = VOCDetection(
                 data_dir=os.path.join(get_yolox_datadir(), "VOCdevkit"),
                 image_sets=[('2007', 'trainval'), ('2012', 'trainval')],

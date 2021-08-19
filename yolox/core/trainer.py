@@ -9,6 +9,7 @@ from loguru import logger
 
 import torch
 from torch.utils.tensorboard import SummaryWriter
+from torch.nn.parallel import DistributedDataParallel as DDP
 
 from yolox.data import DataPrefetcher
 from yolox.utils import (
@@ -159,7 +160,6 @@ class Trainer:
             occupy_mem(self.local_rank)
 
         if self.is_distributed:
-            from torch.nn.parallel import DistributedDataParallel as DDP
             model = DDP(model, device_ids=[self.local_rank], broadcast_buffers=False)
 
         if self.use_model_ema:

@@ -72,8 +72,10 @@ source ~/.bashrc
    ```
    For example:
    ```shell
-   python3 mo.py --input_model yolox.onnx --input_shape (1,3,640,640) --data_type FP16
+   python3 mo.py --input_model yolox_tiny.onnx --input_shape [1,3,416,416] --data_type FP16
    ```  
+
+   Make sure the input shape is consistent with [those](https://github.com/ruinmessi/YOLOX/blob/main/demo/OpenVINO/cpp/yolox_openvino.cpp#L24-L25) in cpp file. 
 
 ## Build 
 
