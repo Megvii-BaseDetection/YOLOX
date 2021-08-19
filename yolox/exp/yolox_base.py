@@ -141,7 +141,8 @@ class Exp(BaseExp):
         dataloader_kwargs = {"num_workers": self.data_num_workers, "pin_memory": True}
         dataloader_kwargs["batch_sampler"] = batch_sampler
 
-        # Make sure each process has different random seed, especially for 'fork' method
+        # Make sure each process has different random seed, especially for 'fork' method.
+        # Check https://github.com/pytorch/pytorch/issues/63311 for more details.
         dataloader_kwargs["worker_init_fn"] = worker_init_reset_seed
 
         train_loader = DataLoader(self.dataset, **dataloader_kwargs)
