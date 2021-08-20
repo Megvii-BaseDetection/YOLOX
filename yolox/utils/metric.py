@@ -53,8 +53,8 @@ class AverageMeter:
     window or the global series average.
     """
 
-    def __init__(self, window_size=50):
-        self._deque = deque(maxlen=window_size)
+    def __init__(self, window_size = 50):
+        self._deque = deque(maxlen = window_size)
         self._total = 0.0
         self._count = 0
 
@@ -108,15 +108,15 @@ class AverageMeter:
 class MeterBuffer(defaultdict):
     """Computes and stores the average and current value"""
 
-    def __init__(self, window_size=20):
-        factory = functools.partial(AverageMeter, window_size=window_size)
+    def __init__(self, window_size = 20):
+        factory = functools.partial(AverageMeter, window_size = window_size)
         super().__init__(factory)
 
     def reset(self):
         for v in self.values():
             v.reset()
 
-    def get_filtered_meter(self, filter_key="time"):
+    def get_filtered_meter(self, filter_key = "time"):
         return {k: v for k, v in self.items() if filter_key in k}
 
     def update(self, values=None, **kwargs):
