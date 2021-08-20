@@ -23,7 +23,7 @@ using namespace InferenceEngine;
 
 static const int INPUT_W = 416;
 static const int INPUT_H = 416;
-static const int NUM_CLASS = 80; // COCO has 80 classes. Modify this value on your own dataset.
+static const int NUM_CLASSES = 80; // COCO has 80 classes. Modify this value on your own dataset.
 
 cv::Mat static_resize(cv::Mat& img) {
     float r = std::min(INPUT_W / (img.cols*1.0), INPUT_H / (img.rows*1.0));
@@ -107,7 +107,7 @@ static void generate_yolox_proposals(std::vector<GridAndStride> grid_strides, co
         const int grid1 = grid_strides[anchor_idx].grid1;
         const int stride = grid_strides[anchor_idx].stride;
 
-	const int basic_pos = anchor_idx * (NUM_CLASS + 5);
+	const int basic_pos = anchor_idx * (NUM_CLASSES + 5);
 
         // yolox/models/yolo_head.py decode logic
         //  outputs[..., :2] = (outputs[..., :2] + grids) * strides
@@ -120,7 +120,7 @@ static void generate_yolox_proposals(std::vector<GridAndStride> grid_strides, co
         float y0 = y_center - h * 0.5f;
 
         float box_objectness = feat_ptr[basic_pos + 4];
-        for (int class_idx = 0; class_idx < NUM_CLASS; class_idx++)
+        for (int class_idx = 0; class_idx < NUM_CLASSES; class_idx++)
         {
             float box_cls_score = feat_ptr[basic_pos + 5 + class_idx];
             float box_prob = box_objectness * box_cls_score;
