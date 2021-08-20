@@ -30,6 +30,7 @@ using namespace nvinfer1;
 // stuff we know about the network and the input/output blobs
 static const int INPUT_W = 640;
 static const int INPUT_H = 640;
+static const int NUM_CLASSES = 80;
 const char* INPUT_BLOB_NAME = "input_0";
 const char* OUTPUT_BLOB_NAME = "output_0";
 static Logger gLogger;
@@ -163,7 +164,6 @@ static void nms_sorted_bboxes(const std::vector<Object>& faceobjects, std::vecto
 
 static void generate_yolox_proposals(std::vector<GridAndStride> grid_strides, float* feat_blob, float prob_threshold, std::vector<Object>& objects)
 {
-    const int num_class = 80;
 
     const int num_anchors = grid_strides.size();
 
@@ -173,7 +173,7 @@ static void generate_yolox_proposals(std::vector<GridAndStride> grid_strides, fl
         const int grid1 = grid_strides[anchor_idx].grid1;
         const int stride = grid_strides[anchor_idx].stride;
 
-        const int basic_pos = anchor_idx * (num_class + 5);
+        const int basic_pos = anchor_idx * (NUM_CLASSES + 5);
 
         // yolox/models/yolo_head.py decode logic
         float x_center = (feat_blob[basic_pos+0] + grid0) * stride;
@@ -184,7 +184,7 @@ static void generate_yolox_proposals(std::vector<GridAndStride> grid_strides, fl
         float y0 = y_center - h * 0.5f;
 
         float box_objectness = feat_blob[basic_pos+4];
-        for (int class_idx = 0; class_idx < num_class; class_idx++)
+        for (int class_idx = 0; class_idx < NUM_CLASSES; class_idx++)
         {
             float box_cls_score = feat_blob[basic_pos + 5 + class_idx];
             float box_prob = box_objectness * box_cls_score;
