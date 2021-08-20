@@ -145,4 +145,3 @@ def _distributed_worker(
     torch.cuda.set_device(local_rank)
 
     main_func(*args)
-
