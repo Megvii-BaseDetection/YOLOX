@@ -79,7 +79,7 @@ class VOCEvaluator:
 
         inference_time = 0
         nms_time = 0
-        n_samples = len(self.dataloader) - 1
+        n_samples = max(len(self.dataloader) - 1, 1)
 
         if trt_file is not None:
             from torch2trt import TRTModule
