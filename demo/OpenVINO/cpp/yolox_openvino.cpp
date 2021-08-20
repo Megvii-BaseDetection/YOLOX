@@ -42,8 +42,6 @@ void blobFromImage(cv::Mat& img, Blob::Ptr& blob){
     int channels = 3;
     int img_h = img.rows;
     int img_w = img.cols;
-    std::vector<float> mean = {0.485, 0.456, 0.406};
-    std::vector<float> std = {0.229, 0.224, 0.225};
     InferenceEngine::MemoryBlob::Ptr mblob = InferenceEngine::as<InferenceEngine::MemoryBlob>(blob);
     if (!mblob) 
     {
@@ -62,7 +60,7 @@ void blobFromImage(cv::Mat& img, Blob::Ptr& blob){
             for (size_t w = 0; w < img_w; w++) 
             {
                 blob_data[c * img_w * img_h + h * img_w + w] =
-                    (((float)img.at<cv::Vec3b>(h, w)[c]) / 255.0f - mean[c]) / std[c];
+                    (float)img.at<cv::Vec3b>(h, w)[c];
             }
         }
     }
