@@ -41,7 +41,7 @@ class Trainer:
         # todo:reserved for extending accumulated training
         self.gradient_accumulation_steps = getattr(args, "gradient_accumulation_steps", 1)
         self.print_interval = self.exp.print_interval = exp.print_interval*self.gradient_accumulation_steps 
-        #todo
+        # todo
 
         # training related attr
         self.max_epoch = exp.max_epoch
@@ -214,9 +214,11 @@ class Trainer:
         if (self.epoch + 1) % self.exp.eval_interval == 0:
             all_reduce_norm(self.model)
             self.evaluate_and_save_model()
-        #todo: for the last iter in one epcho (self.iter+1 == self.max_iter), don't clear_meters. so we can still get meters to log in self.after_epoch()
-        if self.iter+1 == self.max_iter:
-            self.meter.clear_meters() # guarantee clear_meters ;
+        # in func after_iter(self):
+        #      for the last iter in one epcho (self.iter+1 == self.max_iter),
+        #      we don't clear_meters yet, so we can still get meters to log in self.after_epoch()
+        # now after each epoch , guarantee clear_meters
+        self.meter.clear_meters()
 
     def before_iter(self):
         pass
@@ -258,11 +260,11 @@ class Trainer:
                 + (", size: {:d}, {}".format(self.input_size[0], eta_str))
             )
             self.tbl_write_traning_metrics_helper('iteration')
-            #  for the last iter in one epcho (self.iter+1 == self.max_iter), don't clear_meters. so we can still get meters to log in self.after_epoch()
+            # for the last iter in one epcho (self.iter+1 == self.max_iter), don't clear_meters. 
+            # so we can still get meters to log in self.after_epoch()
+            # we will guarantee clear_meters in func: after_epoch(self)
             if self.iter+1 < self.max_iter:
                 self.meter.clear_meters()
-            else:
-                logger.warning(f"the last iter {self.iter+1} in {self.epoch+1} finished. max_iter/epoch ={self.max_iter}")
 
         # random resizing
         if self.exp.random_size is not None and (self.progress_in_iter + 1) % 10 == 0:
@@ -325,6 +327,7 @@ class Trainer:
         if self.rank == 0:
             # tblogging in the same gragh for comparing
             self.tblogger.add_scalars(f"val/COCOAP_every_{self.exp.eval_interval}_epoch", {"AP50":ap50,"COCOAP50_95":ap50_95}, self.epoch + 1)
+            # or in different graghs 
             #self.tblogger.add_scalar("val/COCOAP50", ap50, self.epoch + 1)
             #self.tblogger.add_scalar("val/COCOAP50_95", ap50_95, self.epoch + 1)
             logger.info("\n" + summary)
