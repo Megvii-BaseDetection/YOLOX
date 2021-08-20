@@ -59,7 +59,8 @@ class AverageMeter:
         self._count = 0
 
     def update(self, value):
-        #for np.array(list(self._deque)) in self.median, self.avg, np.array(list(torch.Tensor)) will raise exception
+        # for np.array(list(self._deque)) in self.median, self.avg, 
+        # np.array(list(torch.Tensor)) will raise exception
         self._deque.append(float(value))
         self._count += 1
         self._total += value
@@ -67,7 +68,7 @@ class AverageMeter:
     @property
     def median(self):
         # if deque is empty, None will be returned. thus all methods will return None
-        if len(self._deque) ==0:
+        if len(self._deque) == 0:
             return None
         else:
             d = np.array(list(self._deque))
@@ -76,7 +77,7 @@ class AverageMeter:
     @property
     def avg(self):
         # if deque is empty, None will be returned. thus all methods will return None         
-        if len(self._deque) ==0:
+        if len(self._deque) == 0:
             return None
         else:
             d = np.array(list(self._deque))
@@ -124,8 +125,7 @@ class MeterBuffer(defaultdict):
         values.update(kwargs)
         for k, v in values.items():
             if isinstance(v, torch.Tensor):
-                v = v.detach()
-                v = float(v) #for np.array(list(self._deque)) in self.median, self.avg, np.array(list(torch.Tensor)) will raise exception
+                v = v.item()                
             self[k].update(v)
 
     def clear_meters(self):
