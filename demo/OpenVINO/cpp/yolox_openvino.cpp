@@ -32,7 +32,8 @@ cv::Mat static_resize(cv::Mat& img) {
     int unpad_h = r * img.rows;
     cv::Mat re(unpad_h, unpad_w, CV_8UC3);
     cv::resize(img, re, re.size());
-    cv::Mat out(INPUT_W, INPUT_H, CV_8UC3, cv::Scalar(114, 114, 114));
+    //cv::Mat out(INPUT_W, INPUT_H, CV_8UC3, cv::Scalar(114, 114, 114));
+    cv::Mat out(INPUT_H, INPUT_W, CV_8UC3, cv::Scalar(114, 114, 114));
     re.copyTo(out(cv::Rect(0, 0, re.cols, re.rows)));
     return out;
 }
@@ -41,6 +42,8 @@ void blobFromImage(cv::Mat& img, Blob::Ptr& blob){
     int channels = 3;
     int img_h = img.rows;
     int img_w = img.cols;
+    std::vector<float> mean = {0.485, 0.456, 0.406};
+    std::vector<float> std = {0.229, 0.224, 0.225};
     InferenceEngine::MemoryBlob::Ptr mblob = InferenceEngine::as<InferenceEngine::MemoryBlob>(blob);
     if (!mblob) 
     {
@@ -59,7 +62,7 @@ void blobFromImage(cv::Mat& img, Blob::Ptr& blob){
             for (size_t w = 0; w < img_w; w++) 
             {
                 blob_data[c * img_w * img_h + h * img_w + w] =
-                    (float)img.at<cv::Vec3b>(h, w)[c];
+                    (((float)img.at<cv::Vec3b>(h, w)[c]) / 255.0f - mean[c]) / std[c];
             }
         }
     }
@@ -80,14 +83,15 @@ struct GridAndStride
     int stride;
 };
 
-static void generate_grids_and_stride(const int target_size, std::vector<int>& strides, std::vector<GridAndStride>& grid_strides)
+static void generate_grids_and_stride(const int target_h,int target_w, std::vector<int>& strides, std::vector<GridAndStride>& grid_strides)
 {
     for (auto stride : strides)
     {
-        int num_grid = target_size / stride;
-        for (int g1 = 0; g1 < num_grid; g1++)
+        int num_grid_h = target_h / stride;
+        int num_grid_w = target_w / stride;
+        for (int g1 = 0; g1 < num_grid_w; g1++)
         {
-            for (int g0 = 0; g0 < num_grid; g0++)
+            for (int g0 = 0; g0 < num_grid_h; g0++)
             {
                 grid_strides.push_back((GridAndStride){g0, g1, stride});
             }
@@ -234,7 +238,7 @@ static void decode_outputs(const float* prob, std::vector<Object>& objects, floa
         std::vector<int> strides = {8, 16, 32};
         std::vector<GridAndStride> grid_strides;
 
-        generate_grids_and_stride(INPUT_W, strides, grid_strides);
+        generate_grids_and_stride(INPUT_W,INPUT_H, strides, grid_strides);
         generate_yolox_proposals(grid_strides, prob,  BBOX_CONF_THRESH, proposals);
         qsort_descent_inplace(proposals);
 
