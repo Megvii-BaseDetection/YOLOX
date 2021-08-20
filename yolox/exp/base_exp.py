@@ -15,8 +15,7 @@ from yolox.utils import LRScheduler
 
 
 class BaseExp(metaclass=ABCMeta):
-    """Basic class for any experiment.
-    """
+    """Basic class for any experiment."""
 
     def __init__(self):
         self.seed = None
@@ -55,7 +54,9 @@ class BaseExp(metaclass=ABCMeta):
     def __repr__(self):
         table_header = ["keys", "values"]
         exp_table = [
-            (str(k), pprint.pformat(v)) for k, v in vars(self).items() if not k.startswith("_")
+            (str(k), pprint.pformat(v))
+            for k, v in vars(self).items()
+            if not k.startswith("_")
         ]
         return tabulate(exp_table, headers=table_header, tablefmt="fancy_grid")
 

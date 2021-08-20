@@ -27,17 +27,17 @@ def make_parser():
         "--dist-backend", default="nccl", type=str, help="distributed backend"
     )
     parser.add_argument(
-        "--dist-url", default=None, type=str, help="url used to set up distributed training"
+        "--dist-url",
+        default=None,
+        type=str,
+        help="url used to set up distributed training",
     )
     parser.add_argument("-b", "--batch-size", type=int, default=64, help="batch size")
     parser.add_argument(
         "-d", "--devices", default=None, type=int, help="device for training"
     )
     parser.add_argument(
-        "--local_rank", default=0, type=int, help="local rank for dist training"
-    )
-    parser.add_argument(
-        "--num_machine", default=1, type=int, help="num of node for training"
+        "--num_machines", default=1, type=int, help="num of node for training"
     )
     parser.add_argument(
         "--machine_rank", default=0, type=int, help="node rank for multi-node training"
@@ -76,6 +76,13 @@ def make_parser():
         help="Using TensorRT model for testing.",
     )
     parser.add_argument(
+        "--legacy",
+        dest="legacy",
+        default=False,
+        action="store_true",
+        help="To be compatible with older versions",
+    )
+    parser.add_argument(
         "--test",
         dest="test",
         default=False,
@@ -83,7 +90,11 @@ def make_parser():
         help="Evaluating on test-dev set.",
     )
     parser.add_argument(
-        "--speed", dest="speed", default=False, action="store_true", help="speed test only."
+        "--speed",
+        dest="speed",
+        default=False,
+        action="store_true",
+        help="speed test only.",
     )
     parser.add_argument(
         "opts",
@@ -95,10 +106,7 @@ def make_parser():
 
 
 @logger.catch
-def main(exp, num_gpu, args):
-    if not args.experiment_name:
-        args.experiment_name = exp.exp_name
-
+def main(exp, args, num_gpu):
     if args.seed is not None:
         random.seed(args.seed)
         torch.manual_seed(args.seed)
@@ -113,21 +121,14 @@ def main(exp, num_gpu, args):
     configure_nccl()
     cudnn.benchmark = True
 
-    # rank = args.local_rank
     rank = get_local_rank()
-
-    if rank == 0:
-        if os.path.exists("./" + args.experiment_name + "ip_add.txt"):
-            os.remove("./" + args.experiment_name + "ip_add.txt")
 
     file_name = os.path.join(exp.output_dir, args.experiment_name)
 
     if rank == 0:
         os.makedirs(file_name, exist_ok=True)
 
-    setup_logger(
-        file_name, distributed_rank=rank, filename="val_log.txt", mode="a"
-    )
+    setup_logger(file_name, distributed_rank=rank, filename="val_log.txt", mode="a")
     logger.info("Args: {}".format(args))
 
     if args.conf is not None:
@@ -141,7 +142,7 @@ def main(exp, num_gpu, args):
     logger.info("Model Summary: {}".format(get_model_info(model, exp.test_size)))
     logger.info("Model Structure:\n{}".format(str(model)))
 
-    evaluator = exp.get_evaluator(args.batch_size, is_distributed, args.test)
+    evaluator = exp.get_evaluator(args.batch_size, is_distributed, args.test, args.legacy)
 
     torch.cuda.set_device(rank)
     model.cuda(rank)
@@ -149,13 +150,12 @@ def main(exp, num_gpu, args):
 
     if not args.speed and not args.trt:
         if args.ckpt is None:
-            ckpt_file = os.path.join(file_name, "best_ckpt.pth.tar")
+            ckpt_file = os.path.join(file_name, "best_ckpt.pth")
         else:
             ckpt_file = args.ckpt
-        logger.info("loading checkpoint")
+        logger.info("loading checkpoint from {}".format(ckpt_file))
         loc = "cuda:{}".format(rank)
         ckpt = torch.load(ckpt_file, map_location=loc)
-        # load the model state dict
         model.load_state_dict(ckpt["model"])
         logger.info("loaded checkpoint done.")
 
@@ -167,10 +167,13 @@ def main(exp, num_gpu, args):
         model = fuse_model(model)
 
     if args.trt:
-        assert (not args.fuse and not is_distributed and args.batch_size == 1),\
-            "TensorRT model is not support model fusing and distributed inferencing!"
+        assert (
+            not args.fuse and not is_distributed and args.batch_size == 1
+        ), "TensorRT model is not support model fusing and distributed inferencing!"
         trt_file = os.path.join(file_name, "model_trt.pth")
-        assert os.path.exists(trt_file), "TensorRT model is not found!\n Run tools/trt.py first!"
+        assert os.path.exists(
+            trt_file
+        ), "TensorRT model is not found!\n Run tools/trt.py first!"
         model.head.decode_in_inference = False
         decoder = model.head.decode_outputs
     else:
@@ -189,11 +192,19 @@ if __name__ == "__main__":
     exp = get_exp(args.exp_file, args.name)
     exp.merge(args.opts)
 
+    if not args.experiment_name:
+        args.experiment_name = exp.exp_name
+
     num_gpu = torch.cuda.device_count() if args.devices is None else args.devices
     assert num_gpu <= torch.cuda.device_count()
 
     dist_url = "auto" if args.dist_url is None else args.dist_url
     launch(
-        main, num_gpu, args.num_machine, backend=args.dist_backend,
-        dist_url=dist_url, args=(exp, num_gpu, args)
+        main,
+        num_gpu,
+        args.num_machines,
+        args.machine_rank,
+        backend=args.dist_backend,
+        dist_url=dist_url,
+        args=(exp, args, num_gpu),
     )

@@ -28,6 +28,7 @@ class StreamToLoguru:
     """
     stream object that redirects writes to a logger instance.
     """
+
     def __init__(self, level="INFO", caller_names=("apex", "pycocotools")):
         """
         Args:

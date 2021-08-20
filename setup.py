@@ -9,7 +9,7 @@ import torch
 from torch.utils.cpp_extension import CppExtension
 
 torch_ver = [int(x) for x in torch.__version__.split(".")[:2]]
-assert torch_ver >= [1, 3], "Requires PyTorch >= 1.3"
+assert torch_ver >= [1, 7], "Requires PyTorch >= 1.7"
 
 
 def get_extensions():
@@ -47,7 +47,7 @@ with open("yolox/__init__.py", "r") as f:
     ).group(1)
 
 
-with open("README.md", "r") as f:
+with open("README.md", "r", encoding="utf-8") as f:
     long_description = f.read()
 
 

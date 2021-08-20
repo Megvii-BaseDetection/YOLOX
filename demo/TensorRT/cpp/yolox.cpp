@@ -173,7 +173,7 @@ static void generate_yolox_proposals(std::vector<GridAndStride> grid_strides, fl
         const int grid1 = grid_strides[anchor_idx].grid1;
         const int stride = grid_strides[anchor_idx].stride;
 
-        const int basic_pos = anchor_idx * 85;
+        const int basic_pos = anchor_idx * (num_class + 5);
 
         // yolox/models/yolo_head.py decode logic
         float x_center = (feat_blob[basic_pos+0] + grid0) * stride;
@@ -207,14 +207,10 @@ static void generate_yolox_proposals(std::vector<GridAndStride> grid_strides, fl
 }
 
 float* blobFromImage(cv::Mat& img){
-    cv::cvtColor(img, img, cv::COLOR_BGR2RGB);
-
     float* blob = new float[img.total()*3];
     int channels = 3;
-    int img_h = 640;
-    int img_w = 640;
-    std::vector<float> mean = {0.485, 0.456, 0.406};
-    std::vector<float> std = {0.229, 0.224, 0.225};
+    int img_h = img.rows;
+    int img_w = img.cols;
     for (size_t c = 0; c < channels; c++) 
     {
         for (size_t  h = 0; h < img_h; h++) 
@@ -222,7 +218,7 @@ float* blobFromImage(cv::Mat& img){
             for (size_t w = 0; w < img_w; w++) 
             {
                 blob[c * img_w * img_h + h * img_w + w] =
-                    (((float)img.at<cv::Vec3b>(h, w)[c]) / 255.0f - mean[c]) / std[c];
+                    (float)img.at<cv::Vec3b>(h, w)[c];
             }
         }
     }

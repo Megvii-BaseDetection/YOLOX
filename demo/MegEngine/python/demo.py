@@ -11,9 +11,10 @@ import megengine as mge
 import megengine.functional as F
 from loguru import logger
 
-from coco_classes import COCO_CLASSES
-from process import postprocess, preprocess
-from visualize import vis
+from yolox.data.datasets import COCO_CLASSES
+from yolox.utils import vis
+from yolox.data.data_augment import preproc as preprocess
+
 from build import build_and_load
 
 IMAGE_EXT = [".jpg", ".jpeg", ".webp", ".bmp", ".png"]
@@ -51,6 +52,43 @@ def get_image_list(path):
     return image_names
 
 
+def postprocess(prediction, num_classes, conf_thre=0.7, nms_thre=0.45):
+    box_corner = F.zeros_like(prediction)
+    box_corner[:, :, 0] = prediction[:, :, 0] - prediction[:, :, 2] / 2
+    box_corner[:, :, 1] = prediction[:, :, 1] - prediction[:, :, 3] / 2
+    box_corner[:, :, 2] = prediction[:, :, 0] + prediction[:, :, 2] / 2
+    box_corner[:, :, 3] = prediction[:, :, 1] + prediction[:, :, 3] / 2
+    prediction[:, :, :4] = box_corner[:, :, :4]
+
+    output = [None for _ in range(len(prediction))]
+    for i, image_pred in enumerate(prediction):
+
+        # If none are remaining => process next image
+        if not image_pred.shape[0]:
+            continue
+        # Get score and class with highest confidence
+        class_conf = F.max(image_pred[:, 5: 5 + num_classes], 1, keepdims=True)
+        class_pred = F.argmax(image_pred[:, 5: 5 + num_classes], 1, keepdims=True)
+
+        class_conf_squeeze = F.squeeze(class_conf)
+        conf_mask = image_pred[:, 4] * class_conf_squeeze >= conf_thre
+        detections = F.concat((image_pred[:, :5], class_conf, class_pred), 1)
+        detections = detections[conf_mask]
+        if not detections.shape[0]:
+            continue
+
+        nms_out_index = F.vision.nms(
+            detections[:, :4], detections[:, 4] * detections[:, 5], nms_thre,
+        )
+        detections = detections[nms_out_index]
+        if output[i] is None:
+            output[i] = detections
+        else:
+            output[i] = F.concat((output[i], detections))
+
+    return output
+
+
 class Predictor(object):
     def __init__(
         self,
@@ -69,8 +107,6 @@ class Predictor(object):
         self.confthre = confthre
         self.nmsthre = nmsthre
         self.test_size = test_size
-        self.rgb_means = (0.485, 0.456, 0.406)
-        self.std = (0.229, 0.224, 0.225)
 
     def inference(self, img):
         img_info = {"id": 0}
@@ -87,7 +123,7 @@ class Predictor(object):
         img_info["width"] = width
         img_info["raw_img"] = img
 
-        img, ratio = preprocess(img, self.test_size, self.rgb_means, self.std)
+        img, ratio = preprocess(img, self.test_size)
         img_info["ratio"] = ratio
         img = F.expand_dims(mge.tensor(img), 0)
 
@@ -168,7 +204,6 @@ def imageflow_demo(predictor, vis_folder, current_time, args):
 
 
 def main(args):
-
     file_name = os.path.join("./yolox_outputs", args.name)
     os.makedirs(file_name, exist_ok=True)
 

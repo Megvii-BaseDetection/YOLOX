@@ -38,7 +38,9 @@ class COCOeval_opt(COCOeval):
         if p.useSegm is not None:
             p.iouType = "segm" if p.useSegm == 1 else "bbox"
             print(
-                "useSegm (deprecated) is not None. Running {} evaluation".format(p.iouType)
+                "useSegm (deprecated) is not None. Running {} evaluation".format(
+                    p.iouType
+                )
             )
         print("Evaluate annotation type *{}*".format(p.iouType))
         p.imgIds = list(np.unique(p.imgIds))

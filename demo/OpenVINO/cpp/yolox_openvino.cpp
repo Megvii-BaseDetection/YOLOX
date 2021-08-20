@@ -37,12 +37,9 @@ cv::Mat static_resize(cv::Mat& img) {
 }
 
 void blobFromImage(cv::Mat& img, Blob::Ptr& blob){
-    cv::cvtColor(img, img, cv::COLOR_BGR2RGB);
     int channels = 3;
     int img_h = img.rows;
     int img_w = img.cols;
-    std::vector<float> mean = {0.485, 0.456, 0.406};
-    std::vector<float> std = {0.229, 0.224, 0.225};
     InferenceEngine::MemoryBlob::Ptr mblob = InferenceEngine::as<InferenceEngine::MemoryBlob>(blob);
     if (!mblob) 
     {
@@ -61,7 +58,7 @@ void blobFromImage(cv::Mat& img, Blob::Ptr& blob){
             for (size_t w = 0; w < img_w; w++) 
             {
                 blob_data[c * img_w * img_h + h * img_w + w] =
-                    (((float)img.at<cv::Vec3b>(h, w)[c]) / 255.0f - mean[c]) / std[c];
+                    (float)img.at<cv::Vec3b>(h, w)[c];
             }
         }
     }
@@ -513,7 +510,6 @@ int main(int argc, char* argv[]) {
         auto moutputHolder = moutput->rmap();
         const float* net_pred = moutputHolder.as<const PrecisionTrait<Precision::FP32>::value_type*>();
         
-        const int image_size = 416;
 	    int img_w = image.cols;
         int img_h = image.rows;
 	    float scale = std::min(INPUT_W / (image.cols*1.0), INPUT_H / (image.rows*1.0));

@@ -1,6 +1,7 @@
 # YOLOX-CPP-ncnn
 
-Cpp file compile of YOLOX object detection base on [ncnn](https://github.com/Tencent/ncnn).
+Cpp file compile of YOLOX object detection base on [ncnn](https://github.com/Tencent/ncnn).  
+YOLOX is included in ncnn now, you could also try building from ncnn, it's better.
 
 ## Tutorial
 
@@ -63,7 +64,7 @@ YoloV5Focus      focus                    1 1 images 683
 ```
 
 ### Step5
-Use onnx_optimze to generate new param and bin:
+Use ncnn_optimize to generate new param and bin:
 ```shell
 # suppose you are still under ncnn/build/tools/ncnn dir.
 ../ncnnoptimize model.param model.bin yolox.param yolox.bin 65536

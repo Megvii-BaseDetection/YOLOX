@@ -7,9 +7,8 @@ import os
 import time
 from loguru import logger
 
-import apex
 import torch
-from apex import amp
+from torch.nn.parallel import DistributedDataParallel as DDP
 from torch.utils.tensorboard import SummaryWriter
 
 from yolox.data import DataPrefetcher
@@ -22,6 +21,7 @@ from yolox.utils import (
     get_rank,
     get_world_size,
     gpu_mem_usage,
+    is_parallel,
     load_ckpt,
     occupy_mem,
     save_checkpoint,
@@ -31,7 +31,6 @@ from yolox.utils import (
 
 
 class Trainer:
-
     def __init__(self, exp, args):
         # init function only defines some basic attr, other attrs like model, optimizer are built in
         # before_train methods.
@@ -41,6 +40,7 @@ class Trainer:
         # training related attr
         self.max_epoch = exp.max_epoch
         self.amp_training = args.fp16
+        self.scaler = torch.cuda.amp.GradScaler(enabled=args.fp16)
         self.is_distributed = get_world_size() > 1
         self.rank = get_rank()
         self.local_rank = get_local_rank()
@@ -56,13 +56,15 @@ class Trainer:
         self.meter = MeterBuffer(window_size=exp.print_interval)
         self.file_name = os.path.join(exp.output_dir, args.experiment_name)
 
-        if self.rank == 0 and os.path.exists("./" + args.experiment_name + "ip_add.txt"):
-            os.remove("./" + args.experiment_name + "ip_add.txt")
-
         if self.rank == 0:
             os.makedirs(self.file_name, exist_ok=True)
 
-        setup_logger(self.file_name, distributed_rank=self.rank, filename="train_log.txt", mode="a")
+        setup_logger(
+            self.file_name,
+            distributed_rank=self.rank,
+            filename="train_log.txt",
+            mode="a",
+        )
 
     def train(self):
         self.before_train()
@@ -92,18 +94,18 @@ class Trainer:
         inps = inps.to(self.data_type)
         targets = targets.to(self.data_type)
         targets.requires_grad = False
+        inps, targets = self.exp.preprocess(inps, targets, self.input_size)
         data_end_time = time.time()
 
-        outputs = self.model(inps, targets)
+        with torch.cuda.amp.autocast(enabled=self.amp_training):
+            outputs = self.model(inps, targets)
+
         loss = outputs["total_loss"]
 
         self.optimizer.zero_grad()
-        if self.amp_training:
-            with amp.scale_loss(loss, self.optimizer) as scaled_loss:
-                scaled_loss.backward()
-        else:
-            loss.backward()
-        self.optimizer.step()
+        self.scaler.scale(loss).backward()
+        self.scaler.step(self.optimizer)
+        self.scaler.update()
 
         if self.use_model_ema:
             self.ema_model.update(self.model)
@@ -127,14 +129,13 @@ class Trainer:
         # model related init
         torch.cuda.set_device(self.local_rank)
         model = self.exp.get_model()
-        logger.info("Model Summary: {}".format(get_model_info(model, self.exp.test_size)))
+        logger.info(
+            "Model Summary: {}".format(get_model_info(model, self.exp.test_size))
+        )
         model.to(self.device)
 
         # solver related init
         self.optimizer = self.exp.get_optimizer(self.args.batch_size)
-
-        if self.amp_training:
-            model, optimizer = amp.initialize(model, self.optimizer, opt_level="O1")
 
         # value of epoch will be set in `resume_train`
         model = self.resume_train(model)
@@ -144,7 +145,8 @@ class Trainer:
         self.train_loader = self.exp.get_data_loader(
             batch_size=self.args.batch_size,
             is_distributed=self.is_distributed,
-            no_aug=self.no_aug
+            no_aug=self.no_aug,
+            cache_img=self.args.cache,
         )
         logger.info("init prefetcher, this might take one minute or less...")
         self.prefetcher = DataPrefetcher(self.train_loader)
@@ -158,9 +160,7 @@ class Trainer:
             occupy_mem(self.local_rank)
 
         if self.is_distributed:
-            model = apex.parallel.DistributedDataParallel(model)
-            # from torch.nn.parallel import DistributedDataParallel as DDP
-            # model = DDP(model, device_ids=[self.local_rank], broadcast_buffers=False)
+            model = DDP(model, device_ids=[self.local_rank], broadcast_buffers=False)
 
         if self.use_model_ema:
             self.ema_model = ModelEMA(model, 0.9998)
@@ -200,9 +200,6 @@ class Trainer:
                 self.save_ckpt(ckpt_name="last_mosaic_epoch")
 
     def after_epoch(self):
-        if self.use_model_ema:
-            self.ema_model.update_attr(self.model)
-
         self.save_ckpt(ckpt_name="latest")
 
         if (self.epoch + 1) % self.exp.eval_interval == 0:
@@ -229,10 +226,14 @@ class Trainer:
                 self.epoch + 1, self.max_epoch, self.iter + 1, self.max_iter
             )
             loss_meter = self.meter.get_filtered_meter("loss")
-            loss_str = ", ".join(["{}: {:.1f}".format(k, v.latest) for k, v in loss_meter.items()])
+            loss_str = ", ".join(
+                ["{}: {:.1f}".format(k, v.latest) for k, v in loss_meter.items()]
+            )
 
             time_meter = self.meter.get_filtered_meter("time")
-            time_str = ", ".join(["{}: {:.3f}s".format(k, v.avg) for k, v in time_meter.items()])
+            time_str = ", ".join(
+                ["{}: {:.3f}s".format(k, v.avg) for k, v in time_meter.items()]
+            )
 
             logger.info(
                 "{}, mem: {:.0f}Mb, {}, {}, lr: {:.3e}".format(
@@ -260,7 +261,7 @@ class Trainer:
         if self.args.resume:
             logger.info("resume training")
             if self.args.ckpt is None:
-                ckpt_file = os.path.join(self.file_name, "latest" + "_ckpt.pth.tar")
+                ckpt_file = os.path.join(self.file_name, "latest" + "_ckpt.pth")
             else:
                 ckpt_file = self.args.ckpt
 
@@ -269,15 +270,17 @@ class Trainer:
             model.load_state_dict(ckpt["model"])
             self.optimizer.load_state_dict(ckpt["optimizer"])
             # resume the training states variables
-            if self.amp_training and "amp" in ckpt:
-                amp.load_state_dict(ckpt["amp"])
             start_epoch = (
                 self.args.start_epoch - 1
                 if self.args.start_epoch is not None
                 else ckpt["start_epoch"]
             )
             self.start_epoch = start_epoch
-            logger.info("loaded checkpoint '{}' (epoch {})".format(self.args.resume, self.start_epoch))  # noqa
+            logger.info(
+                "loaded checkpoint '{}' (epoch {})".format(
+                    self.args.resume, self.start_epoch
+                )
+            )  # noqa
         else:
             if self.args.ckpt is not None:
                 logger.info("loading checkpoint for fine tuning")
@@ -289,8 +292,16 @@ class Trainer:
         return model
 
     def evaluate_and_save_model(self):
-        evalmodel = self.ema_model.ema if self.use_model_ema else self.model
-        ap50_95, ap50, summary = self.exp.eval(evalmodel, self.evaluator, self.is_distributed)
+        if self.use_model_ema:
+            evalmodel = self.ema_model.ema
+        else:
+            evalmodel = self.model
+            if is_parallel(evalmodel):
+                evalmodel = evalmodel.module
+
+        ap50_95, ap50, summary = self.exp.eval(
+            evalmodel, self.evaluator, self.is_distributed
+        )
         self.model.train()
         if self.rank == 0:
             self.tblogger.add_scalar("val/COCOAP50", ap50, self.epoch + 1)
@@ -310,10 +321,6 @@ class Trainer:
                 "model": save_model.state_dict(),
                 "optimizer": self.optimizer.state_dict(),
             }
-            if self.amp_training:
-                # save amp state according to
-                # https://nvidia.github.io/apex/amp.html#checkpointing
-                ckpt_state["amp"] = amp.state_dict()
             save_checkpoint(
                 ckpt_state,
                 update_best_ckpt,

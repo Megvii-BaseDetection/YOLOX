@@ -59,7 +59,9 @@ def multiclass_nms(boxes, scores, nms_thr, score_thr):
             keep = nms(valid_boxes, valid_scores, nms_thr)
             if len(keep) > 0:
                 cls_inds = np.ones((len(keep), 1)) * cls_ind
-                dets = np.concatenate([valid_boxes[keep], valid_scores[keep, None], cls_inds], 1)
+                dets = np.concatenate(
+                    [valid_boxes[keep], valid_scores[keep, None], cls_inds], 1
+                )
                 final_dets.append(dets)
     if len(final_dets) == 0:
         return None
@@ -76,11 +78,11 @@ def demo_postprocess(outputs, img_size, p6=False):
     else:
         strides = [8, 16, 32, 64]
 
-    hsizes = [img_size[0]//stride for stride in strides]
-    wsizes = [img_size[1]//stride for stride in strides]
+    hsizes = [img_size[0] // stride for stride in strides]
+    wsizes = [img_size[1] // stride for stride in strides]
 
     for hsize, wsize, stride in zip(hsizes, wsizes, strides):
-        xv, yv = np.meshgrid(np.arange(hsize), np.arange(wsize))
+        xv, yv = np.meshgrid(np.arange(wsize), np.arange(hsize))
         grid = np.stack((xv, yv), 2).reshape(1, -1, 2)
         grids.append(grid)
         shape = grid.shape[:2]

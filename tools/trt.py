@@ -41,7 +41,7 @@ def main():
     file_name = os.path.join(exp.output_dir, args.experiment_name)
     os.makedirs(file_name, exist_ok=True)
     if args.ckpt is None:
-        ckpt_file = os.path.join(file_name, "best_ckpt.pth.tar")
+        ckpt_file = os.path.join(file_name, "best_ckpt.pth")
     else:
         ckpt_file = args.ckpt
 
@@ -61,11 +61,11 @@ def main():
         log_level=trt.Logger.INFO,
         max_workspace_size=(1 << 32),
     )
-    torch.save(model_trt.state_dict(), os.path.join(file_name, 'model_trt.pth'))
+    torch.save(model_trt.state_dict(), os.path.join(file_name, "model_trt.pth"))
     logger.info("Converted TensorRT model done.")
-    engine_file = os.path.join(file_name, 'model_trt.engine')
-    engine_file_demo = os.path.join('demo', 'TensorRT', 'cpp', 'model_trt.engine')
-    with open(engine_file, 'wb') as f:
+    engine_file = os.path.join(file_name, "model_trt.engine")
+    engine_file_demo = os.path.join("demo", "TensorRT", "cpp", "model_trt.engine")
+    with open(engine_file, "wb") as f:
         f.write(model_trt.engine.serialize())
 
     shutil.copyfile(engine_file, engine_file_demo)

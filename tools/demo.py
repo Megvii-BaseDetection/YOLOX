@@ -11,25 +11,30 @@ import cv2
 
 import torch
 
-from yolox.data.data_augment import preproc
+from yolox.data.data_augment import ValTransform
 from yolox.data.datasets import COCO_CLASSES
 from yolox.exp import get_exp
 from yolox.utils import fuse_model, get_model_info, postprocess, vis
 
-IMAGE_EXT = ['.jpg', '.jpeg', '.webp', '.bmp', '.png']
+IMAGE_EXT = [".jpg", ".jpeg", ".webp", ".bmp", ".png"]
 
 
 def make_parser():
     parser = argparse.ArgumentParser("YOLOX Demo!")
-    parser.add_argument('demo', default='image', help='demo type, eg. image, video and webcam')
+    parser.add_argument(
+        "demo", default="image", help="demo type, eg. image, video and webcam"
+    )
     parser.add_argument("-expn", "--experiment-name", type=str, default=None)
     parser.add_argument("-n", "--name", type=str, default=None, help="model name")
 
-    parser.add_argument('--path', default='./assets/dog.jpg', help='path to images or video')
-    parser.add_argument('--camid', type=int, default=0, help='webcam demo camera id')
     parser.add_argument(
-        '--save_result', action='store_true',
-        help='whether to save the inference result of image/video'
+        "--path", default="./assets/dog.jpg", help="path to images or video"
+    )
+    parser.add_argument("--camid", type=int, default=0, help="webcam demo camera id")
+    parser.add_argument(
+        "--save_result",
+        action="store_true",
+        help="whether to save the inference result of image/video",
     )
 
     # exp file
@@ -41,9 +46,14 @@ def make_parser():
         help="pls input your expriment description file",
     )
     parser.add_argument("-c", "--ckpt", default=None, type=str, help="ckpt for eval")
-    parser.add_argument("--device", default="cpu", type=str, help="device to run our model, can either be cpu or gpu")
-    parser.add_argument("--conf", default=None, type=float, help="test conf")
-    parser.add_argument("--nms", default=None, type=float, help="test nms threshold")
+    parser.add_argument(
+        "--device",
+        default="cpu",
+        type=str,
+        help="device to run our model, can either be cpu or gpu",
+    )
+    parser.add_argument("--conf", default=0.3, type=float, help="test conf")
+    parser.add_argument("--nms", default=0.3, type=float, help="test nms threshold")
     parser.add_argument("--tsize", default=None, type=int, help="test img size")
     parser.add_argument(
         "--fp16",
@@ -51,6 +61,13 @@ def make_parser():
         default=False,
         action="store_true",
         help="Adopting mix precision evaluating.",
+    )
+    parser.add_argument(
+        "--legacy",
+        dest="legacy",
+        default=False,
+        action="store_true",
+        help="To be compatible with older versions",
     )
     parser.add_argument(
         "--fuse",
@@ -81,7 +98,16 @@ def get_image_list(path):
 
 
 class Predictor(object):
-    def __init__(self, model, exp, cls_names=COCO_CLASSES, trt_file=None, decoder=None, device="cpu"):
+    def __init__(
+        self,
+        model,
+        exp,
+        cls_names=COCO_CLASSES,
+        trt_file=None,
+        decoder=None,
+        device="cpu",
+        legacy=False,
+    ):
         self.model = model
         self.cls_names = cls_names
         self.decoder = decoder
@@ -90,32 +116,34 @@ class Predictor(object):
         self.nmsthre = exp.nmsthre
         self.test_size = exp.test_size
         self.device = device
+        self.preproc = ValTransform(legacy=legacy)
         if trt_file is not None:
             from torch2trt import TRTModule
+
             model_trt = TRTModule()
             model_trt.load_state_dict(torch.load(trt_file))
 
             x = torch.ones(1, 3, exp.test_size[0], exp.test_size[1]).cuda()
             self.model(x)
             self.model = model_trt
-        self.rgb_means = (0.485, 0.456, 0.406)
-        self.std = (0.229, 0.224, 0.225)
 
     def inference(self, img):
-        img_info = {'id': 0}
+        img_info = {"id": 0}
         if isinstance(img, str):
-            img_info['file_name'] = os.path.basename(img)
+            img_info["file_name"] = os.path.basename(img)
             img = cv2.imread(img)
         else:
-            img_info['file_name'] = None
+            img_info["file_name"] = None
 
         height, width = img.shape[:2]
-        img_info['height'] = height
-        img_info['width'] = width
-        img_info['raw_img'] = img
+        img_info["height"] = height
+        img_info["width"] = width
+        img_info["raw_img"] = img
 
-        img, ratio = preproc(img, self.test_size, self.rgb_means, self.std)
-        img_info['ratio'] = ratio
+        ratio = min(self.test_size[0] / img.shape[0], self.test_size[1] / img.shape[1])
+        img_info["ratio"] = ratio
+
+        img, _ = self.preproc(img, None, self.test_size)
         img = torch.from_numpy(img).unsqueeze(0)
         if self.device == "gpu":
             img = img.cuda()
@@ -126,14 +154,14 @@ class Predictor(object):
             if self.decoder is not None:
                 outputs = self.decoder(outputs, dtype=outputs.type())
             outputs = postprocess(
-                        outputs, self.num_classes, self.confthre, self.nmsthre
-                    )
-            logger.info('Infer time: {:.4f}s'.format(time.time()-t0))
+                outputs, self.num_classes, self.confthre, self.nmsthre
+            )
+            logger.info("Infer time: {:.4f}s".format(time.time() - t0))
         return outputs, img_info
 
     def visual(self, output, img_info, cls_conf=0.35):
-        ratio = img_info['ratio']
-        img = img_info['raw_img']
+        ratio = img_info["ratio"]
+        img = img_info["raw_img"]
         if output is None:
             return img
         output = output.cpu()
@@ -168,24 +196,26 @@ def image_demo(predictor, vis_folder, path, current_time, save_result):
             logger.info("Saving detection result in {}".format(save_file_name))
             cv2.imwrite(save_file_name, result_image)
         ch = cv2.waitKey(0)
-        if ch == 27 or ch == ord('q') or ch == ord('Q'):
+        if ch == 27 or ch == ord("q") or ch == ord("Q"):
             break
 
 
 def imageflow_demo(predictor, vis_folder, current_time, args):
-    cap = cv2.VideoCapture(args.path if args.demo == 'video' else args.camid)
+    cap = cv2.VideoCapture(args.path if args.demo == "video" else args.camid)
     width = cap.get(cv2.CAP_PROP_FRAME_WIDTH)  # float
     height = cap.get(cv2.CAP_PROP_FRAME_HEIGHT)  # float
     fps = cap.get(cv2.CAP_PROP_FPS)
-    save_folder = os.path.join(vis_folder, time.strftime("%Y_%m_%d_%H_%M_%S", current_time))
+    save_folder = os.path.join(
+        vis_folder, time.strftime("%Y_%m_%d_%H_%M_%S", current_time)
+    )
     os.makedirs(save_folder, exist_ok=True)
     if args.demo == "video":
-        save_path = os.path.join(save_folder, args.path.split('/')[-1])
+        save_path = os.path.join(save_folder, args.path.split("/")[-1])
     else:
-        save_path = os.path.join(save_folder, 'camera.mp4')
-    logger.info(f'video save_path is {save_path}')
+        save_path = os.path.join(save_folder, "camera.mp4")
+    logger.info(f"video save_path is {save_path}")
     vid_writer = cv2.VideoWriter(
-        save_path, cv2.VideoWriter_fourcc(*'mp4v'), fps, (int(width), int(height))
+        save_path, cv2.VideoWriter_fourcc(*"mp4v"), fps, (int(width), int(height))
     )
     while True:
         ret_val, frame = cap.read()
@@ -195,7 +225,7 @@ def imageflow_demo(predictor, vis_folder, current_time, args):
             if args.save_result:
                 vid_writer.write(result_frame)
             ch = cv2.waitKey(1)
-            if ch == 27 or ch == ord('q') or ch == ord('Q'):
+            if ch == 27 or ch == ord("q") or ch == ord("Q"):
                 break
         else:
             break
@@ -208,12 +238,13 @@ def main(exp, args):
     file_name = os.path.join(exp.output_dir, args.experiment_name)
     os.makedirs(file_name, exist_ok=True)
 
+    vis_folder = None
     if args.save_result:
-        vis_folder = os.path.join(file_name, 'vis_res')
+        vis_folder = os.path.join(file_name, "vis_res")
         os.makedirs(vis_folder, exist_ok=True)
 
     if args.trt:
-        args.device="gpu"
+        args.device = "gpu"
 
     logger.info("Args: {}".format(args))
 
@@ -233,7 +264,7 @@ def main(exp, args):
 
     if not args.trt:
         if args.ckpt is None:
-            ckpt_file = os.path.join(file_name, "best_ckpt.pth.tar")
+            ckpt_file = os.path.join(file_name, "best_ckpt.pth")
         else:
             ckpt_file = args.ckpt
         logger.info("loading checkpoint")
@@ -247,12 +278,11 @@ def main(exp, args):
         model = fuse_model(model)
 
     if args.trt:
-        assert (not args.fuse),\
-            "TensorRT model is not support model fusing!"
+        assert not args.fuse, "TensorRT model is not support model fusing!"
         trt_file = os.path.join(file_name, "model_trt.pth")
-        assert os.path.exists(trt_file), (
-            "TensorRT model is not found!\n Run python3 tools/trt.py first!"
-        )
+        assert os.path.exists(
+            trt_file
+        ), "TensorRT model is not found!\n Run python3 tools/trt.py first!"
         model.head.decode_in_inference = False
         decoder = model.head.decode_outputs
         logger.info("Using TensorRT to inference")
@@ -260,11 +290,11 @@ def main(exp, args):
         trt_file = None
         decoder = None
 
-    predictor = Predictor(model, exp, COCO_CLASSES, trt_file, decoder, args.device)
+    predictor = Predictor(model, exp, COCO_CLASSES, trt_file, decoder, args.device, args.legacy)
     current_time = time.localtime()
-    if args.demo == 'image':
+    if args.demo == "image":
         image_demo(predictor, vis_folder, args.path, current_time, args.save_result)
-    elif args.demo == 'video' or args.demo == 'webcam':
+    elif args.demo == "video" or args.demo == "webcam":
         imageflow_demo(predictor, vis_folder, current_time, args)
 
 
