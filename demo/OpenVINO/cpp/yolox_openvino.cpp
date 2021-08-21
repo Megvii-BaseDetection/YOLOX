@@ -81,15 +81,15 @@ struct GridAndStride
     int stride;
 };
 
-static void generate_grids_and_stride(const int target_h, const int target_w, std::vector<int>& strides, std::vector<GridAndStride>& grid_strides)
+static void generate_grids_and_stride(const int target_w, const int target_h, std::vector<int>& strides, std::vector<GridAndStride>& grid_strides)
 {
     for (auto stride : strides)
     {
-        int num_grid_h = target_h / stride;
         int num_grid_w = target_w / stride;
-        for (int g1 = 0; g1 < num_grid_w; g1++)
+        int num_grid_h = target_h / stride;
+        for (int g1 = 0; g1 < num_grid_h; g1++)
         {
-            for (int g0 = 0; g0 < num_grid_h; g0++)
+            for (int g0 = 0; g0 < num_grid_w; g0++)
             {
                 grid_strides.push_back((GridAndStride){g0, g1, stride});
             }
