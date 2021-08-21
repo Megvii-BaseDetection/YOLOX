@@ -81,7 +81,7 @@ struct GridAndStride
     int stride;
 };
 
-static void generate_grids_and_stride(const int target_h,int target_w, std::vector<int>& strides, std::vector<GridAndStride>& grid_strides)
+static void generate_grids_and_stride(const int target_h, const int target_w, std::vector<int>& strides, std::vector<GridAndStride>& grid_strides)
 {
     for (auto stride : strides)
     {
@@ -236,7 +236,7 @@ static void decode_outputs(const float* prob, std::vector<Object>& objects, floa
         std::vector<int> strides = {8, 16, 32};
         std::vector<GridAndStride> grid_strides;
 
-        generate_grids_and_stride(INPUT_W,INPUT_H, strides, grid_strides);
+        generate_grids_and_stride(INPUT_W, INPUT_H, strides, grid_strides);
         generate_yolox_proposals(grid_strides, prob,  BBOX_CONF_THRESH, proposals);
         qsort_descent_inplace(proposals);
 
