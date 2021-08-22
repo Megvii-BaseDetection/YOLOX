@@ -77,7 +77,7 @@ class COCODataset(Dataset):
         cache_file = self.data_dir + "/img_resized_cache_" + self.name + ".array"
         if not os.path.exists(cache_file):
             logger.info(
-                "Caching images for the frist time. This might take about 20 minutes for COCO"
+                "Caching images for the first time. This might take about 20 minutes for COCO"
             )
             self.imgs = np.memmap(
                 cache_file,
