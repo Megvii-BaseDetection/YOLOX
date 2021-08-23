@@ -16,7 +16,7 @@ There is 1 hyperparameter constrols the testing size:
 
 The self.input_size is suggested to set to the save value as self.test_size. By default, it is set to (640, 640).
 
-## 2. Multiscale Training
+## 2. Multi Scale Training
 
 When training on your custom dataset, you can use multiscale training in 2 ways:
 
@@ -46,3 +46,14 @@ When training on your custom dataset, you can use multiscale training in 2 ways:
    In this case, the actual multiscale range is [self.random_size[0]\*32, self.random_size[1]\*32], i.e., [320, 640]
 
    **Note: You must specify the self.input_size because it is used for initializing resize aug in dataset.**
+
+## 3. Single Scale Training
+
+If you want to train in a single scale. You need to specify the self.input_size and self.multiscale_range:
+
+    ```python
+    self.input_size = (416, 416)
+    self.multiscale_range = 0
+    ```
+
+    **DO NOT** set the self.random_size.
