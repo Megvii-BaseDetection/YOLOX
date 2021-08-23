@@ -49,7 +49,7 @@ When training on your custom dataset, you can use multiscale training in 2 ways:
 
 ## 3. Single Scale Training
 
-If you want to train in a single scale. You need to specify the self.input_size and self.multiscale_range:
+If you want to train in a single scale. You need to specify the self.input_size and self.multiscale_range=0:
 
 ```python
 self.input_size = (416, 416)
