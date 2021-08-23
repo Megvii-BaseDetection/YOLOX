@@ -121,7 +121,7 @@ class Exp(BaseExp):
             preproc=TrainTransform(max_labels=120),
             degrees=self.degrees,
             translate=self.translate,
-            mosaic_scale=self.mixup_scale,
+            mosaic_scale=self.mosaic_scale,
             mixup_scale=self.mixup_scale,
             shear=self.shear,
             perspective=self.perspective,
