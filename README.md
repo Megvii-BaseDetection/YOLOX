@@ -186,7 +186,8 @@ python tools/eval.py -n  yolox-s -c yolox_s.pth -b 1 -d 1 --conf 0.001 --fp16 --
 <details>
 <summary>Tutorials</summary>
 
-*  [Training on custom data](docs/train_custom_data.md).
+*  [Training on custom data](docs/train_custom_data.md)
+*  [Manipulating training image size](docs/manipulate_training_image_size.md)
 
 </details>
 
