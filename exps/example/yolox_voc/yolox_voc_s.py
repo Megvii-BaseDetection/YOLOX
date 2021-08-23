@@ -50,7 +50,7 @@ class Exp(MyExp):
             degrees=self.degrees,
             translate=self.translate,
             mosaic_scale=self.mosaic_scale,
-            mixup_scale = self.mixup_scale,
+            mixup_scale=self.mixup_scale,
             shear=self.shear,
             perspective=self.perspective,
             enable_mixup=self.enable_mixup,
