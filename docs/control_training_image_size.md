@@ -14,7 +14,7 @@ There is 1 hyperparameter constrols the testing size:
 
 - self.test_size = (640, 640)
 
-The self.input_size is suggested to set to the save value as self.test_size. By default, it is set to (640, 640).
+The self.input_size is suggested to set to the same value as self.test_size. By default, it is set to (640, 640) for most models and (416, 416) for yolox-tiny and yolox-nano.
 
 ## 2. Multi Scale Training
 
@@ -24,7 +24,7 @@ When training on your custom dataset, you can use multiscale training in 2 ways:
 
    If so, the actual multiscale sizes range from:
 
-   [self.input_size[1] - self.multiscale_range\*32,  self.input_size[1] + self.multiscale_range\*32]
+   [self.input_size[0] - self.multiscale_range\*32,  self.input_size[0] + self.multiscale_range\*32]
 
    For example, if you only set:
 
