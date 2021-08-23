@@ -1,4 +1,4 @@
-# Control Your Training Image Size
+# Manipulating Your Training Image Size
 
 This tutorial explains how to control your image size when training on your own data.
 
