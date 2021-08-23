@@ -1,7 +1,6 @@
+# Control Your Training Image Size
 
-ntrol Your Training Image Size
-
-This toturial explains how to control your image size when training on your own data.
+This tutorial explains how to control your image size when training on your own data.
 
 ## 1. Introduction
 
@@ -11,7 +10,7 @@ There are 3 hyperparamters control the training size:
 - self.multiscale_range = 5
 - self.random_size = (14, 26)
 
-There is 1 hyperparamters constrols the testing size:
+There is 1 hyperparameter constrols the testing size:
 
 - self.test_size = (640, 640)
 
@@ -37,7 +36,7 @@ When training on your custom dataset, you can use multiscale training in 2 ways:
 
    You can modify self.multiscale_range to change the multiscale range.
 
-2. **Simoutaneously Specifying the self.input_size and self.random_size**
+2. **Simultaneously specifying the self.input_size and self.random_size**
 
    ```python
    self.input_size = (416, 416)
