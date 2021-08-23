@@ -39,9 +39,9 @@ class MosaicDetection(Dataset):
 
     def __init__(
         self, dataset, img_size, mosaic=True, preproc=None,
-        degrees=10.0, translate=0.1, scale=(0.5, 1.5), mscale=(0.5, 1.5),
-        shear=2.0, perspective=0.0, enable_mixup=True,
-        mosaic_prob=1.0, mixup_prob=1.0, *args
+        degrees=10.0, translate=0.1, mosaic_scale=(0.5, 1.5),
+        mixup_scale=(0.5, 1.5), shear=2.0, perspective=0.0,
+        enable_mixup=True, mosaic_prob=1.0, mixup_prob=1.0, *args
     ):
         """
 
@@ -52,8 +52,8 @@ class MosaicDetection(Dataset):
             preproc (func):
             degrees (float):
             translate (float):
-            scale (tuple):
-            mscale (tuple):
+            mosaic_scale (tuple):
+            mixup_scale (tuple):
             shear (float):
             perspective (float):
             enable_mixup (bool):
@@ -64,10 +64,10 @@ class MosaicDetection(Dataset):
         self.preproc = preproc
         self.degrees = degrees
         self.translate = translate
-        self.scale = scale
+        self.scale = mosaic_scale
         self.shear = shear
         self.perspective = perspective
-        self.mixup_scale = mscale
+        self.mixup_scale = mixup_scale
         self.enable_mosaic = mosaic
         self.enable_mixup = enable_mixup
         self.mosaic_prob = mosaic_prob
