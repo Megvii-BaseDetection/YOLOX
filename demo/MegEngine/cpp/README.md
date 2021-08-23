@@ -120,7 +120,8 @@ export CXX=aarch64-linux-android21-clang++
 > **Note**: two ways to get `yolox_s.mge` model file
 >
 > * reference to python demo's `dump.py` script.
-> * wget https://github.com/Megvii-BaseDetection/storage/releases/download/0.0.1/yolox_s.mge
+> * For users with code before 0.1.0 version, wget yolox-s weights [here](https://github.com/Megvii-BaseDetection/storage/releases/download/0.0.1/yolox_s.mge).
+> * For users with code after 0.1.0 version, use [python code in megengine](../python) to generate mge file.
 
 ```shell
 # if host:
