@@ -248,7 +248,7 @@ class Trainer:
             self.meter.clear_meters()
 
         # random resizing
-        if self.exp.random_size is not None and (self.progress_in_iter + 1) % 10 == 0:
+        if (self.progress_in_iter + 1) % 10 == 0:
             self.input_size = self.exp.random_resize(
                 self.train_loader, self.epoch, self.rank, self.is_distributed
             )
