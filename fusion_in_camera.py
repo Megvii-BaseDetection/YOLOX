@@ -12,7 +12,7 @@ from loguru import logger
 
 def process_camera(predictor, frame):
     img_outputs, img_info = predictor.inference(frame)
-    img_result, _ = predictor.visual(img_outputs[0], img_info, predictor.confthre)
+    img_result, _, _, _ = predictor.visual(img_outputs[0], img_info, predictor.confthre)
     return img_outputs, img_info, img_result
 
 

@@ -2,7 +2,7 @@ import numpy as np
 import math
 from Fusion.utils.visualize import draw_in_radar
 from Fusion.utils.visualize import _CLASS_SIZE
-from Fusion.fusion_in_radar.filter import filter_two_line
+from Fusion.fusion_in_radar.filter import filter_car_line
 
 
 def get_euclidean_distance(x, y):
@@ -86,7 +86,7 @@ def fusion(related_data, camera_class, camera_scores, camera_frame):
 
 def process_fusion(camera_frame, camera_scores, camera_class, radar_frame, mode):
     # filter,only save two car line
-    c_frame, c_scores, c_class, r_frame, roi = filter_two_line(
+    c_frame, c_scores, c_class, r_frame, roi = filter_car_line(
         camera_frame, camera_scores, camera_class, radar_frame)
 
     # association

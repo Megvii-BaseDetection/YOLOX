@@ -13,7 +13,7 @@ def is_in_rectangle(x, z):
     return True
 
 
-def filter_two_line(camera_frame, camera_scores, camera_class, radar_frame):
+def filter_car_line(camera_frame, camera_scores, camera_class, radar_frame):
     c_frame, c_scores, c_class, r_frame = [], [], [], []
     for c in range(len(camera_frame)):
         x = camera_frame[c, 0]
