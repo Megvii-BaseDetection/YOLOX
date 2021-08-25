@@ -50,6 +50,6 @@ python tools/eval.py -n  yolox-s -c yolox_s.pth -b 64 -d 8 --conf 0.001 [--fp16]
                          yolox-x
 ```
 
-But for deployment demo, we don't suppor the old weights anymore. Users could checkout to YOLOX version 0.1.0 to use legacy weights for deployment
+But for deployment demo, we don't support the old weights anymore. Users could checkout to YOLOX version 0.1.0 to use legacy weights for deployment
 
 
