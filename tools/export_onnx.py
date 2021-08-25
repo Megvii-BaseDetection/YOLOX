@@ -29,6 +29,7 @@ def make_parser():
         "-o", "--opset", default=11, type=int, help="onnx opset version"
     )
     parser.add_argument('--batch-size', type=int, default=1, help='batch size')
+    parser.add_argument('--dynamic', action='store_true', help='ONNX: dynamic axes')
     parser.add_argument("--no-onnxsim", action="store_true", help="use onnxsim or not")
     parser.add_argument(
         "-f",
@@ -79,12 +80,15 @@ def main():
 
     logger.info("loading checkpoint done.")
     dummy_input = torch.randn(args.batch_size, 3, exp.test_size[0], exp.test_size[1])
+
     torch.onnx._export(
         model,
         dummy_input,
         args.output_name,
         input_names=[args.input],
         output_names=[args.output],
+        dynamic_axes={args.input: {0: 'batch'},
+                      args.output: {0: 'batch'}} if args.dynamic else None,
         opset_version=args.opset,
     )
     logger.info("generated onnx model named {}".format(args.output_name))
@@ -96,7 +100,9 @@ def main():
 
         # use onnxsimplify to reduce reduent model.
         onnx_model = onnx.load(args.output_name)
-        model_simp, check = simplify(onnx_model)
+        model_simp, check = simplify(onnx_model,
+                                     dynamic_input_shape=args.dynamic,
+                                     input_shapes={args.input: [1, 3, exp.test_size[0], exp.test_size[1]]} if args.dynamic else None)
         assert check, "Simplified ONNX model could not be validated"
         onnx.save(model_simp, args.output_name)
         logger.info("generated simplified onnx model named {}".format(args.output_name))
