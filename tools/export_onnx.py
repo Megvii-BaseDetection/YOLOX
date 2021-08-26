@@ -29,7 +29,8 @@ def make_parser():
         "-o", "--opset", default=11, type=int, help="onnx opset version"
     )
     parser.add_argument('--batch-size', type=int, default=1, help='batch size')
-    parser.add_argument('--dynamic', action='store_true', help='ONNX: dynamic axes')
+    parser.add_argument(
+        '--dynamic', action='store_true', help='whether the input shape should be dynamic or not')
     parser.add_argument("--no-onnxsim", action="store_true", help="use onnxsim or not")
     parser.add_argument(
         "-f",
