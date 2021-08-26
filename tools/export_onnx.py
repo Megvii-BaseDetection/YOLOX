@@ -103,7 +103,7 @@ def main():
         onnx_model = onnx.load(args.output_name)
         model_simp, check = simplify(onnx_model,
                                      dynamic_input_shape=args.dynamic,
-                                     input_shapes={args.input: [1, 3, exp.test_size[0], exp.test_size[1]]} if args.dynamic else None)
+                                     input_shapes={args.input: list(dummy_input.shape)} if args.dynamic else None)
         assert check, "Simplified ONNX model could not be validated"
         onnx.save(model_simp, args.output_name)
         logger.info("generated simplified onnx model named {}".format(args.output_name))
