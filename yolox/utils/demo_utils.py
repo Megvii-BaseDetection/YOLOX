@@ -49,7 +49,7 @@ def multiclass_nms(boxes, scores, nms_thr, score_thr, class_agnostic=True):
     if class_agnostic:
         nms_method = multiclass_nms_class_agnostic
     else:
-        nms_method = numticlass_nms_class_aware
+        nms_method = multiclass_nms_class_aware
     return nms_method(boxes, scores, nms_thr, score_thr)
 
 
