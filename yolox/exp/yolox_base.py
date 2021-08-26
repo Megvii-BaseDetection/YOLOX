@@ -38,6 +38,8 @@ class Exp(BaseExp):
         # --------------- transform config ----------------- #
         self.mosaic_prob = 1.0
         self.mixup_prob = 1.0
+        self.hsv_prob = 1.0
+        self.flip_prob = 0.5
         self.degrees = 10.0
         self.translate = 0.1
         self.mosaic_scale = (0.1, 2)
@@ -110,7 +112,7 @@ class Exp(BaseExp):
                 data_dir=self.data_dir,
                 json_file=self.train_ann,
                 img_size=self.input_size,
-                preproc=TrainTransform(max_labels=50),
+                preproc=TrainTransform(max_labels=50, self.flip_prob, self.hsv_prob),
                 cache=cache_img,
             )
 
@@ -118,7 +120,7 @@ class Exp(BaseExp):
             dataset,
             mosaic=not no_aug,
             img_size=self.input_size,
-            preproc=TrainTransform(max_labels=120),
+            preproc=TrainTransform(max_labels=120, self.flip_prob, self.hsv_prob),
             degrees=self.degrees,
             translate=self.translate,
             mosaic_scale=self.mosaic_scale,
