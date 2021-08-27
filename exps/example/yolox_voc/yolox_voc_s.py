@@ -15,6 +15,13 @@ class Exp(MyExp):
         self.depth = 0.33
         self.width = 0.50
         self.warmup_epochs = 1
+
+        # ---------- transform config ------------ #
+        self.mosaic_prob = 1.0
+        self.mixup_prob = 1.0
+        self.hsv_prob = 1.0
+        self.flip_prob = 0.5
+
         self.exp_name = os.path.split(os.path.realpath(__file__))[1].split(".")[0]
 
     def get_data_loader(self, batch_size, is_distributed, no_aug=False, cache_img=False):
@@ -38,7 +45,10 @@ class Exp(MyExp):
                 data_dir=os.path.join(get_yolox_datadir(), "VOCdevkit"),
                 image_sets=[('2007', 'trainval'), ('2012', 'trainval')],
                 img_size=self.input_size,
-                preproc=TrainTransform(max_labels=50),
+                preproc=TrainTransform(
+                    max_labels=50,
+                    flip_prob=self.flip_prob,
+                    hsv_prob=self.hsv_prob),
                 cache=cache_img,
             )
 
@@ -46,7 +56,10 @@ class Exp(MyExp):
             dataset,
             mosaic=not no_aug,
             img_size=self.input_size,
-            preproc=TrainTransform(max_labels=120),
+            preproc=TrainTransform(
+                max_labels=120,
+                flip_prob=self.flip_prob,
+                hsv_prob=self.hsv_prob),
             degrees=self.degrees,
             translate=self.translate,
             mosaic_scale=self.mosaic_scale,
