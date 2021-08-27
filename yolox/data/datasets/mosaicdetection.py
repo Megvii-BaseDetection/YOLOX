@@ -154,9 +154,9 @@ class MosaicDetection(Dataset):
 
         else:
             self._dataset._input_dim = self.input_dim
-            img, label, img_info, id_ = self._dataset.pull_item(idx)
+            img, label, img_info, idx = self._dataset.pull_item(idx)
             img, label = self.preproc(img, label, self.input_dim)
-            return img, label, img_info, id_
+            return img, label, img_info, np.array([idx])
 
     def mixup(self, origin_img, origin_labels, input_dim):
         jit_factor = random.uniform(*self.mixup_scale)
