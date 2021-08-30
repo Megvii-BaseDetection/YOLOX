@@ -27,6 +27,10 @@
 #include <stdio.h>
 #include <vector>
 
+#define YOLOX_NMS_THRESH  0.45 // nms threshold
+#define YOLOX_CONF_THRESH 0.25 // threshold of bounding box prob
+#define YOLOX_TARGET_SIZE 640  // target image size after resize, might use 416 for small model
+
 // YOLOX use the same focus in yolov5
 class YoloV5Focus : public ncnn::Layer
 {
@@ -177,14 +181,19 @@ static void nms_sorted_bboxes(const std::vector<Object>& faceobjects, std::vecto
 
 static void generate_grids_and_stride(const int target_size, std::vector<int>& strides, std::vector<GridAndStride>& grid_strides)
 {
-    for (auto stride : strides)
+    for (int i = 0; i < (int)strides.size(); i++)
     {
+        int stride = strides[i];
         int num_grid = target_size / stride;
         for (int g1 = 0; g1 < num_grid; g1++)
         {
             for (int g0 = 0; g0 < num_grid; g0++)
             {
-                grid_strides.push_back((GridAndStride){g0, g1, stride});
+                GridAndStride gs;
+                gs.grid0 = g0;
+                gs.grid1 = g1;
+                gs.stride = stride;
+                grid_strides.push_back(gs);
             }
         }
     }
@@ -193,10 +202,7 @@ static void generate_grids_and_stride(const int target_size, std::vector<int>& s
 static void generate_yolox_proposals(std::vector<GridAndStride> grid_strides, const ncnn::Mat& feat_blob, float prob_threshold, std::vector<Object>& objects)
 {
     const int num_grid = feat_blob.h;
-    fprintf(stderr, "output height: %d, width: %d, channels: %d, dims:%d\n", feat_blob.h, feat_blob.w, feat_blob.c, feat_blob.dims);
-
     const int num_class = feat_blob.w - 5;
-
     const int num_anchors = grid_strides.size();
 
     const float* feat_ptr = feat_blob.channel(0);
@@ -239,7 +245,7 @@ static void generate_yolox_proposals(std::vector<GridAndStride> grid_strides, co
 
     } // point anchor loop
 }
- 
+
 static int detect_yolox(const cv::Mat& bgr, std::vector<Object>& objects)
 {
     ncnn::Net yolox;
@@ -247,16 +253,13 @@ static int detect_yolox(const cv::Mat& bgr, std::vector<Object>& objects)
     yolox.opt.use_vulkan_compute = true;
     // yolox.opt.use_bf16_storage = true;
 
+    // Focus in yolov5
     yolox.register_custom_layer("YoloV5Focus", YoloV5Focus_layer_creator);
 
-    // original pretrained model from https://github.com/yolox
-    // TODO ncnn model https://github.com/nihui/ncnn-assets/tree/master/models
+    // original pretrained model from https://github.com/Megvii-BaseDetection/YOLOX
+    // ncnn model param: https://github.com/Megvii-BaseDetection/storage/releases/download/0.0.1/yolox_s_ncnn.tar.gz
     yolox.load_param("yolox.param");
     yolox.load_model("yolox.bin");
-
-    const int target_size = 416;
-    const float prob_threshold = 0.3f;
-    const float nms_threshold = 0.65f;
 
     int img_w = bgr.cols;
     int img_h = bgr.rows;
@@ -266,32 +269,25 @@ static int detect_yolox(const cv::Mat& bgr, std::vector<Object>& objects)
     float scale = 1.f;
     if (w > h)
     {
-        scale = (float)target_size / w;
-        w = target_size;
+        scale = (float)YOLOX_TARGET_SIZE / w;
+        w = YOLOX_TARGET_SIZE;
         h = h * scale;
     }
     else
     {
-        scale = (float)target_size / h;
-        h = target_size;
+        scale = (float)YOLOX_TARGET_SIZE / h;
+        h = YOLOX_TARGET_SIZE;
         w = w * scale;
     }
-    ncnn::Mat in = ncnn::Mat::from_pixels_resize(bgr.data, ncnn::Mat::PIXEL_BGR2RGB, img_w, img_h, w, h);
+    ncnn::Mat in = ncnn::Mat::from_pixels_resize(bgr.data, ncnn::Mat::PIXEL_BGR, img_w, img_h, w, h);
 
-    // pad to target_size rectangle
-    int wpad = target_size - w;
-    int hpad = target_size - h;
+    // pad to YOLOX_TARGET_SIZE rectangle
+    int wpad = YOLOX_TARGET_SIZE - w;
+    int hpad = YOLOX_TARGET_SIZE - h;
     ncnn::Mat in_pad;
     // different from yolov5, yolox only pad on bottom and right side,
     // which means users don't need to extra padding info to decode boxes coordinate.
     ncnn::copy_make_border(in, in_pad, 0, hpad, 0, wpad, ncnn::BORDER_CONSTANT, 114.f);
-
-    // python 0-1 input tensor with rgb_means = (0.485, 0.456, 0.406), std = (0.229, 0.224, 0.225)
-    // so for 0-255 input image, rgb_mean should multiply 255 and norm should div by std.
-    const float mean_vals[3] = {255.f * 0.485f, 255.f * 0.456, 255.f * 0.406f};
-    const float norm_vals[3] = {1 / (255.f * 0.229f), 1 / (255.f * 0.224f), 1 / (255.f * 0.225f)};
-
-    in_pad.substract_mean_normalize(mean_vals, norm_vals);
 
     ncnn::Extractor ex = yolox.create_extractor();
 
@@ -303,10 +299,11 @@ static int detect_yolox(const cv::Mat& bgr, std::vector<Object>& objects)
         ncnn::Mat out;
         ex.extract("output", out);
 
-        std::vector<int> strides = {8, 16, 32}; // might have stride=64
+        static const int stride_arr[] = {8, 16, 32}; // might have stride=64 in YOLOX
+        std::vector<int> strides(stride_arr, stride_arr + sizeof(stride_arr) / sizeof(stride_arr[0]));
         std::vector<GridAndStride> grid_strides;
-        generate_grids_and_stride(target_size, strides, grid_strides);
-        generate_yolox_proposals(grid_strides, out, prob_threshold, proposals);
+        generate_grids_and_stride(YOLOX_TARGET_SIZE, strides, grid_strides);
+        generate_yolox_proposals(grid_strides, out, YOLOX_CONF_THRESH, proposals);
     }
 
     // sort all proposals by score from highest to lowest
@@ -314,7 +311,7 @@ static int detect_yolox(const cv::Mat& bgr, std::vector<Object>& objects)
 
     // apply nms with nms_threshold
     std::vector<int> picked;
-    nms_sorted_bboxes(proposals, picked, nms_threshold);
+    nms_sorted_bboxes(proposals, picked, YOLOX_NMS_THRESH);
 
     int count = picked.size();
 

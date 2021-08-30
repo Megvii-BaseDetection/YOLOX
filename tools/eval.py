@@ -14,7 +14,7 @@ from torch.nn.parallel import DistributedDataParallel as DDP
 
 from yolox.core import launch
 from yolox.exp import get_exp
-from yolox.utils import fuse_model, get_model_info, setup_logger
+from yolox.utils import configure_nccl, fuse_model, get_local_rank, get_model_info, setup_logger
 
 
 def make_parser():
@@ -35,9 +35,6 @@ def make_parser():
     parser.add_argument("-b", "--batch-size", type=int, default=64, help="batch size")
     parser.add_argument(
         "-d", "--devices", default=None, type=int, help="device for training"
-    )
-    parser.add_argument(
-        "--local_rank", default=0, type=int, help="local rank for dist training"
     )
     parser.add_argument(
         "--num_machines", default=1, type=int, help="num of node for training"
@@ -79,6 +76,13 @@ def make_parser():
         help="Using TensorRT model for testing.",
     )
     parser.add_argument(
+        "--legacy",
+        dest="legacy",
+        default=False,
+        action="store_true",
+        help="To be compatible with older versions",
+    )
+    parser.add_argument(
         "--test",
         dest="test",
         default=False,
@@ -114,10 +118,10 @@ def main(exp, args, num_gpu):
     is_distributed = num_gpu > 1
 
     # set environment variables for distributed training
+    configure_nccl()
     cudnn.benchmark = True
 
-    rank = args.local_rank
-    # rank = get_local_rank()
+    rank = get_local_rank()
 
     file_name = os.path.join(exp.output_dir, args.experiment_name)
 
@@ -138,7 +142,7 @@ def main(exp, args, num_gpu):
     logger.info("Model Summary: {}".format(get_model_info(model, exp.test_size)))
     logger.info("Model Structure:\n{}".format(str(model)))
 
-    evaluator = exp.get_evaluator(args.batch_size, is_distributed, args.test)
+    evaluator = exp.get_evaluator(args.batch_size, is_distributed, args.test, args.legacy)
 
     torch.cuda.set_device(rank)
     model.cuda(rank)
@@ -149,10 +153,9 @@ def main(exp, args, num_gpu):
             ckpt_file = os.path.join(file_name, "best_ckpt.pth")
         else:
             ckpt_file = args.ckpt
-        logger.info("loading checkpoint")
+        logger.info("loading checkpoint from {}".format(ckpt_file))
         loc = "cuda:{}".format(rank)
         ckpt = torch.load(ckpt_file, map_location=loc)
-        # load the model state dict
         model.load_state_dict(ckpt["model"])
         logger.info("loaded checkpoint done.")
 
@@ -195,12 +198,13 @@ if __name__ == "__main__":
     num_gpu = torch.cuda.device_count() if args.devices is None else args.devices
     assert num_gpu <= torch.cuda.device_count()
 
+    dist_url = "auto" if args.dist_url is None else args.dist_url
     launch(
         main,
         num_gpu,
         args.num_machines,
         args.machine_rank,
         backend=args.dist_backend,
-        dist_url=args.dist_url,
+        dist_url=dist_url,
         args=(exp, args, num_gpu),
     )

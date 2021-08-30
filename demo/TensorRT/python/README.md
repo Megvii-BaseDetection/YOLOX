@@ -1,6 +1,6 @@
 # YOLOX-TensorRT in Python
 
-This toturial includes a Python demo for TensorRT.
+This tutorial includes a Python demo for TensorRT.
 
 ## Install TensorRT Toolkit
 

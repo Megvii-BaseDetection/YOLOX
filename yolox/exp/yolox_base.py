@@ -13,7 +13,6 @@ from .base_exp import BaseExp
 
 
 class Exp(BaseExp):
-
     def __init__(self):
         super().__init__()
 
@@ -26,16 +25,25 @@ class Exp(BaseExp):
         # set worker to 4 for shorter dataloader init time
         self.data_num_workers = 4
         self.input_size = (640, 640)
-        self.random_size = (14, 26)
+        # Actual multiscale ranges: [640-5*32, 640+5*32].
+        # To disable multiscale training, set the
+        # self.multiscale_range to 0.
+        self.multiscale_range = 5
+        # You can uncomment this line to specify a multiscale range
+        # self.random_size = (14, 26)
         self.data_dir = None
         self.train_ann = "instances_train2017.json"
         self.val_ann = "instances_val2017.json"
 
         # --------------- transform config ----------------- #
+        self.mosaic_prob = 1.0
+        self.mixup_prob = 1.0
+        self.hsv_prob = 1.0
+        self.flip_prob = 0.5
         self.degrees = 10.0
         self.translate = 0.1
-        self.scale = (0.1, 2)
-        self.mscale = (0.8, 1.6)
+        self.mosaic_scale = (0.1, 2)
+        self.mixup_scale = (0.5, 1.5)
         self.shear = 2.0
         self.perspective = 0.0
         self.enable_mixup = True
@@ -80,7 +88,9 @@ class Exp(BaseExp):
         self.model.head.initialize_biases(1e-2)
         return self.model
 
-    def get_data_loader(self, batch_size, is_distributed, no_aug=False):
+    def get_data_loader(
+        self, batch_size, is_distributed, no_aug=False, cache_img=False
+    ):
         from yolox.data import (
             COCODataset,
             TrainTransform,
@@ -88,34 +98,44 @@ class Exp(BaseExp):
             DataLoader,
             InfiniteSampler,
             MosaicDetection,
+            worker_init_reset_seed,
+        )
+        from yolox.utils import (
+            wait_for_the_master,
+            get_local_rank,
         )
 
-        dataset = COCODataset(
-            data_dir=self.data_dir,
-            json_file=self.train_ann,
-            img_size=self.input_size,
-            preproc=TrainTransform(
-                rgb_means=(0.485, 0.456, 0.406),
-                std=(0.229, 0.224, 0.225),
-                max_labels=50,
-            ),
-        )
+        local_rank = get_local_rank()
+
+        with wait_for_the_master(local_rank):
+            dataset = COCODataset(
+                data_dir=self.data_dir,
+                json_file=self.train_ann,
+                img_size=self.input_size,
+                preproc=TrainTransform(
+                    max_labels=50,
+                    flip_prob=self.flip_prob,
+                    hsv_prob=self.hsv_prob),
+                cache=cache_img,
+            )
 
         dataset = MosaicDetection(
             dataset,
             mosaic=not no_aug,
             img_size=self.input_size,
             preproc=TrainTransform(
-                rgb_means=(0.485, 0.456, 0.406),
-                std=(0.229, 0.224, 0.225),
                 max_labels=120,
-            ),
+                flip_prob=self.flip_prob,
+                hsv_prob=self.hsv_prob),
             degrees=self.degrees,
             translate=self.translate,
-            scale=self.scale,
+            mosaic_scale=self.mosaic_scale,
+            mixup_scale=self.mixup_scale,
             shear=self.shear,
             perspective=self.perspective,
             enable_mixup=self.enable_mixup,
+            mosaic_prob=self.mosaic_prob,
+            mixup_prob=self.mixup_prob,
         )
 
         self.dataset = dataset
@@ -123,20 +143,22 @@ class Exp(BaseExp):
         if is_distributed:
             batch_size = batch_size // dist.get_world_size()
 
-        sampler = InfiniteSampler(
-            len(self.dataset), seed=self.seed if self.seed else 0
-        )
+        sampler = InfiniteSampler(len(self.dataset), seed=self.seed if self.seed else 0)
 
         batch_sampler = YoloBatchSampler(
             sampler=sampler,
             batch_size=batch_size,
             drop_last=False,
-            input_dimension=self.input_size,
             mosaic=not no_aug,
         )
 
         dataloader_kwargs = {"num_workers": self.data_num_workers, "pin_memory": True}
         dataloader_kwargs["batch_sampler"] = batch_sampler
+
+        # Make sure each process has different random seed, especially for 'fork' method.
+        # Check https://github.com/pytorch/pytorch/issues/63311 for more details.
+        dataloader_kwargs["worker_init_fn"] = worker_init_reset_seed
+
         train_loader = DataLoader(self.dataset, **dataloader_kwargs)
 
         return train_loader
@@ -145,7 +167,11 @@ class Exp(BaseExp):
         tensor = torch.LongTensor(2).cuda()
 
         if rank == 0:
-            size_factor = self.input_size[1] * 1. / self.input_size[0]
+            size_factor = self.input_size[1] * 1.0 / self.input_size[0]
+            if not hasattr(self, 'random_size'):
+                min_size = int(self.input_size[0] / 32) - self.multiscale_range
+                max_size = int(self.input_size[0] / 32) + self.multiscale_range
+                self.random_size = (min_size, max_size)
             size = random.randint(*self.random_size)
             size = (int(32 * size), 32 * int(size * size_factor))
             tensor[0] = size[0]
@@ -155,10 +181,17 @@ class Exp(BaseExp):
             dist.barrier()
             dist.broadcast(tensor, 0)
 
-        input_size = data_loader.change_input_dim(
-            multiple=(tensor[0].item(), tensor[1].item()), random_range=None
-        )
+        input_size = (tensor[0].item(), tensor[1].item())
         return input_size
+
+    def preprocess(self, inputs, targets, tsize):
+        scale = tsize[0] / self.input_size[0]
+        if scale != 1:
+            inputs = nn.functional.interpolate(
+                inputs, size=tsize, mode="bilinear", align_corners=False
+            )
+            targets[..., 1:] = targets[..., 1:] * scale
+        return inputs, targets
 
     def get_optimizer(self, batch_size):
         if "optimizer" not in self.__dict__:
@@ -190,6 +223,7 @@ class Exp(BaseExp):
 
     def get_lr_scheduler(self, lr, iters_per_epoch):
         from yolox.utils import LRScheduler
+
         scheduler = LRScheduler(
             self.scheduler,
             lr,
@@ -202,7 +236,7 @@ class Exp(BaseExp):
         )
         return scheduler
 
-    def get_eval_loader(self, batch_size, is_distributed, testdev=False):
+    def get_eval_loader(self, batch_size, is_distributed, testdev=False, legacy=False):
         from yolox.data import COCODataset, ValTransform
 
         valdataset = COCODataset(
@@ -210,9 +244,7 @@ class Exp(BaseExp):
             json_file=self.val_ann if not testdev else "image_info_test-dev2017.json",
             name="val2017" if not testdev else "test2017",
             img_size=self.test_size,
-            preproc=ValTransform(
-                rgb_means=(0.485, 0.456, 0.406), std=(0.229, 0.224, 0.225)
-            ),
+            preproc=ValTransform(legacy=legacy),
         )
 
         if is_distributed:
@@ -233,10 +265,10 @@ class Exp(BaseExp):
 
         return val_loader
 
-    def get_evaluator(self, batch_size, is_distributed, testdev=False):
+    def get_evaluator(self, batch_size, is_distributed, testdev=False, legacy=False):
         from yolox.evaluators import COCOEvaluator
 
-        val_loader = self.get_eval_loader(batch_size, is_distributed, testdev=testdev)
+        val_loader = self.get_eval_loader(batch_size, is_distributed, testdev, legacy)
         evaluator = COCOEvaluator(
             dataloader=val_loader,
             img_size=self.test_size,

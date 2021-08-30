@@ -4,6 +4,9 @@
 
 import os
 import random
+import uuid
+
+import numpy as np
 
 import torch
 from torch.utils.data.dataloader import DataLoader as torchDataLoader
@@ -32,41 +35,6 @@ class DataLoader(torchDataLoader):
     See :class:`torch.utils.data.DataLoader` for more information on the arguments.
     Check more on the following website:
     https://gitlab.com/EAVISE/lightnet/-/blob/master/lightnet/data/_dataloading.py
-
-    Note:
-        This dataloader only works with :class:`lightnet.data.Dataset` based datasets.
-
-    Example:
-        >>> class CustomSet(ln.data.Dataset):
-        ...     def __len__(self):
-        ...         return 4
-        ...     @ln.data.Dataset.resize_getitem
-        ...     def __getitem__(self, index):
-        ...         # Should return (image, anno) but here we return (input_dim,)
-        ...         return (self.input_dim,)
-        >>> dl = ln.data.DataLoader(
-        ...     CustomSet((200,200)),
-        ...     batch_size = 2,
-        ...     collate_fn = ln.data.list_collate   # We want the data to be grouped as a list
-        ... )
-        >>> dl.dataset.input_dim    # Default input_dim
-        (200, 200)
-        >>> for d in dl:
-        ...     d
-        [[(200, 200), (200, 200)]]
-        [[(200, 200), (200, 200)]]
-        >>> dl.change_input_dim(320, random_range=None)
-        (320, 320)
-        >>> for d in dl:
-        ...     d
-        [[(320, 320), (320, 320)]]
-        [[(320, 320), (320, 320)]]
-        >>> dl.change_input_dim((480, 320), random_range=None)
-        (480, 320)
-        >>> for d in dl:
-        ...     d
-        [[(480, 320), (480, 320)]]
-        [[(480, 320), (480, 320)]]
     """
 
     def __init__(self, *args, **kwargs):
@@ -120,46 +88,6 @@ class DataLoader(torchDataLoader):
     def close_mosaic(self):
         self.batch_sampler.mosaic = False
 
-    def change_input_dim(self, multiple=32, random_range=(10, 19)):
-        """This function will compute a new size and update it on the next mini_batch.
-
-        Args:
-            multiple (int or tuple, optional): values to multiply the randomly generated range by.
-                Default **32**
-            random_range (tuple, optional): This (min, max) tuple sets the range
-                for the randomisation; Default **(10, 19)**
-
-        Return:
-            tuple: width, height tuple with new dimension
-
-        Note:
-            The new size is generated as follows: |br|
-            First we compute a random integer inside ``[random_range]``.
-            We then multiply that number with the ``multiple`` argument,
-            which gives our final new input size. |br|
-            If ``multiple`` is an integer we generate a square size. If you give a tuple
-            of **(width, height)**, the size is computed
-            as :math:`rng * multiple[0], rng * multiple[1]`.
-
-        Note:
-            You can set the ``random_range`` argument to **None** to set
-            an exact size of multiply. |br|
-            See the example above for how this works.
-        """
-        if random_range is None:
-            size = 1
-        else:
-            size = random.randint(*random_range)
-
-        if isinstance(multiple, int):
-            size = (size * multiple, size * multiple)
-        else:
-            size = (size * multiple[0], size * multiple[1])
-
-        self.batch_sampler.new_input_dim = size
-
-        return size
-
 
 def list_collate(batch):
     """
@@ -176,3 +104,10 @@ def list_collate(batch):
             items[i] = default_collate(items[i])
 
     return items
+
+
+def worker_init_reset_seed(worker_id):
+    seed = uuid.uuid4().int % 2**32
+    random.seed(seed)
+    torch.set_rng_state(torch.manual_seed(seed).get_state())
+    np.random.seed(seed)

@@ -6,7 +6,7 @@ our C++ demo does not include the model converting or constructing like other te
 
 ## Step 1: Prepare serialized engine file
 
-Follow the trt [python demo README](https://github.com/Megvii-BaseDetection/YOLOX/demo/TensorRT/python/README.md) to convert and save the serialized engine file.
+Follow the trt [python demo README](https://github.com/Megvii-BaseDetection/YOLOX/blob/main/demo/TensorRT/python/README.md) to convert and save the serialized engine file.
 
 Check the 'model_trt.engine' file generated from Step 1, which will be automatically saved at the current demo dir.
 

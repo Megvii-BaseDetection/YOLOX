@@ -35,17 +35,14 @@ cv::Mat static_resize(cv::Mat &img) {
 }
 
 void blobFromImage(cv::Mat &img, float *blob_data) {
-  cv::cvtColor(img, img, cv::COLOR_BGR2RGB);
   int channels = 3;
   int img_h = img.rows;
   int img_w = img.cols;
-  std::vector<float> mean = {0.485, 0.456, 0.406};
-  std::vector<float> std = {0.229, 0.224, 0.225};
   for (size_t c = 0; c < channels; c++) {
     for (size_t h = 0; h < img_h; h++) {
       for (size_t w = 0; w < img_w; w++) {
         blob_data[c * img_w * img_h + h * img_w + w] =
-            (((float)img.at<cv::Vec3b>(h, w)[c]) / 255.0f - mean[c]) / std[c];
+            (float)img.at<cv::Vec3b>(h, w)[c];
       }
     }
   }
