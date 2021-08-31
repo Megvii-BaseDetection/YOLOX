@@ -6,7 +6,7 @@ This tutorial explains how to control your image size when training on your own 
 
 There are 3 hyperparamters control the training size:
 
-- self.input_size = (640, 640)
+- self.input_size = (640, 640)  #(height, width)
 - self.multiscale_range = 5
 - self.random_size = (14, 26)
 
