@@ -6,6 +6,7 @@ import argparse
 import random
 import warnings
 from loguru import logger
+import wandb
 
 import torch
 import torch.backends.cudnn as cudnn
@@ -79,6 +80,14 @@ def make_parser():
         default=False,
         action="store_true",
         help="occupy GPU memory first for training.",
+    )
+    parser.add_argument(
+        "-wb",
+        "--wandb",
+        dest="wandb",
+        default=False,
+        action="store_true",
+        help="Use Weights & Biases for logging experiments",
     )
     parser.add_argument(
         "opts",
