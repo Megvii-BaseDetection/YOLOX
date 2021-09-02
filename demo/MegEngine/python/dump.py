@@ -2,13 +2,12 @@
 # -*- coding:utf-8 -*-
 # Copyright (c) Megvii, Inc. and its affiliates.
 
-import argparse
-
-import megengine as mge
 import numpy as np
-from megengine import jit
 
+import argparse
+import megengine as mge
 from build import build_and_load
+from megengine import jit
 
 
 def make_parser():

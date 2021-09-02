@@ -2,19 +2,19 @@
 # -*- coding:utf-8 -*-
 # Copyright (c) Megvii, Inc. and its affiliates.
 
-import argparse
-import os
-import time
-
-import cv2
-import megengine as mge
-import megengine.functional as F
 from loguru import logger
 
+import cv2
+
+from yolox.data.data_augment import preproc as preprocess
 from yolox.data.datasets import COCO_CLASSES
 from yolox.utils import vis
-from yolox.data.data_augment import preproc as preprocess
 
+import argparse
+import megengine as mge
+import megengine.functional as F
+import os
+import time
 from build import build_and_load
 
 IMAGE_EXT = [".jpg", ".jpeg", ".webp", ".bmp", ".png"]
@@ -67,8 +67,8 @@ def postprocess(prediction, num_classes, conf_thre=0.7, nms_thre=0.45):
         if not image_pred.shape[0]:
             continue
         # Get score and class with highest confidence
-        class_conf = F.max(image_pred[:, 5: 5 + num_classes], 1, keepdims=True)
-        class_pred = F.argmax(image_pred[:, 5: 5 + num_classes], 1, keepdims=True)
+        class_conf = F.max(image_pred[:, 5 : 5 + num_classes], 1, keepdims=True)
+        class_pred = F.argmax(image_pred[:, 5 : 5 + num_classes], 1, keepdims=True)
 
         class_conf_squeeze = F.squeeze(class_conf)
         conf_mask = image_pred[:, 4] * class_conf_squeeze >= conf_thre
@@ -78,7 +78,9 @@ def postprocess(prediction, num_classes, conf_thre=0.7, nms_thre=0.45):
             continue
 
         nms_out_index = F.vision.nms(
-            detections[:, :4], detections[:, 4] * detections[:, 5], nms_thre,
+            detections[:, :4],
+            detections[:, 4] * detections[:, 5],
+            nms_thre,
         )
         detections = detections[nms_out_index]
         if output[i] is None:

@@ -1,12 +1,14 @@
 #!/usr/bin/env python
 # Copyright (c) Megvii, Inc. and its affiliates. All Rights Reserved
 
-import re
 import setuptools
-import glob
-from os import path
+
 import torch
 from torch.utils.cpp_extension import CppExtension
+
+import glob
+import re
+from os import path
 
 torch_ver = [int(x) for x in torch.__version__.split(".")[:2]]
 assert torch_ver >= [1, 7], "Requires PyTorch >= 1.7"
@@ -42,8 +44,7 @@ def get_extensions():
 
 with open("yolox/__init__.py", "r") as f:
     version = re.search(
-        r'^__version__\s*=\s*[\'"]([^\'"]*)[\'"]',
-        f.read(), re.MULTILINE
+        r'^__version__\s*=\s*[\'"]([^\'"]*)[\'"]', f.read(), re.MULTILINE
     ).group(1)
 
 
@@ -58,7 +59,10 @@ setuptools.setup(
     python_requires=">=3.6",
     long_description=long_description,
     ext_modules=get_extensions(),
-    classifiers=["Programming Language :: Python :: 3", "Operating System :: OS Independent"],
+    classifiers=[
+        "Programming Language :: Python :: 3",
+        "Operating System :: OS Independent",
+    ],
     cmdclass={"build_ext": torch.utils.cpp_extension.BuildExtension},
     packages=setuptools.find_packages(),
 )

@@ -2,7 +2,6 @@
 # -*- coding:utf-8 -*-
 # Copyright (c) 2014-2021 Megvii Inc. All rights reserved.
 
-import math
 from loguru import logger
 
 import torch
@@ -10,6 +9,8 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 from yolox.utils import bboxes_iou
+
+import math
 
 from .losses import IOUloss
 from .network_blocks import BaseConv, DWConv

@@ -9,17 +9,18 @@ This file contains primitives for multi-gpu communication.
 This is useful when doing distributed training.
 """
 
-import functools
-import os
-import pickle
-import time
-from contextlib import contextmanager
 from loguru import logger
 
 import numpy as np
 
 import torch
 from torch import distributed as dist
+
+import functools
+import os
+import pickle
+import time
+from contextlib import contextmanager
 
 __all__ = [
     "get_num_devices",
@@ -39,9 +40,9 @@ _LOCAL_PROCESS_GROUP = None
 
 
 def get_num_devices():
-    gpu_list = os.getenv('CUDA_VISIBLE_DEVICES', None)
+    gpu_list = os.getenv("CUDA_VISIBLE_DEVICES", None)
     if gpu_list is not None:
-        return len(gpu_list.split(','))
+        return len(gpu_list.split(","))
     else:
         devices_list_info = os.popen("nvidia-smi -L")
         devices_list_info = devices_list_info.read().strip().split("\n")

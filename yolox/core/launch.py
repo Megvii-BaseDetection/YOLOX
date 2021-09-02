@@ -5,8 +5,6 @@
 # Copyright (c) Facebook, Inc. and its affiliates.
 # Copyright (c) Megvii, Inc. and its affiliates.
 
-import sys
-from datetime import timedelta
 from loguru import logger
 
 import torch
@@ -14,6 +12,9 @@ import torch.distributed as dist
 import torch.multiprocessing as mp
 
 import yolox.utils.dist as comm
+
+import sys
+from datetime import timedelta
 
 __all__ = ["launch"]
 

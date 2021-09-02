@@ -3,15 +3,14 @@
 # This file contains the utilities for logging on Weights & Biases
 # Copyright (c) 2014-2021 Megvii Inc. All rights reserved.
 
+from tqdm import tqdm
+
 import logging
 import os
 import sys
+import yaml
 from contextlib import contextmanager
 from pathlib import Path
-
-import yaml
-from tqdm import tqdm
-
 from utils import get_rank
 
 __all__ = ["WandBLogger"]
@@ -20,9 +19,10 @@ __all__ = ["WandBLogger"]
 FILE = Path(__file__).absolute()
 sys.path.append(FILE.parents[3].as_posix())  # add yolox/ to path
 
+
 @contextmanager
 def all_logging_disabled(highest_level=logging.CRITICAL):
-    """ source - https://gist.github.com/simon-weber/7853144
+    """source - https://gist.github.com/simon-weber/7853144
     A context manager that will prevent any logging messages triggered during the body from being processed.
     :param highest_level: the maximum logging level in use.
       This would only need to be changed if a custom level greater than CRITICAL is defined.
@@ -33,6 +33,7 @@ def all_logging_disabled(highest_level=logging.CRITICAL):
         yield
     finally:
         logging.disable(previous_level)
+
 
 class WandBLogger:
     """
@@ -109,8 +110,7 @@ class WandBLogger:
             self.wandb.watch(self.model)
         self.wandb.run._label(repo=self.project_name)
 
-    def log_metrics(
-        self, log_dict: dict = None) -> None:
+    def log_metrics(self, log_dict: dict = None) -> None:
         for key, value in log_dict.items():
 
             curr_val = value[-1]

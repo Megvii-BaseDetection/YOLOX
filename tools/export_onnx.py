@@ -2,8 +2,6 @@
 # -*- coding:utf-8 -*-
 # Copyright (c) Megvii, Inc. and its affiliates.
 
-import argparse
-import os
 from loguru import logger
 
 import torch
@@ -12,6 +10,9 @@ from torch import nn
 from yolox.exp import get_exp
 from yolox.models.network_blocks import SiLU
 from yolox.utils import replace_module
+
+import argparse
+import os
 
 
 def make_parser():
@@ -30,7 +31,9 @@ def make_parser():
     )
     parser.add_argument("--batch-size", type=int, default=1, help="batch size")
     parser.add_argument(
-        "--dynamic", action="store_true", help="whether the input shape should be dynamic or not"
+        "--dynamic",
+        action="store_true",
+        help="whether the input shape should be dynamic or not",
     )
     parser.add_argument("--no-onnxsim", action="store_true", help="use onnxsim or not")
     parser.add_argument(
@@ -89,8 +92,9 @@ def main():
         args.output_name,
         input_names=[args.input],
         output_names=[args.output],
-        dynamic_axes={args.input: {0: 'batch'},
-                      args.output: {0: 'batch'}} if args.dynamic else None,
+        dynamic_axes={args.input: {0: "batch"}, args.output: {0: "batch"}}
+        if args.dynamic
+        else None,
         opset_version=args.opset,
     )
     logger.info("generated onnx model named {}".format(args.output_name))
@@ -101,12 +105,12 @@ def main():
         from onnxsim import simplify
 
         input_shapes = {args.input: list(dummy_input.shape)} if args.dynamic else None
-        
+
         # use onnxsimplify to reduce reduent model.
         onnx_model = onnx.load(args.output_name)
-        model_simp, check = simplify(onnx_model,
-                                     dynamic_input_shape=args.dynamic,
-                                     input_shapes=input_shapes)
+        model_simp, check = simplify(
+            onnx_model, dynamic_input_shape=args.dynamic, input_shapes=input_shapes
+        )
         assert check, "Simplified ONNX model could not be validated"
         onnx.save(model_simp, args.output_name)
         logger.info("generated simplified onnx model named {}".format(args.output_name))

@@ -2,10 +2,6 @@
 # -*- coding:utf-8 -*-
 # Copyright (c) Megvii, Inc. and its affiliates.
 
-import argparse
-import os
-import random
-import warnings
 from loguru import logger
 
 import torch
@@ -15,6 +11,11 @@ from torch.nn.parallel import DistributedDataParallel as DDP
 from yolox.core import launch
 from yolox.exp import get_exp
 from yolox.utils import configure_nccl, fuse_model, get_local_rank, get_model_info, setup_logger
+
+import argparse
+import os
+import random
+import warnings
 
 
 def make_parser():
@@ -142,7 +143,9 @@ def main(exp, args, num_gpu):
     logger.info("Model Summary: {}".format(get_model_info(model, exp.test_size)))
     logger.info("Model Structure:\n{}".format(str(model)))
 
-    evaluator = exp.get_evaluator(args.batch_size, is_distributed, args.test, args.legacy)
+    evaluator = exp.get_evaluator(
+        args.batch_size, is_distributed, args.test, args.legacy
+    )
 
     torch.cuda.set_device(rank)
     model.cuda(rank)

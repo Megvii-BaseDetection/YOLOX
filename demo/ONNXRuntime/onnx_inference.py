@@ -2,9 +2,6 @@
 # -*- coding: utf-8 -*-
 # Copyright (c) Megvii, Inc. and its affiliates.
 
-import argparse
-import os
-
 import cv2
 import numpy as np
 
@@ -12,7 +9,10 @@ import onnxruntime
 
 from yolox.data.data_augment import preproc as preprocess
 from yolox.data.datasets import COCO_CLASSES
-from yolox.utils import mkdir, multiclass_nms, demo_postprocess, vis
+from yolox.utils import demo_postprocess, mkdir, multiclass_nms, vis
+
+import argparse
+import os
 
 
 def make_parser():
@@ -28,14 +28,14 @@ def make_parser():
         "-i",
         "--image_path",
         type=str,
-        default='test_image.png',
+        default="test_image.png",
         help="Path to your input image.",
     )
     parser.add_argument(
         "-o",
         "--output_dir",
         type=str,
-        default='demo_output',
+        default="demo_output",
         help="Path to your output directory.",
     )
     parser.add_argument(
@@ -59,10 +59,10 @@ def make_parser():
     return parser
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     args = make_parser().parse_args()
 
-    input_shape = tuple(map(int, args.input_shape.split(',')))
+    input_shape = tuple(map(int, args.input_shape.split(",")))
     origin_img = cv2.imread(args.image_path)
     img, ratio = preprocess(origin_img, input_shape)
 
@@ -76,16 +76,22 @@ if __name__ == '__main__':
     scores = predictions[:, 4:5] * predictions[:, 5:]
 
     boxes_xyxy = np.ones_like(boxes)
-    boxes_xyxy[:, 0] = boxes[:, 0] - boxes[:, 2]/2.
-    boxes_xyxy[:, 1] = boxes[:, 1] - boxes[:, 3]/2.
-    boxes_xyxy[:, 2] = boxes[:, 0] + boxes[:, 2]/2.
-    boxes_xyxy[:, 3] = boxes[:, 1] + boxes[:, 3]/2.
+    boxes_xyxy[:, 0] = boxes[:, 0] - boxes[:, 2] / 2.0
+    boxes_xyxy[:, 1] = boxes[:, 1] - boxes[:, 3] / 2.0
+    boxes_xyxy[:, 2] = boxes[:, 0] + boxes[:, 2] / 2.0
+    boxes_xyxy[:, 3] = boxes[:, 1] + boxes[:, 3] / 2.0
     boxes_xyxy /= ratio
     dets = multiclass_nms(boxes_xyxy, scores, nms_thr=0.45, score_thr=0.1)
     if dets is not None:
         final_boxes, final_scores, final_cls_inds = dets[:, :4], dets[:, 4], dets[:, 5]
-        origin_img = vis(origin_img, final_boxes, final_scores, final_cls_inds,
-                         conf=args.score_thr, class_names=COCO_CLASSES)
+        origin_img = vis(
+            origin_img,
+            final_boxes,
+            final_scores,
+            final_cls_inds,
+            conf=args.score_thr,
+            class_names=COCO_CLASSES,
+        )
 
     mkdir(args.output_dir)
     output_path = os.path.join(args.output_dir, args.image_path.split("/")[-1])

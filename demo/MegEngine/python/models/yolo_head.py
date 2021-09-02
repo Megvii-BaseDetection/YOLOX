@@ -20,8 +20,13 @@ def meshgrid(x, y):
 
 class YOLOXHead(M.Module):
     def __init__(
-        self, num_classes, width=1.0, strides=[8, 16, 32],
-        in_channels=[256, 512, 1024], act="silu", depthwise=False
+        self,
+        num_classes,
+        width=1.0,
+        strides=[8, 16, 32],
+        in_channels=[256, 512, 1024],
+        act="silu",
+        depthwise=False,
     ):
         """
         Args:
@@ -141,7 +146,9 @@ class YOLOXHead(M.Module):
             reg_feat = reg_conv(reg_x)
             reg_output = self.reg_preds[k](reg_feat)
             obj_output = self.obj_preds[k](reg_feat)
-            output = F.concat([reg_output, F.sigmoid(obj_output), F.sigmoid(cls_output)], 1)
+            output = F.concat(
+                [reg_output, F.sigmoid(obj_output), F.sigmoid(cls_output)], 1
+            )
             outputs.append(output)
 
         self.hw = [x.shape[-2:] for x in outputs]
@@ -165,9 +172,8 @@ class YOLOXHead(M.Module):
             self.grids[k] = grid
 
         output = output.view(batch_size, self.n_anchors, n_ch, hsize, wsize)
-        output = (
-            output.permute(0, 1, 3, 4, 2)
-            .reshape(batch_size, self.n_anchors * hsize * wsize, -1)
+        output = output.permute(0, 1, 3, 4, 2).reshape(
+            batch_size, self.n_anchors * hsize * wsize, -1
         )
         grid = grid.view(1, -1, 2)
         output[..., :2] = (output[..., :2] + grid) * stride

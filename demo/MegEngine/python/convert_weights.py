@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 # -*- coding:utf-8 -*-
-import argparse
-from collections import OrderedDict
-
-import megengine as mge
 import torch
+
+import argparse
+import megengine as mge
+from collections import OrderedDict
 
 
 def make_parser():

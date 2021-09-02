@@ -2,9 +2,6 @@
 # -*- coding:utf-8 -*-
 # Copyright (c) Megvii, Inc. and its affiliates.
 
-import argparse
-import os
-import shutil
 from loguru import logger
 
 import tensorrt as trt
@@ -12,6 +9,10 @@ import torch
 from torch2trt import torch2trt
 
 from yolox.exp import get_exp
+
+import argparse
+import os
+import shutil
 
 
 def make_parser():
