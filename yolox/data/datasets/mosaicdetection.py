@@ -149,9 +149,9 @@ class MosaicDetection(Dataset):
                 mosaic_img, mosaic_labels = self.mixup(mosaic_img, mosaic_labels, self.input_dim)
             mix_img, padded_labels = self.preproc(mosaic_img, mosaic_labels, self.input_dim)
             img_info = (mix_img.shape[1], mix_img.shape[0])
-            
+
             # -----------------------------------------------------------------
-            # img_info and img_id are not used for training. 
+            # img_info and img_id are not used for training.
             # They are also hard to be specified on a mosaic image.
             # -----------------------------------------------------------------
             return mix_img, padded_labels, img_info, img_id
