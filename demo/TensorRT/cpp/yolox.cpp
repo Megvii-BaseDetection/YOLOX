@@ -519,7 +519,8 @@ int main(int argc, char** argv) {
     std::vector<Object> objects;
     decode_outputs(prob, objects, scale, img_w, img_h);
     draw_objects(img, objects, input_image_path);
-
+    // delete the pointer to the float
+    delete blob;
     // destroy the engine
     context->destroy();
     engine->destroy();

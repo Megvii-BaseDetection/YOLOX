@@ -144,7 +144,6 @@ def _mirror(image, boxes, prob=0.5):
     _, width, _ = image.shape
     if random.random() < prob:
         image = image[:, ::-1]
-        boxes = boxes.copy()
         boxes[:, 0::2] = width - boxes[:, 2::-2]
     return image, boxes
 
