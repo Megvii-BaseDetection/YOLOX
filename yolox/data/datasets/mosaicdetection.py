@@ -92,7 +92,10 @@ class MosaicDetection(Dataset):
             indices = [idx] + [random.randint(0, len(self._dataset) - 1) for _ in range(3)]
 
             for i_mosaic, index in enumerate(indices):
-                img, _labels, _, _ = self._dataset.pull_item(index)
+                if i_mosaic == 0:
+                    img, _labels, _, _ = self._dataset.pull_item(index)
+                else:
+                    img, _labels, _, img_id = self._dataset.pull_item(index)
                 h0, w0 = img.shape[:2]  # orig hw
                 scale = min(1. * input_h / h0, 1. * input_w / w0)
                 img = cv2.resize(
@@ -150,13 +153,13 @@ class MosaicDetection(Dataset):
             mix_img, padded_labels = self.preproc(mosaic_img, mosaic_labels, self.input_dim)
             img_info = (mix_img.shape[1], mix_img.shape[0])
 
-            return mix_img, padded_labels, img_info, np.array([idx])
+            return mix_img, padded_labels, img_info, img_id
 
         else:
             self._dataset._input_dim = self.input_dim
-            img, label, img_info, idx = self._dataset.pull_item(idx)
+            img, label, img_info, img_id = self._dataset.pull_item(idx)
             img, label = self.preproc(img, label, self.input_dim)
-            return img, label, img_info, np.array([idx])
+            return img, label, img_info, img_id
 
     def mixup(self, origin_img, origin_labels, input_dim):
         jit_factor = random.uniform(*self.mixup_scale)
