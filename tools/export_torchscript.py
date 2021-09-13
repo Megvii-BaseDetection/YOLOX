@@ -2,8 +2,6 @@
 # -*- coding:utf-8 -*-
 # Copyright (c) Megvii, Inc. and its affiliates.
 
-import argparse
-import os
 from loguru import logger
 
 import torch
@@ -11,11 +9,17 @@ from torch import nn
 
 from yolox.exp import get_exp
 
+import argparse
+import os
+
 
 def make_parser():
     parser = argparse.ArgumentParser("YOLOX torchscript deploy")
     parser.add_argument(
-        "--output-name", type=str, default="yolox.torchscript.pt", help="output name of models"
+        "--output-name",
+        type=str,
+        default="yolox.torchscript.pt",
+        help="output name of models",
     )
     parser.add_argument("--batch-size", type=int, default=1, help="batch size")
     parser.add_argument(

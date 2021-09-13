@@ -5,23 +5,20 @@
 
 from tqdm import tqdm
 
+import cv2
+
+import torch
+
+from yolox.data.data_augment import preproc as preprocess
+from yolox.data.datasets import COCO_CLASSES
+
 import logging
 import os
 import sys
 import yaml
-from typing import Union
 from pathlib import Path
+from typing import Union
 from utils import get_rank
-
-import torch
-from torch.nn.functional as F
-
-from yolox.data.datasets import COCO_CLASSES
-from yolox.data.data_augment import preproc as preprocess
-
-
-import cv2
-
 
 __all__ = ["WandBLogger"]
 

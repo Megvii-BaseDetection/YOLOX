@@ -302,7 +302,9 @@ def main(exp, args):
         trt_file = None
         decoder = None
 
-    predictor = Predictor(model, exp, COCO_CLASSES, trt_file, decoder, args.device, args.fp16, args.legacy)
+    predictor = Predictor(
+        model, exp, COCO_CLASSES, trt_file, decoder, args.device, args.fp16, args.legacy
+    )
     current_time = time.localtime()
     if args.demo == "image":
         image_demo(predictor, vis_folder, args.path, current_time, args.save_result)
