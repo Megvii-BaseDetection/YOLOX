@@ -121,51 +121,71 @@ class WandBLogger:
         returns:
         Updated dataset info dictionary where local dataset paths are replaced by WAND_ARFACT_PREFIX links.
         """
-        assert self.wandb, 'Install wandb to upload dataset'
-        config_path = self.log_dataset_artifact(opt.data,
-                                                opt.single_cls,
-                                                'YOLOX' if opt.project == 'runs/train' else Path(opt.project).stem)
+        assert self.wandb, "Install wandb to upload dataset"
+        config_path = self.log_dataset_artifact(
+            opt.data,
+            opt.single_cls,
+            "YOLOX" if opt.project == "runs/train" else Path(opt.project).stem,
+        )
         print("Created dataset config file ", config_path)
-        with open(config_path, errors='ignore') as f:
+        with open(config_path, errors="ignore") as f:
             wandb_data_dict = yaml.safe_load(f)
         return wandb_data_dict
 
-    def log_dataset_artifact(self, data_file, single_cls, project, overwrite_config=False):
+    def log_dataset_artifact(
+        self, data_file, single_cls, project, overwrite_config=False
+    ):
         """
         Log the dataset as W&B artifact and return the new data file with W&B links
         arguments:
         data_file (str) -- the .yaml file with information about the dataset like - path, classes etc.
         single_class (boolean)  -- train multi-class data as single-class
         project (str) -- project name. Used to construct the artifact path
-        overwrite_config (boolean) -- overwrites the data.yaml file if set to true otherwise creates a new 
+        overwrite_config (boolean) -- overwrites the data.yaml file if set to true otherwise creates a new
         file with _wandb postfix. Eg -> data_wandb.yaml
         returns:
         the new .yaml file with artifact links. it can be used to start training directly from artifacts
         """
         self.data_dict = check_dataset(data_file)  # parse and check
         data = dict(self.data_dict)
-        nc, names = (1, ['item']) if single_cls else (int(data['nc']), data['names'])
+        nc, names = (1, ["item"]) if single_cls else (int(data["nc"]), data["names"])
         names = {k: v for k, v in enumerate(names)}  # to index dictionary
-        self.train_artifact = self.create_dataset_table(LoadImagesAndLabels(
-            data['train'], rect=True, batch_size=1), names, name='train') if data.get('train') else None
-        self.val_artifact = self.create_dataset_table(LoadImagesAndLabels(
-            data['val'], rect=True, batch_size=1), names, name='val') if data.get('val') else None
-        if data.get('train'):
-            data['train'] = WANDB_ARTIFACT_PREFIX + str(Path(project) / 'train')
-        if data.get('val'):
-            data['val'] = WANDB_ARTIFACT_PREFIX + str(Path(project) / 'val')
+        self.train_artifact = (
+            self.create_dataset_table(
+                LoadImagesAndLabels(data["train"], rect=True, batch_size=1),
+                names,
+                name="train",
+            )
+            if data.get("train")
+            else None
+        )
+        self.val_artifact = (
+            self.create_dataset_table(
+                LoadImagesAndLabels(data["val"], rect=True, batch_size=1),
+                names,
+                name="val",
+            )
+            if data.get("val")
+            else None
+        )
+        if data.get("train"):
+            data["train"] = WANDB_ARTIFACT_PREFIX + str(Path(project) / "train")
+        if data.get("val"):
+            data["val"] = WANDB_ARTIFACT_PREFIX + str(Path(project) / "val")
         path = Path(data_file).stem
-        path = (path if overwrite_config else path + '_wandb') + '.yaml'  # updated data.yaml path
-        data.pop('download', None)
-        data.pop('path', None)
-        with open(path, 'w') as f:
+        path = (
+            path if overwrite_config else path + "_wandb"
+        ) + ".yaml"  # updated data.yaml path
+        data.pop("download", None)
+        data.pop("path", None)
+        with open(path, "w") as f:
             yaml.safe_dump(data, f)
 
-        if self.job_type == 'Training':  # builds correct artifact pipeline graph
+        if self.job_type == "Training":  # builds correct artifact pipeline graph
             self.wandb_run.use_artifact(self.val_artifact)
             self.wandb_run.use_artifact(self.train_artifact)
             self.val_artifact.wait()
-            self.val_table = self.val_artifact.get('val')
+            self.val_table = self.val_artifact.get("val")
             self.map_val_table_path()
         else:
             self.wandb_run.log_artifact(self.train_artifact)
@@ -188,23 +208,32 @@ class WandBLogger:
         # plot each bounding box for this image
         for b_i, box in enumerate(v_boxes):
             # get coordinates and labels
-            box_data = {"position" : {
-            "minX" : box.xmin,
-            "maxX" : box.xmax,
-            "minY" : box.ymin,
-            "maxY" : box.ymax},
-            "class_id" : display_ids[v_labels[b_i]],
-            # optionally caption each box with its class and score
-            "box_caption" : "%s (%.3f)" % (v_labels[b_i], v_scores[b_i]),
-            "domain" : "pixel",
-            "scores" : { "score" : v_scores[b_i] }}
+            box_data = {
+                "position": {
+                    "minX": box.xmin,
+                    "maxX": box.xmax,
+                    "minY": box.ymin,
+                    "maxY": box.ymax,
+                },
+                "class_id": display_ids[v_labels[b_i]],
+                # optionally caption each box with its class and score
+                "box_caption": "%s (%.3f)" % (v_labels[b_i], v_scores[b_i]),
+                "domain": "pixel",
+                "scores": {"score": v_scores[b_i]},
+            }
             all_boxes.append(box_data)
 
         # log to wandb: raw image, predictions, and dictionary of class labels for each class id
-        box_image = self.wandb.Image(raw_image, boxes = {"predictions": {"box_data": all_boxes, "class_labels" :class_id_to_label}})
+        box_image = self.wandb.Image(
+            raw_image,
+            boxes={
+                "predictions": {
+                    "box_data": all_boxes,
+                    "class_labels": class_id_to_label,
+                }
+            },
+        )
         return box_image
-
-
 
 
 def postprocess(prediction, num_classes, conf_thre=0.7, nms_thre=0.45):
@@ -246,7 +275,6 @@ def postprocess(prediction, num_classes, conf_thre=0.7, nms_thre=0.45):
     return output
 
 
-
 class Predictor(object):
     def __init__(
         self,
@@ -257,7 +285,7 @@ class Predictor(object):
         cls_names=COCO_CLASSES,
         trt_file=None,
         decoder=None,
-    ): 
+    ):
         self.model = model
         self.cls_names = cls_names
         self.decoder = decoder
@@ -265,8 +293,6 @@ class Predictor(object):
         self.confthre = confthre
         self.nmsthre = nmsthre
         self.test_size = test_size
-
-
 
     def inference(self, img):
         img_info = {"id": 0}

@@ -13,7 +13,7 @@ from yolox.utils import (
     postprocess,
     synchronize,
     time_synchronized,
-    xyxy2xywh
+    xyxy2xywh,
 )
 
 import contextlib
