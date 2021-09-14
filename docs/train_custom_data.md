@@ -122,7 +122,7 @@ Generally, for small models, you should weak the aug, while for large models or 
     self.degrees = 10.0
     self.translate = 0.1
     self.scale = (0.1, 2)
-    self.mscale = (0.8, 1.6)
+    self.mosaic_scale = (0.8, 1.6)
     self.shear = 2.0
     self.perspective = 0.0
     self.enable_mixup = True
