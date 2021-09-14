@@ -201,12 +201,22 @@ class WandBLogger:
     def resume_train() -> object:
         pass
 
-    def log_pred(self, image, bbox, class_id) -> None:
-        # load raw input photo
-        raw_image = load_img(filename, target_size=(log_height, log_width))
+    def log_pred(self, image, bboxes, labels) -> None:
+        
+        # load raw input image
+        if isinstance(image, str):
+            filename = os.path.basename(image)
+            image = cv2.imread(image)
+            if image is None:
+                raise ValueError("test image path is invalid!")
+        else:
+            filename = None
+        
         all_boxes = []
+
         # plot each bounding box for this image
-        for b_i, box in enumerate(v_boxes):
+        for b_i, box in enumerate(bboxes):
+
             # get coordinates and labels
             box_data = {
                 "position": {
@@ -217,118 +227,102 @@ class WandBLogger:
                 },
                 "class_id": display_ids[v_labels[b_i]],
                 # optionally caption each box with its class and score
-                "box_caption": "%s (%.3f)" % (v_labels[b_i], v_scores[b_i]),
+                # "box_caption": "%s (%.3f)" % (v_labels[b_i], v_scores[b_i]),
                 "domain": "pixel",
-                "scores": {"score": v_scores[b_i]},
+                # "scores": {"score": v_scores[b_i]},
             }
             all_boxes.append(box_data)
 
         # log to wandb: raw image, predictions, and dictionary of class labels for each class id
         box_image = self.wandb.Image(
-            raw_image,
+            image,
             boxes={
                 "predictions": {
                     "box_data": all_boxes,
-                    "class_labels": class_id_to_label,
+                    "class_labels": COCO_CLASSES,
                 }
             },
         )
         return box_image
 
 
-def postprocess(prediction, num_classes, conf_thre=0.7, nms_thre=0.45):
-    box_corner = F.zeros_like(prediction)
-    box_corner[:, :, 0] = prediction[:, :, 0] - prediction[:, :, 2] / 2
-    box_corner[:, :, 1] = prediction[:, :, 1] - prediction[:, :, 3] / 2
-    box_corner[:, :, 2] = prediction[:, :, 0] + prediction[:, :, 2] / 2
-    box_corner[:, :, 3] = prediction[:, :, 1] + prediction[:, :, 3] / 2
-    prediction[:, :, :4] = box_corner[:, :, :4]
+# def postprocess(prediction, num_classes, conf_thre=0.7, nms_thre=0.45):
+#     box_corner = F.zeros_like(prediction)
+#     box_corner[:, :, 0] = prediction[:, :, 0] - prediction[:, :, 2] / 2
+#     box_corner[:, :, 1] = prediction[:, :, 1] - prediction[:, :, 3] / 2
+#     box_corner[:, :, 2] = prediction[:, :, 0] + prediction[:, :, 2] / 2
+#     box_corner[:, :, 3] = prediction[:, :, 1] + prediction[:, :, 3] / 2
+#     prediction[:, :, :4] = box_corner[:, :, :4]
 
-    output = [None for _ in range(len(prediction))]
-    for i, image_pred in enumerate(prediction):
+#     output = [None for _ in range(len(prediction))]
+#     for i, image_pred in enumerate(prediction):
 
-        # If none are remaining => process next image
-        if not image_pred.shape[0]:
-            continue
-        # Get score and class with highest confidence
-        class_conf = F.max(image_pred[:, 5 : 5 + num_classes], 1, keepdims=True)
-        class_pred = F.argmax(image_pred[:, 5 : 5 + num_classes], 1, keepdims=True)
+#         # If none are remaining => process next image
+#         if not image_pred.shape[0]:
+#             continue
+#         # Get score and class with highest confidence
+#         class_conf = F.max(image_pred[:, 5 : 5 + num_classes], 1, keepdims=True)
+#         class_pred = F.argmax(image_pred[:, 5 : 5 + num_classes], 1, keepdims=True)
 
-        class_conf_squeeze = F.squeeze(class_conf)
-        conf_mask = image_pred[:, 4] * class_conf_squeeze >= conf_thre
-        detections = F.concat((image_pred[:, :5], class_conf, class_pred), 1)
-        detections = detections[conf_mask]
-        if not detections.shape[0]:
-            continue
+#         class_conf_squeeze = F.squeeze(class_conf)
+#         conf_mask = image_pred[:, 4] * class_conf_squeeze >= conf_thre
+#         detections = F.concat((image_pred[:, :5], class_conf, class_pred), 1)
+#         detections = detections[conf_mask]
+#         if not detections.shape[0]:
+#             continue
 
-        nms_out_index = F.vision.nms(
-            detections[:, :4],
-            detections[:, 4] * detections[:, 5],
-            nms_thre,
-        )
-        detections = detections[nms_out_index]
-        if output[i] is None:
-            output[i] = detections
-        else:
-            output[i] = F.concat((output[i], detections))
+#         nms_out_index = F.vision.nms(
+#             detections[:, :4],
+#             detections[:, 4] * detections[:, 5],
+#             nms_thre,
+#         )
+#         detections = detections[nms_out_index]
+#         if output[i] is None:
+#             output[i] = detections
+#         else:
+#             output[i] = F.concat((output[i], detections))
 
-    return output
+#     return output
 
 
-class Predictor(object):
-    def __init__(
-        self,
-        model,
-        confthre=0.01,
-        nmsthre=0.65,
-        test_size=(640, 640),
-        cls_names=COCO_CLASSES,
-        trt_file=None,
-        decoder=None,
-    ):
-        self.model = model
-        self.cls_names = cls_names
-        self.decoder = decoder
-        self.num_classes = 80
-        self.confthre = confthre
-        self.nmsthre = nmsthre
-        self.test_size = test_size
+# class Predictor(object):
+#     def __init__(
+#         self,
+#         model,
+#         confthre=0.01,
+#         nmsthre=0.65,
+#         test_size=(640, 640),
+#         cls_names=COCO_CLASSES,
+#         trt_file=None,
+#         decoder=None,
+#     ):
+#         self.model = model
+#         self.cls_names = cls_names
+#         self.decoder = decoder
+#         self.num_classes = 80
+#         self.confthre = confthre
+#         self.nmsthre = nmsthre
+#         self.test_size = test_size
 
-    def inference(self, img):
-        img_info = {"id": 0}
-        if isinstance(img, str):
-            img_info["file_name"] = os.path.basename(img)
-            img = cv2.imread(img)
-            if img is None:
-                raise ValueError("test image path is invalid!")
-        else:
-            img_info["file_name"] = None
+#     def inference(self, img):
+#         img_info = {"id": 0}
+#         if isinstance(img, str):
+#             img_info["file_name"] = os.path.basename(img)
+#             img = cv2.imread(img)
+#             if img is None:
+#                 raise ValueError("test image path is invalid!")
+#         else:
+#             img_info["file_name"] = None
 
-        height, width = img.shape[:2]
-        img_info["height"] = height
-        img_info["width"] = width
-        img_info["raw_img"] = img
+#         height, width = img.shape[:2]
+#         img_info["height"] = height
+#         img_info["width"] = width
+#         img_info["raw_img"] = img
 
-        img, ratio = preprocess(img, self.test_size)
-        img_info["ratio"] = ratio
-        img = F.expand_dims(torch.tensor(img), 0)
+#         img, ratio = preprocess(img, self.test_size)
+#         img_info["ratio"] = ratio
+#         img = F.expand_dims(torch.tensor(img), 0)
 
-        outputs = self.model(img)
-        outputs = postprocess(outputs, self.num_classes, self.confthre, self.nmsthre)
-        return outputs, img_info
-
-    def visual(self, output, img_info, cls_conf=0.35):
-        ratio = img_info["ratio"]
-        img = img_info["raw_img"]
-        if output is None:
-            return img
-        output = output.numpy()
-
-        # preprocessing: resize
-        bboxes = output[:, 0:4] / ratio
-
-        cls = output[:, 6]
-        scores = output[:, 4] * output[:, 5]
-
-        vis_res = vis(img, bboxes, scores, cls, cls_conf, self.cls_names)
-        return vis_res
+#         outputs = self.model(img)
+#         outputs = postprocess(outputs, self.num_classes, self.confthre, self.nmsthre)
+#         return outputs, img_info

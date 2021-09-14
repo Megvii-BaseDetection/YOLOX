@@ -27,6 +27,7 @@ from yolox.utils import (
 )
 
 import datetime
+from yolox.utils.wandb.wandb_utils import WandBLogger
 import os
 import time
 
@@ -66,6 +67,8 @@ class Trainer:
             filename="train_log.txt",
             mode="a",
         )
+
+        self.wandb = WandBLogger()
 
     def train(self):
         self.before_train()
@@ -208,6 +211,8 @@ class Trainer:
         if (self.epoch + 1) % self.exp.eval_interval == 0:
             all_reduce_norm(self.model)
             self.evaluate_and_save_model()
+
+        self.wandb.log_pred(self.model, self.evaluator.dataloader, self.epoch)
 
     def before_iter(self):
         pass
