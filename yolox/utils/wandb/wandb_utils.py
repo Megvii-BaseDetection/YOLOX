@@ -112,7 +112,7 @@ class WandBLogger:
 
             else:
                 return
-
+            
     def _handle_pred(self, image, output):
         """Log a single prediction."""
 
@@ -142,7 +142,7 @@ class WandBLogger:
                     "minY": int(box[1]),
                     "maxY": int(box[3]),
                 },
-                "class_id": int(cls[b_i]),
+                "class_id": int(labels[b_i]),
                 # optionally caption each box with its class and score
                 # "box_caption": "%s (%.3f)" % (v_labels[b_i], v_scores[b_i]),
                 "domain": "pixel",
@@ -169,18 +169,22 @@ class WandBLogger:
     def log_preds(self, images, outputs) -> None:
         """Log a batch of predictions."""
 
+        predictions = []
+
         if isinstance(images, torch.Tensor):
-            assert len(images.shape) == 4
-            images = images.cpu().numpy()
-
-        for image, output in zip(images, outputs):
-            predictions = self._handle_pred(image, output)
-
-        data = {"predictions": predictions}
-        colums = ["predictions"]
+            images = images.cpu().numpy().transpose(0, 2, 3, 1)
+            if len(images.shape) == 4:
+                for image, output in zip(images, outputs):
+                    image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+                    if output is not None:
+                        predictions.append(self._handle_pred(image, output))
+            elif len(images.shape) == 3 and len(outputs) == 1:
+                predictions.append(self._handle_pred(images, outputs[0]))
+            else:
+                raise ValueError("images and outputs must be a torch.Tensor or list")
 
         log_dict = {
-            "Prediction Samples": self.wandb.Table(data=data, columns=colums)
+            "Prediction Samples": predictions
         }
 
         if self.log_dict and "epoch" in self.log_dict:

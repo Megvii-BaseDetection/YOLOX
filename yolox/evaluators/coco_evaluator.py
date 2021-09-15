@@ -122,8 +122,8 @@ class COCOEvaluator:
                     nms_end = time_synchronized()
                     nms_time += nms_end - infer_end
                 
-                if wandb_logger:
-                    wandb_logger.log_pred(imgs, outputs)
+                if wandb_logger and cur_iter == 0:
+                    wandb_logger.log_preds(imgs, outputs)
 
             data_list.extend(self.convert_to_coco_format(outputs, info_imgs, ids))
 
