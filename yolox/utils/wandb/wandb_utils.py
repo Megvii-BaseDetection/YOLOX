@@ -112,21 +112,15 @@ class WandBLogger:
 
             else:
                 return
-            
-    def log_preds(self, images, outputs) -> None:
 
-        print(f"images type: {type(images)}, outputs type: {type(outputs)}")
-        
-        if isinstance(images, torch.Tensor):
-            images = images.cpu().numpy()
-
+    def _handle_pred(self, image, output):
+        """Log a single prediction."""
 
         bboxes = output[:, 0:4]
-
-        cls = output[:, 6]
+        labels = output[:, 6]
         scores = output[:, 4] * output[:, 5]
-        
-        # load raw input image
+
+        # load input image
         if isinstance(image, str):
             filename = os.path.basename(image)
             image = cv2.imread(image)
@@ -134,7 +128,7 @@ class WandBLogger:
                 raise ValueError("test image path is invalid!")
         else:
             filename = None
-        
+
         all_boxes = []
 
         # plot each bounding box for this image
@@ -155,7 +149,7 @@ class WandBLogger:
                 "scores": {"score": float(scores[b_i])},
             }
             all_boxes.append(box_data)
-            
+
         ids = [i for i in range(len(COCO_CLASSES))]
         class_labels = dict(zip(ids, list(COCO_CLASSES)))
 
@@ -169,10 +163,30 @@ class WandBLogger:
                 }
             },
         )
-        pred_dict = {"Bounding boxes": box_image}
+
+        return box_image
+
+    def log_preds(self, images, outputs) -> None:
+        """Log a batch of predictions."""
+
+        if isinstance(images, torch.Tensor):
+            assert len(images.shape) == 4
+            images = images.cpu().numpy()
+
+        for image, output in zip(images, outputs):
+            predictions = self._handle_pred(image, output)
+
+        data = {"predictions": predictions}
+        colums = ["predictions"]
+
+        log_dict = {
+            "Prediction Samples": self.wandb.Table(data=data, columns=colums)
+        }
+
         if self.log_dict and "epoch" in self.log_dict:
-            pred_dict["epoch"] = self.log_dict["epoch"]
-        self.wandb.log(pred_dict)
+            log_dict["epoch"] = self.log_dict["epoch"]
+
+        self.wandb.log(log_dict)
 
     def check_and_upload_dataset(self, opt):
         """
