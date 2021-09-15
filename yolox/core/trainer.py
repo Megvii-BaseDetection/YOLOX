@@ -308,7 +308,7 @@ class Trainer:
                 evalmodel = evalmodel.module
 
         ap50_95, ap50, summary = self.exp.eval(
-            evalmodel, self.evaluator, self.is_distributed
+            evalmodel, self.evaluator, self.is_distributed, wandb_logger=self.wandb 
         )
         self.model.train()
         if self.rank == 0:

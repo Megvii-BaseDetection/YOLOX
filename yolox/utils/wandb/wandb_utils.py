@@ -18,7 +18,7 @@ import sys
 import yaml
 from pathlib import Path
 from typing import Union
-from utils import get_rank
+from yolox.utils import get_rank
 
 __all__ = ["WandBLogger"]
 
@@ -66,6 +66,7 @@ class WandBLogger:
         self.config = config
         self.model = model
         self.params = params
+        self.log_dict = None
 
         self._import_wandb()
         self._args_parse()
@@ -86,7 +87,7 @@ class WandBLogger:
             "name": self.run_name,
             "save_code": self.save_code,
             "dir": self.dir,
-            "config": vars(self.config),
+            "config": vars(self.config) if self.config else None,
         }
         if self.params:
             self.init_kwargs.update(self.params)
@@ -103,15 +104,75 @@ class WandBLogger:
         self.wandb.run._label(repo=self.project_name)
 
     def log_metrics(self, log_dict: dict = None) -> None:
+        self.log_dict = log_dict
         for key, value in log_dict.items():
 
-            curr_val = value[-1]
-
-            if isinstance(curr_val, (int, float, Tensor)):
-                self.wandb.log({key: curr_val})
+            if isinstance(value, (int, float, Tensor)):
+                self.wandb.log({key: value})
 
             else:
                 return
+            
+    def log_preds(self, images, outputs) -> None:
+
+        print(f"images type: {type(images)}, outputs type: {type(outputs)}")
+        
+        if isinstance(images, torch.Tensor):
+            images = images.cpu().numpy()
+
+
+        bboxes = output[:, 0:4]
+
+        cls = output[:, 6]
+        scores = output[:, 4] * output[:, 5]
+        
+        # load raw input image
+        if isinstance(image, str):
+            filename = os.path.basename(image)
+            image = cv2.imread(image)
+            if image is None:
+                raise ValueError("test image path is invalid!")
+        else:
+            filename = None
+        
+        all_boxes = []
+
+        # plot each bounding box for this image
+        for b_i, box in enumerate(bboxes):
+
+            # get coordinates and labels
+            box_data = {
+                "position": {
+                    "minX": int(box[0]),
+                    "maxX": int(box[2]),
+                    "minY": int(box[1]),
+                    "maxY": int(box[3]),
+                },
+                "class_id": int(cls[b_i]),
+                # optionally caption each box with its class and score
+                # "box_caption": "%s (%.3f)" % (v_labels[b_i], v_scores[b_i]),
+                "domain": "pixel",
+                "scores": {"score": float(scores[b_i])},
+            }
+            all_boxes.append(box_data)
+            
+        ids = [i for i in range(len(COCO_CLASSES))]
+        class_labels = dict(zip(ids, list(COCO_CLASSES)))
+
+        # log to wandb: raw image, predictions, and dictionary of class labels for each class id
+        box_image = self.wandb.Image(
+            image,
+            boxes={
+                "predictions": {
+                    "box_data": all_boxes,
+                    "class_labels": class_labels,
+                }
+            },
+        )
+        pred_dict = {"Bounding boxes": box_image}
+        if self.log_dict and "epoch" in self.log_dict:
+            pred_dict["epoch"] = self.log_dict["epoch"]
+        self.wandb.log(pred_dict)
 
     def check_and_upload_dataset(self, opt):
         """
@@ -200,52 +261,3 @@ class WandBLogger:
 
     def resume_train() -> object:
         pass
-
-    def log_pred(self, image, output) -> None:
-
-        bboxes = output[:, 0:4]
-
-        cls = output[:, 6]
-        scores = output[:, 4] * output[:, 5]
-        
-        # load raw input image
-        if isinstance(image, str):
-            filename = os.path.basename(image)
-            image = cv2.imread(image)
-            if image is None:
-                raise ValueError("test image path is invalid!")
-        else:
-            filename = None
-        
-        all_boxes = []
-
-        # plot each bounding box for this image
-        for b_i, box in enumerate(bboxes):
-
-            # get coordinates and labels
-            box_data = {
-                "position": {
-                    "minX": int(box[0]),
-                    "maxX": int(box[2]),
-                    "minY": int(box[1]),
-                    "maxY": int(box[3]),
-                },
-                "class_id": int(cls[b_i]),
-                # optionally caption each box with its class and score
-                # "box_caption": "%s (%.3f)" % (v_labels[b_i], v_scores[b_i]),
-                "domain": "pixel",
-                "scores": {"score": scores[b_i]},
-            }
-            all_boxes.append(box_data)
-
-        # log to wandb: raw image, predictions, and dictionary of class labels for each class id
-        box_image = self.wandb.Image(
-            image,
-            boxes={
-                "predictions": {
-                    "box_data": all_boxes,
-                    "class_labels": COCO_CLASSES,
-                }
-            },
-        )
-        return box_image

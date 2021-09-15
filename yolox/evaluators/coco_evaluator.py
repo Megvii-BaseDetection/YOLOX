@@ -57,6 +57,7 @@ class COCOEvaluator:
         trt_file=None,
         decoder=None,
         test_size=None,
+        wandb_logger=None,
     ):
         """
         COCO average precision (AP) Evaluation. Iterate inference on the test dataset
@@ -120,6 +121,9 @@ class COCOEvaluator:
                 if is_time_record:
                     nms_end = time_synchronized()
                     nms_time += nms_end - infer_end
+                
+                if wandb_logger:
+                    wandb_logger.log_pred(imgs, outputs)
 
             data_list.extend(self.convert_to_coco_format(outputs, info_imgs, ids))
 
