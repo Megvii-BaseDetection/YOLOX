@@ -277,4 +277,6 @@ class Exp(BaseExp):
         return evaluator
 
     def eval(self, model, evaluator, is_distributed, half=False, wandb_logger=None):
-        return evaluator.evaluate(model, is_distributed, half, wandb_logger=wandb_logger)
+        return evaluator.evaluate(
+            model, is_distributed, half, wandb_logger=wandb_logger
+        )

@@ -25,9 +25,9 @@ from yolox.utils import (
     setup_logger,
     synchronize,
 )
+from yolox.utils.wandb.wandb_utils import WandBLogger
 
 import datetime
-from yolox.utils.wandb.wandb_utils import WandBLogger
 import os
 import time
 
@@ -308,7 +308,7 @@ class Trainer:
                 evalmodel = evalmodel.module
 
         ap50_95, ap50, summary = self.exp.eval(
-            evalmodel, self.evaluator, self.is_distributed, wandb_logger=self.wandb 
+            evalmodel, self.evaluator, self.is_distributed, wandb_logger=self.wandb
         )
         self.model.train()
         if self.rank == 0:

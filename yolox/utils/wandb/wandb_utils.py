@@ -11,6 +11,7 @@ import torch
 
 from yolox.data.data_augment import preproc as preprocess
 from yolox.data.datasets import COCO_CLASSES
+from yolox.utils import get_rank
 
 import logging
 import os
@@ -18,7 +19,6 @@ import sys
 import yaml
 from pathlib import Path
 from typing import Union
-from yolox.utils import get_rank
 
 __all__ = ["WandBLogger"]
 
@@ -112,7 +112,7 @@ class WandBLogger:
 
             else:
                 return
-            
+
     def _handle_pred(self, image, output):
         """Log a single prediction."""
 
@@ -183,9 +183,7 @@ class WandBLogger:
             else:
                 raise ValueError("images and outputs must be a torch.Tensor or list")
 
-        log_dict = {
-            "Prediction Samples": predictions
-        }
+        log_dict = {"Prediction Samples": predictions}
 
         if self.log_dict and "epoch" in self.log_dict:
             log_dict["epoch"] = self.log_dict["epoch"]

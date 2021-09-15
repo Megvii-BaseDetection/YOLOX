@@ -121,7 +121,7 @@ class COCOEvaluator:
                 if is_time_record:
                     nms_end = time_synchronized()
                     nms_time += nms_end - infer_end
-                
+
                 if wandb_logger and cur_iter == 0:
                     wandb_logger.log_preds(imgs, outputs)
 
