@@ -68,6 +68,8 @@ class WandBLogger:
         self.params = params
         self.log_dict = None
 
+        self.result_table = self.wandb.Table(["epoch", "prediction"])
+
         self._import_wandb()
         self._args_parse()
         self._before_job()
@@ -173,25 +175,28 @@ class WandBLogger:
 
         if isinstance(images, torch.Tensor):
             images = images.cpu().numpy().transpose(0, 2, 3, 1)
+
             if len(images.shape) == 4:
                 for image, output in zip(images, outputs):
                     image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
                     if output is not None:
-                        predictions.append(self._handle_pred(image, output))
+                        prediction = self._handle_pred(image, output)
             elif len(images.shape) == 3 and len(outputs) == 1:
-                predictions.append(self._handle_pred(images, outputs[0]))
+                prediction = self._handle_pred(images, outputs[0]))
             else:
                 raise ValueError("images and outputs must be a torch.Tensor or list")
 
-        if self.log_dict and "epoch" in self.log_dict:
-            data = [[self.log_dict["epoch"], pred] for pred in predictions]
-            columns = ["epoch", "prediction"]
-        else:
-            data = [[pred] for pred in predictions]
-            columns = ["prediction"]
+            self.result_table.add_data(self.current_epoch, prediction)
 
-        prediction_table = self.wandb.Table(data=data, columns=columns)
-        self.wandb.log({"Prediction Table": prediction_table})
+        # if self.log_dict and "epoch" in self.log_dict:
+        #     data = [[self.log_dict["epoch"], pred] for pred in predictions]
+        #     columns = ["epoch", "prediction"]
+        # else:
+        #     data = [[pred] for pred in predictions]
+        #     columns = ["prediction"]
+        # prediction_table = self.wandb.Table(data=data, columns=columns)
+        
+        self.wandb.log({"Prediction Table": self.result_table})
 
     def check_and_upload_dataset(self, opt):
         """
