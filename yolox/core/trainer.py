@@ -336,5 +336,5 @@ class Trainer:
                 ckpt_name,
             )
 
-            if wandb_logger:
-                wandb_logger.log_checkpoint(self.file_name, update_best_ckpt)
+            if self.wandb_logger:
+                self.wandb_logger.log_checkpoint(self.file_name, update_best_ckpt)
