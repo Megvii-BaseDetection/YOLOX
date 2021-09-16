@@ -68,11 +68,12 @@ class WandBLogger:
         self.params = params
         self.log_dict = None
 
-        self.result_table = self.wandb.Table(["epoch", "prediction"])
-
         self._import_wandb()
         self._args_parse()
         self._before_job()
+        
+        self.current_epoch = 0
+        self.result_table = self.wandb.Table(["epoch", "prediction"])
 
     def _import_wandb(self):
         try:
@@ -155,6 +156,8 @@ class WandBLogger:
         ids = [i for i in range(len(COCO_CLASSES))]
         class_labels = dict(zip(ids, list(COCO_CLASSES)))
 
+        class_set = self.wandb.Classes([{'id': id, 'name': name} for id, name in class_labels.items()])
+
         # log to wandb: raw image, predictions, and dictionary of class labels for each class id
         box_image = self.wandb.Image(
             image,
@@ -162,8 +165,9 @@ class WandBLogger:
                 "predictions": {
                     "box_data": all_boxes,
                     "class_labels": class_labels,
-                }
+                },
             },
+            classes = class_set
         )
 
         return box_image
@@ -182,7 +186,7 @@ class WandBLogger:
                     if output is not None:
                         prediction = self._handle_pred(image, output)
             elif len(images.shape) == 3 and len(outputs) == 1:
-                prediction = self._handle_pred(images, outputs[0]))
+                prediction = self._handle_pred(images, outputs[0])
             else:
                 raise ValueError("images and outputs must be a torch.Tensor or list")
 
