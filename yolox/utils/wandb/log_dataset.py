@@ -6,8 +6,9 @@ WANDB_ARTIFACT_PREFIX = "wandb-artifact://"
 
 def create_dataset_artifact(opt):
     logger = WandbLogger(
-        opt, None, job_type="Dataset Creation"
+        opt, None
     )  # TODO: return value unused
+    logger.create_dataset_artifact(opt)
 
 
 if __name__ == "__main__":

@@ -22,6 +22,7 @@ from typing import Union
 
 __all__ = ["WandBLogger"]
 
+WANDB_ARTIFACT_PREFIX = "wandb-artifact://"
 
 FILE = Path(__file__).absolute()
 sys.path.append(FILE.parents[3].as_posix())  # add yolox/ to path
@@ -71,7 +72,7 @@ class WandBLogger:
         self._import_wandb()
         self._args_parse()
         self._before_job()
-        
+
         self.current_epoch = 0
         self.result_table = self.wandb.Table(["epoch", "prediction", "avg_confidence"])
 
@@ -156,7 +157,8 @@ class WandBLogger:
         ids = [i for i in range(len(COCO_CLASSES))]
         class_labels = dict(zip(ids, list(COCO_CLASSES)))
 
-        class_set = self.wandb.Classes([{'id': id, 'name': name} for id, name in class_labels.items()])
+        class_set = self.wandb.Classes([{'id': id, 'name': name}
+                                       for id, name in class_labels.items()])
 
         # log to wandb: raw image, predictions, and dictionary of class labels for each class id
         box_image = self.wandb.Image(
@@ -183,13 +185,11 @@ class WandBLogger:
         else:
             raise ValueError("image must be a torch.Tensor or a numpy.ndarray")
 
-        pred = self._handle_pred(image, output) 
+        pred = self._handle_pred(image, output)
         scores = output[:, 4] * output[:, 5]
         avg_score = scores.mean()
 
         self.result_table.add_data(self.current_epoch, pred, avg_score)
-
-        self.wandb.log({"Result Table": self.result_table})
 
     def log_preds(self, images, outputs) -> None:
         """Log a batch of predictions."""
@@ -203,7 +203,7 @@ class WandBLogger:
                         self.log_pred(image, output)
             else:
                 raise ValueError("images must be a torch.Tensor of shape (N, C, H, W)")
-        
+
         self.wandb.log({"Prediction Table": self.result_table})
 
     def check_and_upload_dataset(self, opt):
@@ -239,6 +239,7 @@ class WandBLogger:
         returns:
         the new .yaml file with artifact links. it can be used to start training directly from artifacts
         """
+
         self.data_dict = check_dataset(data_file)  # parse and check
         data = dict(self.data_dict)
         nc, names = (1, ["item"]) if single_cls else (int(data["nc"]), data["names"])
@@ -285,8 +286,33 @@ class WandBLogger:
             self.wandb_run.log_artifact(self.val_artifact)
         return path
 
-    def log_checkpoint() -> None:
-        pass
+    def log_checkpoint(self, path, best_model=False):
+        """
+        Log the model checkpoint as W&B artifact
+        arguments:
+        path (Path)   -- Path of directory containing the checkpoints
+        opt (namespace) -- Command line arguments for this run
+        epoch (int)  -- Current epoch number
+        fitness_score (float) -- fitness score for current epoch 
+        best_model (boolean) -- Boolean representing if the current checkpoint is the best yet.
+        """
+
+        model_artifact = wandb.Artifact('run_' + self.wandb.run.id + '_model', type='model', metadata={
+            'original_url': str(path),
+            # 'epochs_trained': epoch + 1,
+            # 'save period': opt.save_period,
+            # 'project': opt.project,
+            # 'total_epochs': opt.epochs,
+            # 'fitness_score': fitness_score
+        })
+        model_artifact.add_file(str(path / 'last.pt'), name='last.pt')
+        self.wandb.log_artifact(model_artifact,
+                                aliases=['latest', 'last', 'epoch ' + str(self.current_epoch), 'best' if best_model else ''])
+        # print("Saving model artifact on epoch ", epoch + 1)
+
+    # def log_checkpoint(self, path, opt, epoch=None, best_model=False) -> None:
+
+    #     self.wandb.log({"Checkpoint": path})
 
     def get_dataset() -> object:
         pass
