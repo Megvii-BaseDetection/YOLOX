@@ -73,7 +73,7 @@ class WandBLogger:
         self._before_job()
         
         self.current_epoch = 0
-        self.result_table = self.wandb.Table(["epoch", "prediction"])
+        self.result_table = self.wandb.Table(["epoch", "prediction", "avg_confidence"])
 
     def _import_wandb(self):
         try:
@@ -167,10 +167,29 @@ class WandBLogger:
                     "class_labels": class_labels,
                 },
             },
-            classes = class_set
+            classes=class_set
         )
 
         return box_image
+
+    def log_pred(self, image, output) -> None:
+        """Log a prediction on a single image."""
+
+        if isinstance(image, torch.Tensor):
+            image = image.cpu().numpy().transpose(1, 2, 0)
+            image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+        elif isinstance(image, np.ndarray):
+            image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+        else:
+            raise ValueError("image must be a torch.Tensor or a numpy.ndarray")
+
+        pred = self._handle_pred(image, output) 
+        scores = output[:, 4] * output[:, 5]
+        avg_score = scores.mean()
+
+        self.result_table.add_data(self.current_epoch, pred, avg_score)
+
+        self.wandb.log({"Result Table": self.result_table})
 
     def log_preds(self, images, outputs) -> None:
         """Log a batch of predictions."""
@@ -178,27 +197,12 @@ class WandBLogger:
         predictions = []
 
         if isinstance(images, torch.Tensor):
-            images = images.cpu().numpy().transpose(0, 2, 3, 1)
-
             if len(images.shape) == 4:
                 for image, output in zip(images, outputs):
-                    image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
                     if output is not None:
-                        prediction = self._handle_pred(image, output)
-            elif len(images.shape) == 3 and len(outputs) == 1:
-                prediction = self._handle_pred(images, outputs[0])
+                        self.log_pred(image, output)
             else:
-                raise ValueError("images and outputs must be a torch.Tensor or list")
-
-            self.result_table.add_data(self.current_epoch, prediction)
-
-        # if self.log_dict and "epoch" in self.log_dict:
-        #     data = [[self.log_dict["epoch"], pred] for pred in predictions]
-        #     columns = ["epoch", "prediction"]
-        # else:
-        #     data = [[pred] for pred in predictions]
-        #     columns = ["prediction"]
-        # prediction_table = self.wandb.Table(data=data, columns=columns)
+                raise ValueError("images must be a torch.Tensor of shape (N, C, H, W)")
         
         self.wandb.log({"Prediction Table": self.result_table})
 

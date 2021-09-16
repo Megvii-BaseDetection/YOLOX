@@ -122,10 +122,13 @@ class COCOEvaluator:
                     nms_end = time_synchronized()
                     nms_time += nms_end - infer_end
 
-                if wandb_logger and cur_iter == 0:
-                    wandb_logger.log_preds(imgs, outputs)
+            
+            coco_item = self.convert_to_coco_format(outputs, info_imgs, ids)
+            
+            if wandb_logger and cur_iter == 0:
+                wandb_logger.log_coco_item(imgs, outputs, coco_item)
 
-            data_list.extend(self.convert_to_coco_format(outputs, info_imgs, ids))
+            data_list.extend(coco_item)
 
         statistics = torch.cuda.FloatTensor([inference_time, nms_time, n_samples])
         if distributed:
