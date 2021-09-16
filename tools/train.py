@@ -39,7 +39,7 @@ def make_parser():
         "--exp_file",
         default=None,
         type=str,
-        help="plz input your expriment description file",
+        help="plz input your experiment description file",
     )
     parser.add_argument(
         "--resume", default=False, action="store_true", help="resume training"
