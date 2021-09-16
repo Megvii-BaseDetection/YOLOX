@@ -296,7 +296,7 @@ class WandBLogger:
         fitness_score (float) -- fitness score for current epoch 
         best_model (boolean) -- Boolean representing if the current checkpoint is the best yet.
         """
-
+        path = Path(path)
         model_artifact = wandb.Artifact('run_' + self.wandb.run.id + '_model', type='model', metadata={
             'original_url': str(path),
             # 'epochs_trained': epoch + 1,
@@ -305,14 +305,10 @@ class WandBLogger:
             # 'total_epochs': opt.epochs,
             # 'fitness_score': fitness_score
         })
-        model_artifact.add_file(str(path / 'last.pt'), name='last.pt')
+        model_artifact.add_file(str(path), name='last.pth')
         self.wandb.log_artifact(model_artifact,
                                 aliases=['latest', 'last', 'epoch ' + str(self.current_epoch), 'best' if best_model else ''])
         # print("Saving model artifact on epoch ", epoch + 1)
-
-    # def log_checkpoint(self, path, opt, epoch=None, best_model=False) -> None:
-
-    #     self.wandb.log({"Checkpoint": path})
 
     def get_dataset() -> object:
         pass
