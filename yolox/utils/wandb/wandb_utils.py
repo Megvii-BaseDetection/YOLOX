@@ -183,12 +183,15 @@ class WandBLogger:
             else:
                 raise ValueError("images and outputs must be a torch.Tensor or list")
 
-        log_dict = {"Prediction Samples": predictions}
-
         if self.log_dict and "epoch" in self.log_dict:
-            log_dict["epoch"] = self.log_dict["epoch"]
+            data = [[self.log_dict["epoch"], pred] for pred in predictions]
+            columns = ["epoch", "prediction"]
+        else:
+            data = [[pred] for pred in predictions]
+            columns = ["prediction"]
 
-        self.wandb.log(log_dict)
+        prediction_table = self.wandb.Table(data=data, columns=columns)
+        self.wandb.log({"Prediction Table": prediction_table})
 
     def check_and_upload_dataset(self, opt):
         """
