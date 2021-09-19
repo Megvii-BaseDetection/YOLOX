@@ -55,7 +55,7 @@ Concat           Concat_40                4 1 652 672 662 682 683 0=0
 ```
 YoloV5Focus      focus                    1 1 images 683
 ```
-After(just an exmaple):
+After(just an example):
 ```
 286 328
 Input            images                   0 1 images
@@ -67,7 +67,7 @@ YoloV5Focus      focus                    1 1 images 683
 Use ncnn_optimize to generate new param and bin:
 ```shell
 # suppose you are still under ncnn/build/tools/ncnn dir.
-../ncnnoptimize model.param model.bin yolox.param yolox.bin 65536
+../ncnnoptimize yolox.param yolox.bin model.param model.bin 65536
 ```
 
 ### Step6
