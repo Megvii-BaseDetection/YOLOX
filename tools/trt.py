@@ -28,6 +28,8 @@ def make_parser():
         help="pls input your expriment description file",
     )
     parser.add_argument("-c", "--ckpt", default=None, type=str, help="ckpt path")
+    parser.add_argument("-w", '--workspace', type=int, default=32, help='max workspace size in detect')
+    parser.add_argument("-b", '--batch', type=int, default=1, help='max batch size in detect')
     return parser
 
 
@@ -60,7 +62,8 @@ def main():
         [x],
         fp16_mode=True,
         log_level=trt.Logger.INFO,
-        max_workspace_size=(1 << 32),
+        max_workspace_size=(1 << args.workspace),
+        max_batch_size=args.batch,
     )
     torch.save(model_trt.state_dict(), os.path.join(file_name, "model_trt.pth"))
     logger.info("Converted TensorRT model done.")
