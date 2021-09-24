@@ -48,6 +48,7 @@ class WandBLogger:
         dir: Union[str, Path] = None,
         model: object = None,
         job_type: str = "training",
+        rank: int = 0,
         params: dict = None,
     ) -> None:
         """
@@ -58,6 +59,7 @@ class WandBLogger:
         :param dir: Path to the local log directory for W&B logs to be saved at.
         :param model: Model checkpoint to be logged to W&B.
         :param config: Syncs hyper-parameters and config values used to W&B.
+        :rank: The rank of the current process.
         :param params: All arguments for wandb.init() function call.
         Visit https://docs.wandb.ai/ref/python/init to learn about all
         wand.init() parameters.
@@ -70,6 +72,7 @@ class WandBLogger:
         self.config = config
         self.model = model
         self.job_type = job_type
+        self.rank = rank
         self.params = params
 
         self._import_wandb()
@@ -89,7 +92,7 @@ class WandBLogger:
             import wandb
 
             assert hasattr(wandb, "__version__")
-            if pkg.parse_version(wandb.__version__) >= pkg.parse_version('0.12.2'):
+            if pkg.parse_version(wandb.__version__) >= pkg.parse_version('0.12.2') and self.rank in [0, -1]:
                 logging.warning('wandb version is higher than 0.12.2, please update to 0.12.2')
                 wandb.login(timeout=30)
         except (ImportError, AssertionError):

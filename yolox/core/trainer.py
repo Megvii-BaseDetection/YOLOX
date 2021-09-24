@@ -186,6 +186,7 @@ class Trainer:
                 self.wandb = WandBLogger(
                     model=self.model,
                     config=self.args,
+                    rank = self.rank
                 )
 
         logger.info("Training start...")
