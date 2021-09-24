@@ -23,7 +23,7 @@ from yolox.utils import (
     occupy_mem,
     save_checkpoint,
     setup_logger,
-    synchronize,
+    synchronize
 )
 from yolox.utils.wandb import WandBLogger
 

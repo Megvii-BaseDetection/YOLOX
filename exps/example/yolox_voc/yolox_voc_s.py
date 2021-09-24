@@ -34,7 +34,7 @@ class Exp(MyExp):
             TrainTransform,
             VOCDetection,
             YoloBatchSampler,
-            worker_init_reset_seed,
+            worker_init_reset_seed
         )
         from yolox.utils import get_local_rank, wait_for_the_master
 
