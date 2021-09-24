@@ -70,7 +70,6 @@ class WandBLogger:
         self.model = model
         self.job_type = job_type
         self.params = params
-        self.log_dict = None
 
         self._import_wandb()
         self._args_parse()
@@ -118,20 +117,14 @@ class WandBLogger:
             self.wandb.watch(self.model)
         self.wandb.run._label(repo="YOLOX")
 
-    def log_metrics(self, log_dict: dict = None) -> None:
-        """Logs a dictionary of metrics to Weights & Biases dashboard.
+    def log_metrics(self, key: str = None, value: Union[int, float, Tensor] = None, step: Union[int, float] = None) -> None:
+        """Logs metrics to Weights & Biases dashboard.
 
         Args:
-            log_dict (dict, optional): Dictionary of metrics to be logged to WandB.
-                                        Defaults to None.
+            key: Name of the metric.
+            value: Value of the metric.
         """
-        self.log_dict = log_dict
-        for key, value in log_dict.items():
-
-            if isinstance(value, (int, float, Tensor)):
-                self.wandb.log({key: value})
-            else:
-                return
+        self.wandb.log({key: value}, step = step)
 
     def _handle_pred(self, image, output):
         """Log a single prediction."""

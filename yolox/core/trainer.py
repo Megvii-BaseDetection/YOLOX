@@ -25,7 +25,7 @@ from yolox.utils import (
     setup_logger,
     synchronize
 )
-from yolox.utils.wandb.wandb_utils import WandBLogger
+from yolox.utils.wandb import WandBLogger
 
 import datetime
 import os
@@ -67,8 +67,6 @@ class Trainer:
             filename="train_log.txt",
             mode="a",
         )
-
-        self.wandb = WandBLogger()
 
     def train(self):
         self.before_train()
@@ -179,6 +177,11 @@ class Trainer:
         # Tensorboard logger
         if self.rank == 0:
             self.tblogger = SummaryWriter(self.file_name)
+            if self.args.wandb:
+                self.wandb = WandBLogger(
+                    model = self.model,
+                    config = self.args,
+                )
 
         logger.info("Training start...")
         logger.info("\n{}".format(model))
@@ -314,11 +317,15 @@ class Trainer:
         if self.rank == 0:
             self.tblogger.add_scalar("val/COCOAP50", ap50, self.epoch + 1)
             self.tblogger.add_scalar("val/COCOAP50_95", ap50_95, self.epoch + 1)
+            self.wandb.log_metrics("val/COCOAP50", ap50, self.epoch + 1)
+            self.wandb.log_metrics("val/COCOAP50_95", ap50_95, self.epoch + 1)
             logger.info("\n" + summary)
         synchronize()
 
         self.save_ckpt("last_epoch", ap50_95 > self.best_ap)
         self.best_ap = max(self.best_ap, ap50_95)
+        if self.rank == 0:
+            self.wandb.config.update({"Best_Ap": self.best_ap})
 
     def save_ckpt(self, ckpt_name, update_best_ckpt=False):
         if self.rank == 0:
@@ -336,5 +343,7 @@ class Trainer:
                 ckpt_name,
             )
 
-            if self.wandb_logger:
-                self.wandb_logger.log_checkpoint(self.file_name, update_best_ckpt)
+            if self.rank == 0:
+                self.wandb.save(self.file_name)
+                if self.wandb_logger:
+                    self.wandb_logger.log_checkpoint(self.file_name, update_best_ckpt)
