@@ -300,7 +300,7 @@ class WandBLogger:
         best_model (boolean) -- Boolean representing if the current checkpoint is the best yet.
         """
         path = Path(path)
-        model_artifact = wandb.Artifact(
+        model_artifact = self.wandb.Artifact(
             "run_" + self.wandb.run.id + "_model",
             type="model",
             metadata={
