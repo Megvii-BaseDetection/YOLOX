@@ -347,5 +347,5 @@ class Trainer:
                 self.wandb.save(self.file_name)
                 if self.wandb_logger:
                     self.wandb_logger.log_checkpoint(
-                        self.file_name, self.epoch, self.max_epoch, update_best_ckpt
+                        self.file_name, self.max_epoch, update_best_ckpt
                     )

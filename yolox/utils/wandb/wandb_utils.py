@@ -287,12 +287,11 @@ class WandBLogger:
         artifact.add(table, name)
         return artifact
 
-    def log_checkpoint(self, path, epoch, total_epochs, best_model=False):
+    def log_checkpoint(self, path, total_epochs, best_model=False):
         """
         Log the model checkpoint as W&B artifact
         arguments:
         path (Path)   -- Path of directory containing the checkpoints
-        epoch (int)  -- Current epoch number
         total_epochs (int) -- Total number of epochs
         best_model (boolean) -- Boolean representing if the current checkpoint is the best yet.
         """
@@ -302,7 +301,7 @@ class WandBLogger:
             type="model",
             metadata={
                 "original_url": str(path),
-                "epochs_trained": epoch + 1,
+                "epochs_trained": self.current_epoch,
                 "total_epochs": total_epochs,
             },
         )
