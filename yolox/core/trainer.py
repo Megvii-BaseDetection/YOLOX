@@ -118,7 +118,7 @@ class Trainer:
 
         if self.rank == 0:
             self.wandb.log_metrics("LR", lr)
-            self.wandb.log_metrics("Train/loss", loss)
+            self.wandb.log_metrics("Train/loss", loss.item())
             self.wandb.config.update({"LR": lr})
 
         iter_end_time = time.time()
