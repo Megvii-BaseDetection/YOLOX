@@ -14,6 +14,7 @@ from yolox.data.data_augment import preproc as preprocess
 from yolox.data.datasets import COCO_CLASSES
 
 import logging
+import pkg_resources as pkg
 import os
 import sys
 import yaml
@@ -88,6 +89,9 @@ class WandBLogger:
             import wandb
 
             assert hasattr(wandb, "__version__")
+            if pkg.parse_version(wandb.__version__) >= pkg.parse_version('0.12.2'):
+                logging.warning('wandb version is higher than 0.12.2, please update to 0.12.2')
+                wandb.login(timeout=30)
         except (ImportError, AssertionError):
             raise ImportError('Please run "pip install wandb" to install wandb')
         self.wandb = wandb
