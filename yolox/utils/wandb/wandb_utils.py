@@ -317,6 +317,3 @@ class WandBLogger:
             ],
         )
         print("Saving model artifact on epoch ", epoch + 1)
-
-    def resume_train() -> object:
-        pass
