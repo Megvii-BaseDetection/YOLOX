@@ -104,7 +104,7 @@ class WandBLogger:
             self.wandb.init()
         if self.model is not None:
             self.wandb.watch(self.model)
-        self.wandb.run._label(repo=self.project_name)
+        self.wandb.run._label(repo="YOLOX")
 
     def log_metrics(self, log_dict: dict = None) -> None:
         self.log_dict = log_dict
