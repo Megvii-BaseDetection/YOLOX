@@ -117,14 +117,19 @@ class WandBLogger:
             self.wandb.watch(self.model)
         self.wandb.run._label(repo="YOLOX")
 
-    def log_metrics(self, key: str = None, value: Union[int, float, Tensor] = None, step: Union[int, float] = None) -> None:
+    def log_metrics(
+        self,
+        key: str = None,
+        value: Union[int, float, Tensor] = None,
+        step: Union[int, float] = None,
+    ) -> None:
         """Logs metrics to Weights & Biases dashboard.
 
         Args:
             key: Name of the metric.
             value: Value of the metric.
         """
-        self.wandb.log({key: value}, step = step)
+        self.wandb.log({key: value}, step=step)
 
     def _handle_pred(self, image, output):
         """Log a single prediction."""
@@ -297,8 +302,8 @@ class WandBLogger:
             type="model",
             metadata={
                 "original_url": str(path),
-                'epochs_trained': epoch + 1,
-                'total_epochs': total_epochs,
+                "epochs_trained": epoch + 1,
+                "total_epochs": total_epochs,
             },
         )
         model_artifact.add_file(str(path), name="last.pth")
