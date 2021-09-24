@@ -116,6 +116,11 @@ class Trainer:
         for param_group in self.optimizer.param_groups:
             param_group["lr"] = lr
 
+        if self.rank == 0:
+            self.wandb.log_metrics("LR", lr)
+            self.wandb.log_metrics("Train/loss", loss)
+            self.wandb.config.update({"LR": lr})
+
         iter_end_time = time.time()
         self.meter.update(
             iter_time=iter_end_time - iter_start_time,
@@ -325,7 +330,7 @@ class Trainer:
         self.save_ckpt("last_epoch", ap50_95 > self.best_ap)
         self.best_ap = max(self.best_ap, ap50_95)
         if self.rank == 0:
-            self.wandb.config.update({"Best_Ap": self.best_ap})
+            self.wandb.config.update({"Best_AP": self.best_ap})
 
     def save_ckpt(self, ckpt_name, update_best_ckpt=False):
         if self.rank == 0:
