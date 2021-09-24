@@ -2,15 +2,13 @@
 # -*- coding:utf-8 -*-
 # Copyright (c) 2014-2021 Megvii Inc. All rights reserved.
 
-from loguru import logger
+import math
 
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-
+from loguru import logger
 from yolox.utils import bboxes_iou
-
-import math
 
 from .losses import IOUloss
 from .network_blocks import BaseConv, DWConv

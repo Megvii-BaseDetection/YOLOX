@@ -19,15 +19,15 @@
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
 import os
+import sys
+from typing import Dict, List, Tuple
+from unittest import mock
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
 import sphinx_rtd_theme
-import sys
 from sphinx.domains import Domain
-from typing import Dict, List, Tuple
-from unittest import mock
 
 
 class GithubURLDomain(Domain):

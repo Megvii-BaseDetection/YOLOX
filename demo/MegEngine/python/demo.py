@@ -2,20 +2,18 @@
 # -*- coding:utf-8 -*-
 # Copyright (c) Megvii, Inc. and its affiliates.
 
-from loguru import logger
+import argparse
+import os
+import time
 
 import cv2
-
+import megengine as mge
+import megengine.functional as F
+from build import build_and_load
+from loguru import logger
 from yolox.data.data_augment import preproc as preprocess
 from yolox.data.datasets import COCO_CLASSES
 from yolox.utils import vis
-
-import argparse
-import megengine as mge
-import megengine.functional as F
-import os
-import time
-from build import build_and_load
 
 IMAGE_EXT = [".jpg", ".jpeg", ".webp", ".bmp", ".png"]
 

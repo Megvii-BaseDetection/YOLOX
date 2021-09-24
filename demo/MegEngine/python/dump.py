@@ -2,10 +2,10 @@
 # -*- coding:utf-8 -*-
 # Copyright (c) Megvii, Inc. and its affiliates.
 
-import numpy as np
-
 import argparse
+
 import megengine as mge
+import numpy as np
 from build import build_and_load
 from megengine import jit
 

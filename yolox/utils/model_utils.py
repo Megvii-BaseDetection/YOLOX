@@ -2,11 +2,11 @@
 # -*- coding:utf-8 -*-
 # Copyright (c) 2014-2021 Megvii Inc. All rights reserved.
 
+from copy import deepcopy
+
 import torch
 import torch.nn as nn
 from thop import profile
-
-from copy import deepcopy
 
 __all__ = [
     "fuse_conv_and_bn",

@@ -2,16 +2,15 @@
 # -*- coding:utf-8 -*-
 # Copyright (c) 2014-2021 Megvii Inc. All rights reserved.
 
-import torch
-from torch.nn import Module
-
-from yolox.utils import LRScheduler
-
 import ast
 import pprint
 from abc import ABCMeta, abstractmethod
-from tabulate import tabulate
 from typing import Dict
+
+import torch
+from tabulate import tabulate
+from torch.nn import Module
+from yolox.utils import LRScheduler
 
 
 class BaseExp(metaclass=ABCMeta):

@@ -4,7 +4,8 @@
 
 from torch import nn
 
-from .network_blocks import BaseConv, CSPLayer, DWConv, Focus, ResLayer, SPPBottleneck
+from .network_blocks import (BaseConv, CSPLayer, DWConv, Focus, ResLayer,
+                             SPPBottleneck)
 
 
 class Darknet(nn.Module):

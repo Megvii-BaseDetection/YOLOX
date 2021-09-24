@@ -11,7 +11,6 @@ import torch
 
 from yolox.data.data_augment import preproc as preprocess
 from yolox.data.datasets import COCO_CLASSES
-from yolox.utils import get_rank
 
 import logging
 import os
@@ -206,85 +205,57 @@ class WandBLogger:
 
         self.wandb.log({"Prediction Table": self.result_table})
 
-    def check_and_upload_dataset(self, opt):
-        """
-        Check if the dataset format is compatible and upload it as W&B artifact
-        arguments:
-        opt (namespace)-- Commandline arguments for current run
-        returns:
-        Updated dataset info dictionary where local dataset paths are replaced by WAND_ARFACT_PREFIX links.
-        """
+    def create_dataset_artifact(self, opt) -> None:
+        """Create a dataset artifact for the current run."""
+
         assert self.wandb, "Install wandb to upload dataset"
-        config_path = self.log_dataset_artifact(
-            opt.data,
-            opt.single_cls,
-            "YOLOX" if opt.project == "runs/train" else Path(opt.project).stem,
-        )
-        print("Created dataset config file ", config_path)
-        with open(config_path, errors="ignore") as f:
-            wandb_data_dict = yaml.safe_load(f)
-        return wandb_data_dict
 
-    def log_dataset_artifact(
-        self, data_file, single_cls, project, overwrite_config=False
-    ):
-        """
-        Log the dataset as W&B artifact and return the new data file with W&B links
-        arguments:
-        data_file (str) -- the .yaml file with information about the dataset like - path, classes etc.
-        single_class (boolean)  -- train multi-class data as single-class
-        project (str) -- project name. Used to construct the artifact path
-        overwrite_config (boolean) -- overwrites the data.yaml file if set to true otherwise creates a new
-        file with _wandb postfix. Eg -> data_wandb.yaml
-        returns:
-        the new .yaml file with artifact links. it can be used to start training directly from artifacts
-        """
+        nc, names = (1, ["item"]) if opt.single_cls else len(COCO_CLASSES), COCO_CLASSES
 
-        self.data_dict = check_dataset(data_file)  # parse and check
-        data = dict(self.data_dict)
-        nc, names = (1, ["item"]) if single_cls else (int(data["nc"]), data["names"])
-        names = {k: v for k, v in enumerate(names)}  # to index dictionary
-        self.train_artifact = (
-            self.create_dataset_table(
-                LoadImagesAndLabels(data["train"], rect=True, batch_size=1),
-                names,
-                name="train",
-            )
-            if data.get("train")
-            else None
-        )
-        self.val_artifact = (
-            self.create_dataset_table(
-                LoadImagesAndLabels(data["val"], rect=True, batch_size=1),
-                names,
-                name="val",
-            )
-            if data.get("val")
-            else None
-        )
-        if data.get("train"):
-            data["train"] = WANDB_ARTIFACT_PREFIX + str(Path(project) / "train")
-        if data.get("val"):
-            data["val"] = WANDB_ARTIFACT_PREFIX + str(Path(project) / "val")
-        path = Path(data_file).stem
-        path = (
-            path if overwrite_config else path + "_wandb"
-        ) + ".yaml"  # updated data.yaml path
-        data.pop("download", None)
-        data.pop("path", None)
-        with open(path, "w") as f:
-            yaml.safe_dump(data, f)
+        self.train_artifact = self.create_dataset_table(opt.train, nc, names)
+        self.val_artifact = self.create_dataset_table(opt.val, nc, names)
 
-        if self.job_type == "Training":  # builds correct artifact pipeline graph
-            self.wandb_run.use_artifact(self.val_artifact)
-            self.wandb_run.use_artifact(self.train_artifact)
-            self.val_artifact.wait()
-            self.val_table = self.val_artifact.get("val")
-            self.map_val_table_path()
-        else:
-            self.wandb_run.log_artifact(self.train_artifact)
-            self.wandb_run.log_artifact(self.val_artifact)
-        return path
+        self.wandb.log({"Train Dataset": self.train_artifact})
+        self.wandb.log({"Val Dataset": self.val_artifact})
+
+    
+    def create_dataset_table(self, path, names, name="") -> wandb.Table:
+        """Create a wandb table for the dataset."""
+
+        artifact = self.wandb.Artifact(name=name, type="dataset")
+                
+        # img_files = tqdm([path]) if isinstance(dataset.path, str) and Path(dataset.path).is_dir() else None
+        # img_files = tqdm(dataset.img_files) if not img_files else img_files
+        
+        
+
+        for img_file in img_files:
+            if Path(img_file).is_dir():
+                artifact.add_dir(img_file, name='data/images')
+                labels_path = 'labels'.join(dataset.path.rsplit('images', 1))
+                artifact.add_dir(labels_path, name='data/labels')
+            else:
+                artifact.add_file(img_file, name='data/images/' + Path(img_file).name)
+                label_file = Path(img2label_paths([img_file])[0])
+                artifact.add_file(str(label_file),
+                                  name='data/labels/' + label_file.name) if label_file.exists() else None
+        
+        table = self.wandb.Table(columns=["id", "train_image", "Classes", "name"])
+        class_set = self.wandb.Classes([{'id': id, 'name': name} for id, name in class_to_id.items()])
+        
+        for si, (img, labels, paths, shapes) in enumerate(tqdm(dataset)):
+            box_data, img_classes = [], {}
+            for cls, *xywh in labels[:, 1:].tolist():
+                cls = int(cls)
+                box_data.append({"position": {"middle": [xywh[0], xywh[1]], "width": xywh[2], "height": xywh[3]},
+                                 "class_id": cls,
+                                 "box_caption": "%s" % (class_to_id[cls])})
+                img_classes[cls] = class_to_id[cls]
+            boxes = {"ground_truth": {"box_data": box_data, "class_labels": class_to_id}}  # inference-space
+            table.add_data(si, self.wandb.Image(paths, classes=class_set, boxes=boxes), list(img_classes.values()),
+                           Path(paths).name)
+        artifact.add(table, name)
+        return artifact
 
     def log_checkpoint(self, path, best_model=False):
         """
@@ -309,9 +280,7 @@ class WandBLogger:
         self.wandb.log_artifact(model_artifact,
                                 aliases=['latest', 'last', 'epoch ' + str(self.current_epoch), 'best' if best_model else ''])
         # print("Saving model artifact on epoch ", epoch + 1)
-
-    def get_dataset() -> object:
-        pass
+    
 
     def resume_train() -> object:
         pass

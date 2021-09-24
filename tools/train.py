@@ -2,19 +2,17 @@
 # -*- coding:utf-8 -*-
 # Copyright (c) Megvii, Inc. and its affiliates.
 
-from loguru import logger
+import argparse
+import random
+import warnings
 
 import torch
 import torch.backends.cudnn as cudnn
-
+import wandb
+from loguru import logger
 from yolox.core import Trainer, launch
 from yolox.exp import get_exp
 from yolox.utils import configure_nccl, configure_omp, get_num_devices
-
-import argparse
-import random
-import wandb
-import warnings
 
 
 def make_parser():

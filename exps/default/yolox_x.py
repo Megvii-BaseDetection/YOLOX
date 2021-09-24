@@ -2,9 +2,9 @@
 # -*- coding:utf-8 -*-
 # Copyright (c) Megvii, Inc. and its affiliates.
 
-from yolox.exp import Exp as MyExp
-
 import os
+
+from yolox.exp import Exp as MyExp
 
 
 class Exp(MyExp):

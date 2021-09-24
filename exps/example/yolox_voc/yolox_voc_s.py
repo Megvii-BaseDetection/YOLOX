@@ -1,11 +1,10 @@
 # encoding: utf-8
+import os
+
 import torch
 import torch.distributed as dist
-
 from yolox.data import get_yolox_datadir
 from yolox.exp import Exp as MyExp
-
-import os
 
 
 class Exp(MyExp):
@@ -27,15 +26,9 @@ class Exp(MyExp):
     def get_data_loader(
         self, batch_size, is_distributed, no_aug=False, cache_img=False
     ):
-        from yolox.data import (
-            DataLoader,
-            InfiniteSampler,
-            MosaicDetection,
-            TrainTransform,
-            VOCDetection,
-            YoloBatchSampler,
-            worker_init_reset_seed,
-        )
+        from yolox.data import (DataLoader, InfiniteSampler, MosaicDetection,
+                                TrainTransform, VOCDetection, YoloBatchSampler,
+                                worker_init_reset_seed)
         from yolox.utils import get_local_rank, wait_for_the_master
 
         local_rank = get_local_rank()

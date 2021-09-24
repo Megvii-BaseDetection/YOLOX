@@ -1,14 +1,13 @@
 #!/usr/bin/env python
 # Copyright (c) Megvii, Inc. and its affiliates. All Rights Reserved
 
-import setuptools
-
-import torch
-from torch.utils.cpp_extension import CppExtension
-
 import glob
 import re
 from os import path
+
+import setuptools
+import torch
+from torch.utils.cpp_extension import CppExtension
 
 torch_ver = [int(x) for x in torch.__version__.split(".")[:2]]
 assert torch_ver >= [1, 7], "Requires PyTorch >= 1.7"

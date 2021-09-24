@@ -6,17 +6,15 @@
 # Copyright (c) Ellis Brown, Max deGroot.
 # Copyright (c) Megvii, Inc. and its affiliates.
 
-from loguru import logger
-
-import cv2
-import numpy as np
-
-from yolox.evaluators.voc_eval import voc_eval
-
 import os
 import os.path
 import pickle
 import xml.etree.ElementTree as ET
+
+import cv2
+import numpy as np
+from loguru import logger
+from yolox.evaluators.voc_eval import voc_eval
 
 from .datasets_wrapper import Dataset
 from .voc_classes import VOC_CLASSES
@@ -161,9 +159,9 @@ class VOCDetection(Dataset):
                 dtype=np.uint8,
                 mode="w+",
             )
-            from tqdm import tqdm
-
             from multiprocessing.pool import ThreadPool
+
+            from tqdm import tqdm
 
             NUM_THREADs = min(8, os.cpu_count())
             loaded_images = ThreadPool(NUM_THREADs).imap(

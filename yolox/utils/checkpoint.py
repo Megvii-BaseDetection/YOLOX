@@ -1,12 +1,11 @@
 #!/usr/bin/env python3
 # -*- coding:utf-8 -*-
 # Copyright (c) 2014-2021 Megvii Inc. All rights reserved.
-from loguru import logger
-
-import torch
-
 import os
 import shutil
+
+import torch
+from loguru import logger
 
 
 def load_ckpt(model, ckpt):

@@ -2,13 +2,12 @@
 # -*- coding:utf-8 -*-
 # Copyright (c) Megvii, Inc. and its affiliates.
 
-from loguru import logger
+import os
 
 import cv2
 import numpy as np
+from loguru import logger
 from pycocotools.coco import COCO
-
-import os
 
 from ..dataloading import get_yolox_datadir
 from .datasets_wrapper import Dataset
@@ -86,9 +85,9 @@ class COCODataset(Dataset):
                 dtype=np.uint8,
                 mode="w+",
             )
-            from tqdm import tqdm
-
             from multiprocessing.pool import ThreadPool
+
+            from tqdm import tqdm
 
             NUM_THREADs = min(8, os.cpu_count())
             loaded_images = ThreadPool(NUM_THREADs).imap(
