@@ -8,6 +8,7 @@ from tqdm import tqdm
 import cv2
 
 import torch
+from torch import Tensor
 
 from yolox.data.data_augment import preproc as preprocess
 from yolox.data.datasets import COCO_CLASSES
@@ -45,6 +46,7 @@ class WandBLogger:
         config: object = None,
         dir: Union[str, Path] = None,
         model: object = None,
+        job_type: str = "training",
         params: dict = None,
     ) -> None:
         """
@@ -53,6 +55,7 @@ class WandBLogger:
         :param run_name: Name of the W&B run.
         :param save_code: Saves the main training script to W&B.
         :param dir: Path to the local log directory for W&B logs to be saved at.
+        :param model: Model checkpoint to be logged to W&B.
         :param config: Syncs hyper-parameters and config values used to W&B.
         :param params: All arguments for wandb.init() function call.
         Visit https://docs.wandb.ai/ref/python/init to learn about all
@@ -65,6 +68,7 @@ class WandBLogger:
         self.dir = dir
         self.config = config
         self.model = model
+        self.job_type = job_type
         self.params = params
         self.log_dict = None
 
@@ -76,6 +80,11 @@ class WandBLogger:
         self.result_table = self.wandb.Table(["epoch", "prediction", "avg_confidence"])
 
     def _import_wandb(self):
+        """Imports Weights & Biases package
+
+        Raises:
+            ImportError: If the Weights & Biases package is not installed.
+        """
         try:
             import wandb
 
@@ -85,17 +94,20 @@ class WandBLogger:
         self.wandb = wandb
 
     def _args_parse(self):
+        """Parses the arguments for wandb.init() function call."""
         self.init_kwargs = {
             "project": self.project_name,
             "name": self.run_name,
             "save_code": self.save_code,
             "dir": self.dir,
+            "job_type": self.job_type,
             "config": vars(self.config) if self.config else None,
         }
         if self.params:
             self.init_kwargs.update(self.params)
 
     def _before_job(self):
+        """Initializes the Weights & Biases logger."""
         if self.wandb is None:
             self.import_wandb()
         if self.init_kwargs:
@@ -107,12 +119,17 @@ class WandBLogger:
         self.wandb.run._label(repo="YOLOX")
 
     def log_metrics(self, log_dict: dict = None) -> None:
+        """Logs a dictionary of metrics to Weights & Biases dashboard.
+
+        Args:
+            log_dict (dict, optional): Dictionary of metrics to be logged to WandB. 
+                                        Defaults to None.
+        """
         self.log_dict = log_dict
         for key, value in log_dict.items():
 
             if isinstance(value, (int, float, Tensor)):
                 self.wandb.log({key: value})
-
             else:
                 return
 

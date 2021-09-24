@@ -2,10 +2,12 @@ import argparse
 
 from wandb_utils import WandbLogger
 
-WANDB_ARTIFACT_PREFIX = "wandb-artifact://"
+def create_dataset_artifact(opt): -> None:
+    """Initializes the WandbLogger and creates a dataset artifact.
 
-
-def create_dataset_artifact(opt):
+    Args:
+        opt ([type]): Argparse options.
+    """
     logger = WandbLogger(opt, None)  # TODO: return value unused
     logger.create_dataset_artifact(opt)
 
@@ -29,7 +31,10 @@ if __name__ == "__main__":
     )
     parser.add_argument("--entity", default=None, help="W&B entity")
     parser.add_argument(
-        "--name", type=str, default="log dataset", help="name of W&B run"
+        "--name", type=str, default="COCO_data_log", help="name of W&B run"
+    )
+    parser.add_argument(
+        "--job", type=str, default="dataset", help="type of job"
     )
 
     opt = parser.parse_args()
