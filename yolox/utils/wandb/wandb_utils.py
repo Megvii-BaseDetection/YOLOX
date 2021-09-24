@@ -322,4 +322,4 @@ class WandBLogger:
                 "best" if best_model else "",
             ],
         )
-        print("Saving model artifact on epoch ", epoch + 1)
+        print("Saving model artifact on epoch ", self.current_epoch + 1)
