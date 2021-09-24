@@ -7,8 +7,8 @@ from tqdm import tqdm
 
 import cv2
 
-import torch
 from torch import Tensor
+import numpy
 
 from yolox.data.data_augment import preproc as preprocess
 from yolox.data.datasets import COCO_CLASSES
@@ -199,7 +199,7 @@ class WandBLogger:
     def log_pred(self, image, output) -> None:
         """Log a prediction on a single image."""
 
-        if isinstance(image, torch.Tensor):
+        if isinstance(image, Tensor):
             image = image.cpu().numpy().transpose(1, 2, 0)
             image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
         elif isinstance(image, np.ndarray):
@@ -218,7 +218,7 @@ class WandBLogger:
 
         predictions = []
 
-        if isinstance(images, torch.Tensor):
+        if isinstance(images, Tensor):
             if len(images.shape) == 4:
                 for image, output in zip(images, outputs):
                     if output is not None:
