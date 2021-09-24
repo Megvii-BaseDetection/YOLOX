@@ -155,7 +155,7 @@ class VOCDetection(Dataset):
                 "Caching images for the first time. This might take about 3 minutes for VOC"
             )
             logger.warning(
-                "Everytime the self.input_size is changed in your exp file, you need to deleted\n"
+                "Everytime the self.input_size is changed in your exp file, you need to delete\n"
                 "the cached data and re-generate them.\n"
             )
             self.imgs = np.memmap(
