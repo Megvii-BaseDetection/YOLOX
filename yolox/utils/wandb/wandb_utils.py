@@ -8,7 +8,6 @@ from tqdm import tqdm
 import cv2
 
 from torch import Tensor
-import numpy
 
 from yolox.data.data_augment import preproc as preprocess
 from yolox.data.datasets import COCO_CLASSES
@@ -17,7 +16,6 @@ import logging
 import pkg_resources as pkg
 import os
 import sys
-import yaml
 from pathlib import Path
 from typing import Union
 
