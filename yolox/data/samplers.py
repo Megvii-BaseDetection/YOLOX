@@ -2,13 +2,13 @@
 # -*- coding:utf-8 -*-
 # Copyright (c) Megvii, Inc. and its affiliates.
 
-import itertools
-from typing import Optional
-
 import torch
 import torch.distributed as dist
 from torch.utils.data.sampler import BatchSampler as torchBatchSampler
 from torch.utils.data.sampler import Sampler
+
+import itertools
+from typing import Optional
 
 
 class YoloBatchSampler(torchBatchSampler):

@@ -122,7 +122,7 @@ class WandBLogger:
         """Logs a dictionary of metrics to Weights & Biases dashboard.
 
         Args:
-            log_dict (dict, optional): Dictionary of metrics to be logged to WandB. 
+            log_dict (dict, optional): Dictionary of metrics to be logged to WandB.
                                         Defaults to None.
         """
         self.log_dict = log_dict
@@ -173,8 +173,9 @@ class WandBLogger:
         ids = [i for i in range(len(COCO_CLASSES))]
         class_labels = dict(zip(ids, list(COCO_CLASSES)))
 
-        class_set = self.wandb.Classes([{'id': id, 'name': name}
-                                       for id, name in class_labels.items()])
+        class_set = self.wandb.Classes(
+            [{"id": id, "name": name} for id, name in class_labels.items()]
+        )
 
         # log to wandb: raw image, predictions, and dictionary of class labels for each class id
         box_image = self.wandb.Image(
@@ -185,7 +186,7 @@ class WandBLogger:
                     "class_labels": class_labels,
                 },
             },
-            classes=class_set
+            classes=class_set,
         )
 
         return box_image
@@ -235,42 +236,56 @@ class WandBLogger:
         self.wandb.log({"Train Dataset": self.train_artifact})
         self.wandb.log({"Val Dataset": self.val_artifact})
 
-    
     def create_dataset_table(self, path, names, name="") -> wandb.Table:
         """Create a wandb table for the dataset."""
 
         artifact = self.wandb.Artifact(name=name, type="dataset")
-                
+
         # img_files = tqdm([path]) if isinstance(dataset.path, str) and Path(dataset.path).is_dir() else None
         # img_files = tqdm(dataset.img_files) if not img_files else img_files
-        
-        
 
         for img_file in img_files:
             if Path(img_file).is_dir():
-                artifact.add_dir(img_file, name='data/images')
-                labels_path = 'labels'.join(dataset.path.rsplit('images', 1))
-                artifact.add_dir(labels_path, name='data/labels')
+                artifact.add_dir(img_file, name="data/images")
+                labels_path = "labels".join(dataset.path.rsplit("images", 1))
+                artifact.add_dir(labels_path, name="data/labels")
             else:
-                artifact.add_file(img_file, name='data/images/' + Path(img_file).name)
+                artifact.add_file(img_file, name="data/images/" + Path(img_file).name)
                 label_file = Path(img2label_paths([img_file])[0])
-                artifact.add_file(str(label_file),
-                                  name='data/labels/' + label_file.name) if label_file.exists() else None
-        
+                artifact.add_file(
+                    str(label_file), name="data/labels/" + label_file.name
+                ) if label_file.exists() else None
+
         table = self.wandb.Table(columns=["id", "train_image", "Classes", "name"])
-        class_set = self.wandb.Classes([{'id': id, 'name': name} for id, name in class_to_id.items()])
-        
+        class_set = self.wandb.Classes(
+            [{"id": id, "name": name} for id, name in class_to_id.items()]
+        )
+
         for si, (img, labels, paths, shapes) in enumerate(tqdm(dataset)):
             box_data, img_classes = [], {}
             for cls, *xywh in labels[:, 1:].tolist():
                 cls = int(cls)
-                box_data.append({"position": {"middle": [xywh[0], xywh[1]], "width": xywh[2], "height": xywh[3]},
-                                 "class_id": cls,
-                                 "box_caption": "%s" % (class_to_id[cls])})
+                box_data.append(
+                    {
+                        "position": {
+                            "middle": [xywh[0], xywh[1]],
+                            "width": xywh[2],
+                            "height": xywh[3],
+                        },
+                        "class_id": cls,
+                        "box_caption": "%s" % (class_to_id[cls]),
+                    }
+                )
                 img_classes[cls] = class_to_id[cls]
-            boxes = {"ground_truth": {"box_data": box_data, "class_labels": class_to_id}}  # inference-space
-            table.add_data(si, self.wandb.Image(paths, classes=class_set, boxes=boxes), list(img_classes.values()),
-                           Path(paths).name)
+            boxes = {
+                "ground_truth": {"box_data": box_data, "class_labels": class_to_id}
+            }  # inference-space
+            table.add_data(
+                si,
+                self.wandb.Image(paths, classes=class_set, boxes=boxes),
+                list(img_classes.values()),
+                Path(paths).name,
+            )
         artifact.add(table, name)
         return artifact
 
@@ -281,23 +296,33 @@ class WandBLogger:
         path (Path)   -- Path of directory containing the checkpoints
         opt (namespace) -- Command line arguments for this run
         epoch (int)  -- Current epoch number
-        fitness_score (float) -- fitness score for current epoch 
+        fitness_score (float) -- fitness score for current epoch
         best_model (boolean) -- Boolean representing if the current checkpoint is the best yet.
         """
         path = Path(path)
-        model_artifact = wandb.Artifact('run_' + self.wandb.run.id + '_model', type='model', metadata={
-            'original_url': str(path),
-            # 'epochs_trained': epoch + 1,
-            # 'save period': opt.save_period,
-            # 'project': opt.project,
-            # 'total_epochs': opt.epochs,
-            # 'fitness_score': fitness_score
-        })
-        model_artifact.add_file(str(path), name='last.pth')
-        self.wandb.log_artifact(model_artifact,
-                                aliases=['latest', 'last', 'epoch ' + str(self.current_epoch), 'best' if best_model else ''])
+        model_artifact = wandb.Artifact(
+            "run_" + self.wandb.run.id + "_model",
+            type="model",
+            metadata={
+                "original_url": str(path),
+                # 'epochs_trained': epoch + 1,
+                # 'save period': opt.save_period,
+                # 'project': opt.project,
+                # 'total_epochs': opt.epochs,
+                # 'fitness_score': fitness_score
+            },
+        )
+        model_artifact.add_file(str(path), name="last.pth")
+        self.wandb.log_artifact(
+            model_artifact,
+            aliases=[
+                "latest",
+                "last",
+                "epoch " + str(self.current_epoch),
+                "best" if best_model else "",
+            ],
+        )
         # print("Saving model artifact on epoch ", epoch + 1)
-    
 
     def resume_train() -> object:
         pass

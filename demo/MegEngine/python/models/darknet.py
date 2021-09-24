@@ -4,8 +4,7 @@
 
 import megengine.module as M
 
-from .network_blocks import (BaseConv, CSPLayer, DWConv, Focus, ResLayer,
-                             SPPBottleneck)
+from .network_blocks import BaseConv, CSPLayer, DWConv, Focus, ResLayer, SPPBottleneck
 
 
 class Darknet(M.Module):

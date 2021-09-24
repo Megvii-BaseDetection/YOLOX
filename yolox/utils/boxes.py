@@ -3,6 +3,7 @@
 # Copyright (c) 2014-2021 Megvii Inc. All rights reserved.
 
 import numpy as np
+
 import torch
 import torchvision
 

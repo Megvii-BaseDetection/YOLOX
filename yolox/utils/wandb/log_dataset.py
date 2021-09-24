@@ -1,6 +1,6 @@
 import argparse
-
 from wandb_utils import WandbLogger
+
 
 def create_dataset_artifact(opt): -> None:
     """Initializes the WandbLogger and creates a dataset artifact.

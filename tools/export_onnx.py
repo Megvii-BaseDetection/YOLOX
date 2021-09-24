@@ -2,15 +2,17 @@
 # -*- coding:utf-8 -*-
 # Copyright (c) Megvii, Inc. and its affiliates.
 
-import argparse
-import os
+from loguru import logger
 
 import torch
-from loguru import logger
 from torch import nn
+
 from yolox.exp import get_exp
 from yolox.models.network_blocks import SiLU
 from yolox.utils import replace_module
+
+import argparse
+import os
 
 
 def make_parser():
@@ -99,6 +101,7 @@ def main():
 
     if not args.no_onnxsim:
         import onnx
+
         from onnxsim import simplify
 
         input_shapes = {args.input: list(dummy_input.shape)} if args.dynamic else None

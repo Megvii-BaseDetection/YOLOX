@@ -2,12 +2,12 @@
 # -*- coding:utf-8 -*-
 # Copyright (c) 2014-2021 Megvii Inc. All rights reserved.
 
-import os
-import random
-
 import torch
 import torch.distributed as dist
 import torch.nn as nn
+
+import os
+import random
 
 from .base_exp import BaseExp
 
@@ -91,9 +91,15 @@ class Exp(BaseExp):
     def get_data_loader(
         self, batch_size, is_distributed, no_aug=False, cache_img=False
     ):
-        from yolox.data import (COCODataset, DataLoader, InfiniteSampler,
-                                MosaicDetection, TrainTransform,
-                                YoloBatchSampler, worker_init_reset_seed)
+        from yolox.data import (
+            COCODataset,
+            DataLoader,
+            InfiniteSampler,
+            MosaicDetection,
+            TrainTransform,
+            YoloBatchSampler,
+            worker_init_reset_seed
+        )
         from yolox.utils import get_local_rank, wait_for_the_master
 
         local_rank = get_local_rank()

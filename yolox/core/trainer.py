@@ -2,21 +2,34 @@
 # -*- coding:utf-8 -*-
 # Copyright (c) Megvii, Inc. and its affiliates.
 
+from loguru import logger
+
+import torch
+from torch.nn.parallel import DistributedDataParallel as DDP
+from torch.utils.tensorboard import SummaryWriter
+
+from yolox.data import DataPrefetcher
+from yolox.utils import (
+    MeterBuffer,
+    ModelEMA,
+    all_reduce_norm,
+    get_local_rank,
+    get_model_info,
+    get_rank,
+    get_world_size,
+    gpu_mem_usage,
+    is_parallel,
+    load_ckpt,
+    occupy_mem,
+    save_checkpoint,
+    setup_logger,
+    synchronize
+)
+from yolox.utils.wandb.wandb_utils import WandBLogger
+
 import datetime
 import os
 import time
-
-import torch
-from loguru import logger
-from torch.nn.parallel import DistributedDataParallel as DDP
-from torch.utils.tensorboard import SummaryWriter
-from yolox.data import DataPrefetcher
-from yolox.utils import (MeterBuffer, ModelEMA, all_reduce_norm,
-                         get_local_rank, get_model_info, get_rank,
-                         get_world_size, gpu_mem_usage, is_parallel, load_ckpt,
-                         occupy_mem, save_checkpoint, setup_logger,
-                         synchronize)
-from yolox.utils.wandb.wandb_utils import WandBLogger
 
 
 class Trainer:

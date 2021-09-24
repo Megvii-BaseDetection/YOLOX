@@ -2,14 +2,15 @@
 # -*- coding:utf-8 -*-
 # Copyright (c) Megvii, Inc. and its affiliates.
 
-import os
-import random
-import uuid
-
 import numpy as np
+
 import torch
 from torch.utils.data.dataloader import DataLoader as torchDataLoader
 from torch.utils.data.dataloader import default_collate
+
+import os
+import random
+import uuid
 
 from .samplers import YoloBatchSampler
 

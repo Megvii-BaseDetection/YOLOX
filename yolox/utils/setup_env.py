@@ -2,11 +2,12 @@
 # -*- coding:utf-8 -*-
 # Copyright (c) 2014-2021 Megvii Inc. All rights reserved.
 
-import os
-import subprocess
+from loguru import logger
 
 import cv2
-from loguru import logger
+
+import os
+import subprocess
 
 from .dist import get_world_size, is_main_process
 

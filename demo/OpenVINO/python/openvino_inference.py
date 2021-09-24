@@ -4,17 +4,19 @@
 # SPDX-License-Identifier: Apache-2.0
 # Copyright (c) Megvii, Inc. and its affiliates.
 
+import cv2
+import numpy as np
+
+from openvino.inference_engine import IECore
+
+from yolox.data.data_augment import preproc as preprocess
+from yolox.data.datasets import COCO_CLASSES
+from yolox.utils import demo_postprocess, mkdir, multiclass_nms, vis
+
 import argparse
 import logging as log
 import os
 import sys
-
-import cv2
-import numpy as np
-from openvino.inference_engine import IECore
-from yolox.data.data_augment import preproc as preprocess
-from yolox.data.datasets import COCO_CLASSES
-from yolox.utils import demo_postprocess, mkdir, multiclass_nms, vis
 
 
 def parse_args() -> argparse.Namespace:

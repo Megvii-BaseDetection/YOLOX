@@ -2,18 +2,26 @@
 # -*- coding:utf-8 -*-
 # Copyright (c) Megvii, Inc. and its affiliates.
 
+from loguru import logger
+from tqdm import tqdm
+
+import torch
+
+from yolox.utils import (
+    gather,
+    is_main_process,
+    postprocess,
+    synchronize,
+    time_synchronized,
+    xyxy2xywh
+)
+
 import contextlib
 import io
 import itertools
 import json
 import tempfile
 import time
-
-import torch
-from loguru import logger
-from tqdm import tqdm
-from yolox.utils import (gather, is_main_process, postprocess, synchronize,
-                         time_synchronized, xyxy2xywh)
 
 
 class COCOEvaluator:
