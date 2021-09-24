@@ -282,14 +282,13 @@ class WandBLogger:
         artifact.add(table, name)
         return artifact
 
-    def log_checkpoint(self, path, best_model=False):
+    def log_checkpoint(self, path, epoch, total_epochs, best_model=False):
         """
         Log the model checkpoint as W&B artifact
         arguments:
         path (Path)   -- Path of directory containing the checkpoints
-        opt (namespace) -- Command line arguments for this run
         epoch (int)  -- Current epoch number
-        fitness_score (float) -- fitness score for current epoch
+        total_epochs (int) -- Total number of epochs
         best_model (boolean) -- Boolean representing if the current checkpoint is the best yet.
         """
         path = Path(path)
@@ -298,11 +297,8 @@ class WandBLogger:
             type="model",
             metadata={
                 "original_url": str(path),
-                # 'epochs_trained': epoch + 1,
-                # 'save period': opt.save_period,
-                # 'project': opt.project,
-                # 'total_epochs': opt.epochs,
-                # 'fitness_score': fitness_score
+                'epochs_trained': epoch + 1,
+                'total_epochs': total_epochs,
             },
         )
         model_artifact.add_file(str(path), name="last.pth")
@@ -315,7 +311,7 @@ class WandBLogger:
                 "best" if best_model else "",
             ],
         )
-        # print("Saving model artifact on epoch ", epoch + 1)
+        print("Saving model artifact on epoch ", epoch + 1)
 
     def resume_train() -> object:
         pass
