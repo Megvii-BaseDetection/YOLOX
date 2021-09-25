@@ -144,13 +144,10 @@ class WandBLogger:
         scores = output[:, 4] * output[:, 5]
 
         # load input image
-        if isinstance(image, str):
-            filename = os.path.basename(image)
+        if isinstance(image, Union[str, Path]):
             image = cv2.imread(image)
             if image is None:
                 raise ValueError("test image path is invalid!")
-        else:
-            filename = None
 
         all_boxes = []
 
@@ -226,28 +223,37 @@ class WandBLogger:
 
         self.wandb.log({"Prediction Table": self.result_table})
 
-    def create_dataset_artifact(self, opt) -> None:
+    def create_dataset_artifact(self, opt, name="") -> None:
         """Create a dataset artifact for the current run."""
 
         assert self.wandb, "Install wandb to upload dataset"
 
         nc, names = (1, ["item"]) if opt.single_cls else len(COCO_CLASSES), COCO_CLASSES
 
-        self.train_artifact = self.create_dataset_table(opt.train, nc, names)
-        self.val_artifact = self.create_dataset_table(opt.val, nc, names)
+        self.train_artifact = self.wandb.Artifact(name=name, type="dataset")
+        self.val_artifact = self.wandb.Artifact(name=name, type="dataset")
+
+        self.train_artifact.add_dir(opt.train_path, name="data/images")
+        self.val_artifact.add_dir(opt.val_path, name="data/images")
 
         self.wandb.log({"Train Dataset": self.train_artifact})
         self.wandb.log({"Val Dataset": self.val_artifact})
 
-    def create_dataset_table(self, path, names, name="") -> wandb.Table:
+    def create_dataset_table(self, path, name="") -> object:
         """Create a wandb table for the dataset."""
 
         artifact = self.wandb.Artifact(name=name, type="dataset")
 
-        # img_files = tqdm([path]) if isinstance(dataset.path, str) and Path(dataset.path).is_dir() else None
+        # path = Path(path)
+        # img_files = tqdm([path]) if isinstance(Path, str) and Path(path).is_dir() else None
         # img_files = tqdm(dataset.img_files) if not img_files else img_files
 
-        for img_file in img_files:
+        # def img2label_paths(img_paths):
+        #     # Define label paths as a function of image paths
+        #     sa, sb = os.sep + 'images' + os.sep, os.sep + 'labels' + os.sep  # /images/, /labels/ substrings
+        #     return [sb.join(x.rsplit(sa, 1)).rsplit('.', 1)[0] + '.txt' for x in img_paths]
+
+        for img_file in os.listdir(path):
             if Path(img_file).is_dir():
                 artifact.add_dir(img_file, name="data/images")
                 labels_path = "labels".join(dataset.path.rsplit("images", 1))
@@ -260,8 +266,9 @@ class WandBLogger:
                 ) if label_file.exists() else None
 
         table = self.wandb.Table(columns=["id", "train_image", "Classes", "name"])
+        class_labels = dict(zip(ids, list(COCO_CLASSES)))
         class_set = self.wandb.Classes(
-            [{"id": id, "name": name} for id, name in class_to_id.items()]
+            [{"id": id, "name": name} for id, name in class_labels.items()]
         )
 
         for si, (img, labels, paths, shapes) in enumerate(tqdm(dataset)):
@@ -276,12 +283,12 @@ class WandBLogger:
                             "height": xywh[3],
                         },
                         "class_id": cls,
-                        "box_caption": "%s" % (class_to_id[cls]),
+                        "box_caption": "%s" % (class_labels[cls]),
                     }
                 )
-                img_classes[cls] = class_to_id[cls]
+                img_classes[cls] = class_labels[cls]
             boxes = {
-                "ground_truth": {"box_data": box_data, "class_labels": class_to_id}
+                "ground_truth": {"box_data": box_data, "class_labels": class_labels}
             }  # inference-space
             table.add_data(
                 si,

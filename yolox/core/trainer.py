@@ -188,6 +188,8 @@ class Trainer:
                     config=self.args,
                     rank = self.rank
                 )
+            else:
+                self.wandb = None
 
         logger.info("Training start...")
         logger.info("\n{}".format(model))

@@ -14,6 +14,10 @@ def create_dataset_artifact(opt): -> None:
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
+
+    
+
+
     parser.add_argument(
         "--train-path",
         type=str,
@@ -22,9 +26,6 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--val-path", type=str, default="datasets/COCO/val2017", help="validation path"
-    )
-    parser.add_argument(
-        "--single-cls", action="store_true", help="train as single-class dataset"
     )
     parser.add_argument(
         "--project", type=str, default="YOLOX", help="name of W&B Project"

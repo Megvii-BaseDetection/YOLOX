@@ -125,7 +125,7 @@ class COCOEvaluator:
             coco_item = self.convert_to_coco_format(outputs, info_imgs, ids)
 
             if wandb_logger and cur_iter == 0:
-                wandb_logger.preds(imgs, outputs)
+                wandb_logger.log_preds(imgs, outputs)
 
             data_list.extend(coco_item)
 
