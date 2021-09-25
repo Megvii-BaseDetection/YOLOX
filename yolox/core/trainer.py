@@ -117,9 +117,9 @@ class Trainer:
             param_group["lr"] = lr
 
         if self.rank == 0:
-            self.wandb.log_metrics("LR", lr)
-            self.wandb.log_metrics("Train/loss", loss.item())
-            self.wandb.config.update({"LR": lr})
+            self.wandb_logger.log_metrics("LR", lr)
+            self.wandb_logger.log_metrics("Train/loss", loss.item())
+            self.wandb_logger.wandb.config.update({"LR": lr})
 
         iter_end_time = time.time()
         self.meter.update(
@@ -183,13 +183,13 @@ class Trainer:
         if self.rank == 0:
             self.tblogger = SummaryWriter(self.file_name)
             if self.args.wandb:
-                self.wandb = WandBLogger(
+                self.wandb_logger = WandBLogger(
                     model=self.model,
                     config=self.args,
                     rank = self.rank
                 )
             else:
-                self.wandb = None
+                self.wandb_logger = None
 
         logger.info("Training start...")
         logger.info("\n{}".format(model))
@@ -223,7 +223,7 @@ class Trainer:
             all_reduce_norm(self.model)
             self.evaluate_and_save_model()
 
-        self.wandb.log_pred(self.model, self.evaluator.dataloader, self.epoch)
+        self.wandb_logger.log_pred(self.model, self.evaluator.dataloader, self.epoch)
 
     def before_iter(self):
         pass
@@ -319,21 +319,21 @@ class Trainer:
                 evalmodel = evalmodel.module
 
         ap50_95, ap50, summary = self.exp.eval(
-            evalmodel, self.evaluator, self.is_distributed, wandb_logger=self.wandb
+            evalmodel, self.evaluator, self.is_distributed, wandb_logger=self.wandb_logger
         )
         self.model.train()
         if self.rank == 0:
             self.tblogger.add_scalar("val/COCOAP50", ap50, self.epoch + 1)
             self.tblogger.add_scalar("val/COCOAP50_95", ap50_95, self.epoch + 1)
-            self.wandb.log_metrics("val/COCOAP50", ap50, self.epoch + 1)
-            self.wandb.log_metrics("val/COCOAP50_95", ap50_95, self.epoch + 1)
+            self.wandb_logger.log_metrics("val/COCOAP50", ap50, self.epoch + 1)
+            self.wandb_logger.log_metrics("val/COCOAP50_95", ap50_95, self.epoch + 1)
             logger.info("\n" + summary)
         synchronize()
 
         self.save_ckpt("last_epoch", ap50_95 > self.best_ap)
         self.best_ap = max(self.best_ap, ap50_95)
         if self.rank == 0:
-            self.wandb.config.update({"Best_AP": self.best_ap})
+            self.wandb_logger.wandb.config.update({"Best_AP": self.best_ap})
 
     def save_ckpt(self, ckpt_name, update_best_ckpt=False):
         if self.rank == 0:
@@ -352,7 +352,7 @@ class Trainer:
             )
 
             if self.rank == 0:
-                self.wandb.save(self.file_name)
+                self.wandb_logger.save(self.file_name)
                 if self.wandb_logger:
                     self.wandb_logger.log_checkpoint(
                         self.file_name, self.max_epoch, update_best_ckpt

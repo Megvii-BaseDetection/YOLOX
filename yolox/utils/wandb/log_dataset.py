@@ -15,9 +15,6 @@ def create_dataset_artifact(opt): -> None:
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
 
-    
-
-
     parser.add_argument(
         "--train-path",
         type=str,
