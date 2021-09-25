@@ -251,7 +251,7 @@ class Trainer:
             if self.rank == 0:
                 for k, v in loss_meter.items():
                     k = "Train/" + str(k)
-                    self.wandb_logger.log_metrics(k, v.latest, self.iter+1)
+                    self.wandb_logger.log_metrics(k, v.latest)
 
             time_meter = self.meter.get_filtered_meter("time")
             time_str = ", ".join(
