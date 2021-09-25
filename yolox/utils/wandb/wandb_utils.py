@@ -105,7 +105,6 @@ class WandBLogger:
             "save_code": self.save_code,
             "dir": self.dir,
             "job_type": self.job_type,
-            "allow_val_change": True,
             "config": vars(self.config) if self.config else None,
         }
         if self.params:

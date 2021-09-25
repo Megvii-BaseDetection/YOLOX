@@ -119,7 +119,7 @@ class Trainer:
         if self.rank == 0:
             self.wandb_logger.log_metrics("LR", lr)
             self.wandb_logger.log_metrics("Train/loss", loss.item())
-            self.wandb_logger.wandb.config.update({"LR": lr})
+            self.wandb_logger.wandb.config.update({"LR": lr}, allow_val_change = True)
 
         iter_end_time = time.time()
         self.meter.update(
@@ -333,7 +333,7 @@ class Trainer:
         self.save_ckpt("last_epoch", ap50_95 > self.best_ap)
         self.best_ap = max(self.best_ap, ap50_95)
         if self.rank == 0:
-            self.wandb_logger.wandb.config.update({"Best_AP": self.best_ap})
+            self.wandb_logger.wandb.config.update({"Best_AP": self.best_ap}, allow_val_change = True)
 
     def save_ckpt(self, ckpt_name, update_best_ckpt=False):
         if self.rank == 0:
