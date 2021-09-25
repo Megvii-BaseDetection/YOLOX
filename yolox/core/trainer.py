@@ -116,11 +116,6 @@ class Trainer:
         for param_group in self.optimizer.param_groups:
             param_group["lr"] = lr
 
-        if self.rank == 0:
-            self.wandb_logger.log_metrics("LR", lr)
-            self.wandb_logger.log_metrics("Train/loss", loss.item())
-            self.wandb_logger.wandb.config.update({"LR": lr}, allow_val_change = True)
-
         iter_end_time = time.time()
         self.meter.update(
             iter_time=iter_end_time - iter_start_time,
@@ -252,6 +247,8 @@ class Trainer:
                 for k, v in loss_meter.items():
                     k = "Train/" + str(k)
                     self.wandb_logger.log_metrics(k, v.latest)
+                    self.wandb_logger.log_metrics("LR", self.meter["lr"].latest)
+                    self.wandb_logger.wandb.config.update({"LR": self.meter["lr"].latest}, allow_val_change = True)
 
             time_meter = self.meter.get_filtered_meter("time")
             time_str = ", ".join(
