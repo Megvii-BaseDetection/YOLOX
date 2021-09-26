@@ -79,10 +79,6 @@ class COCODataset(Dataset):
             logger.info(
                 "Caching images for the first time. This might take about 20 minutes for COCO"
             )
-            logger.warning(
-                "Everytime the self.input_size is changed in your exp file, you need to delete\n"
-                "the cached data and re-generate them.\n"
-            )
             self.imgs = np.memmap(
                 cache_file,
                 shape=(len(self.ids), max_h, max_w, 3),
@@ -104,7 +100,9 @@ class COCODataset(Dataset):
             pbar.close()
         else:
             logger.warning(
-                "You are using cached imgs! Make sure your dataset is not changed!!"
+                "You are using cached imgs! Make sure your dataset is not changed!!\n"
+                "Everytime the self.input_size is changed in your exp file, you need to delete\n"
+                "the cached data and re-generate them.\n"
             )
 
         logger.info("Loading cached imgs...")
