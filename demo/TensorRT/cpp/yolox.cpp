@@ -42,7 +42,7 @@ cv::Mat static_resize(cv::Mat& img) {
     int unpad_h = r * img.rows;
     cv::Mat re(unpad_h, unpad_w, CV_8UC3);
     cv::resize(img, re, re.size());
-    cv::Mat out(INPUT_W, INPUT_H, CV_8UC3, cv::Scalar(114, 114, 114));
+    cv::Mat out(INPUT_H, INPUT_W, CV_8UC3, cv::Scalar(114, 114, 114));
     re.copyTo(out(cv::Rect(0, 0, re.cols, re.rows)));
     return out;
 }
