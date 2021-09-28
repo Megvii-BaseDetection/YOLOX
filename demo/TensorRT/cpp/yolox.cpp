@@ -42,7 +42,7 @@ cv::Mat static_resize(cv::Mat& img) {
     int unpad_h = r * img.rows;
     cv::Mat re(unpad_h, unpad_w, CV_8UC3);
     cv::resize(img, re, re.size());
-    cv::Mat out(INPUT_W, INPUT_H, CV_8UC3, cv::Scalar(114, 114, 114));
+    cv::Mat out(INPUT_H, INPUT_W, CV_8UC3, cv::Scalar(114, 114, 114));
     re.copyTo(out(cv::Rect(0, 0, re.cols, re.rows)));
     return out;
 }
@@ -65,10 +65,11 @@ static void generate_grids_and_stride(const int target_size, std::vector<int>& s
 {
     for (auto stride : strides)
     {
-        int num_grid = target_size / stride;
-        for (int g1 = 0; g1 < num_grid; g1++)
+        int num_grid_y = INPUT_H / stride;
+        int num_grid_x = INPUT_W / stride;
+        for (int g1 = 0; g1 < num_grid_y; g1++)
         {
-            for (int g0 = 0; g0 < num_grid; g0++)
+            for (int g0 = 0; g0 < num_grid_x; g0++)
             {
                 grid_strides.push_back((GridAndStride){g0, g1, stride});
             }
