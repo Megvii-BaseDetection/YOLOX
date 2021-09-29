@@ -20,6 +20,14 @@ def make_parser():
     parser.add_argument("-expn", "--experiment-name", type=str, default=None)
     parser.add_argument("-n", "--name", type=str, default=None, help="model name")
 
+    # 3d detection
+    parser.add_argument(
+        "--ddd", 
+        default=False, 
+        action="store_true", 
+        help="use 3d detection head."
+    )
+
     # distributed
     parser.add_argument(
         "--dist-backend", default="nccl", type=str, help="distributed backend"
