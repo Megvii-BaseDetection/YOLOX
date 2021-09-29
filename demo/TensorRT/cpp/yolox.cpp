@@ -61,7 +61,7 @@ struct GridAndStride
     int stride;
 };
 
-static void generate_grids_and_stride(const int target_size, std::vector<int>& strides, std::vector<GridAndStride>& grid_strides)
+static void generate_grids_and_stride(std::vector<int>& strides, std::vector<GridAndStride>& grid_strides)
 {
     for (auto stride : strides)
     {
@@ -231,7 +231,7 @@ static void decode_outputs(float* prob, std::vector<Object>& objects, float scal
         std::vector<Object> proposals;
         std::vector<int> strides = {8, 16, 32};
         std::vector<GridAndStride> grid_strides;
-        generate_grids_and_stride(INPUT_W, strides, grid_strides);
+        generate_grids_and_stride(strides, grid_strides);
         generate_yolox_proposals(grid_strides, prob,  BBOX_CONF_THRESH, proposals);
         std::cout << "num of boxes before nms: " << proposals.size() << std::endl;
 
