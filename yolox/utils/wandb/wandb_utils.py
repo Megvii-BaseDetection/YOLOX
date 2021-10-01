@@ -240,65 +240,65 @@ class WandBLogger:
         self.wandb.log({"Train Dataset": self.train_artifact})
         self.wandb.log({"Val Dataset": self.val_artifact})
 
-    def create_dataset_table(self, path, name="") -> object:
-        """Create a wandb table for the dataset."""
+    # def create_dataset_table(self, path, name="") -> object:
+    #     """Create a wandb table for the dataset."""
 
-        artifact = self.wandb.Artifact(name=name, type="dataset")
+    #     artifact = self.wandb.Artifact(name=name, type="dataset")
 
-        # path = Path(path)
-        # img_files = tqdm([path]) if isinstance(Path, str) and Path(path).is_dir() else None
-        # img_files = tqdm(dataset.img_files) if not img_files else img_files
+    #     # path = Path(path)
+    #     # img_files = tqdm([path]) if isinstance(Path, str) and Path(path).is_dir() else None
+    #     # img_files = tqdm(dataset.img_files) if not img_files else img_files
 
-        # def img2label_paths(img_paths):
-        #     # Define label paths as a function of image paths
-        #     sa, sb = os.sep + 'images' + os.sep, os.sep + 'labels' + os.sep  # /images/, /labels/ substrings
-        #     return [sb.join(x.rsplit(sa, 1)).rsplit('.', 1)[0] + '.txt' for x in img_paths]
+    #     # def img2label_paths(img_paths):
+    #     #     # Define label paths as a function of image paths
+    #     #     sa, sb = os.sep + 'images' + os.sep, os.sep + 'labels' + os.sep  # /images/, /labels/ substrings
+    #     #     return [sb.join(x.rsplit(sa, 1)).rsplit('.', 1)[0] + '.txt' for x in img_paths]
 
-        for img_file in os.listdir(path):
-            if Path(img_file).is_dir():
-                artifact.add_dir(img_file, name="data/images")
-                labels_path = "labels".join(dataset.path.rsplit("images", 1))
-                artifact.add_dir(labels_path, name="data/labels")
-            else:
-                artifact.add_file(img_file, name="data/images/" + Path(img_file).name)
-                label_file = Path(img2label_paths([img_file])[0])
-                artifact.add_file(
-                    str(label_file), name="data/labels/" + label_file.name
-                ) if label_file.exists() else None
+    #     for img_file in os.listdir(path):
+    #         if Path(img_file).is_dir():
+    #             artifact.add_dir(img_file, name="data/images")
+    #             labels_path = "labels".join(dataset.path.rsplit("images", 1))
+    #             artifact.add_dir(labels_path, name="data/labels")
+    #         else:
+    #             artifact.add_file(img_file, name="data/images/" + Path(img_file).name)
+    #             label_file = Path(img2label_paths([img_file])[0])
+    #             artifact.add_file(
+    #                 str(label_file), name="data/labels/" + label_file.name
+    #             ) if label_file.exists() else None
 
-        table = self.wandb.Table(columns=["id", "train_image", "Classes", "name"])
-        class_labels = dict(zip(ids, list(COCO_CLASSES)))
-        class_set = self.wandb.Classes(
-            [{"id": id, "name": name} for id, name in class_labels.items()]
-        )
+    #     table = self.wandb.Table(columns=["id", "train_image", "Classes", "name"])
+    #     class_labels = dict(zip(ids, list(COCO_CLASSES)))
+    #     class_set = self.wandb.Classes(
+    #         [{"id": id, "name": name} for id, name in class_labels.items()]
+    #     )
 
-        for si, (img, labels, paths, shapes) in enumerate(tqdm(dataset)):
-            box_data, img_classes = [], {}
-            for cls, *xywh in labels[:, 1:].tolist():
-                cls = int(cls)
-                box_data.append(
-                    {
-                        "position": {
-                            "middle": [xywh[0], xywh[1]],
-                            "width": xywh[2],
-                            "height": xywh[3],
-                        },
-                        "class_id": cls,
-                        "box_caption": "%s" % (class_labels[cls]),
-                    }
-                )
-                img_classes[cls] = class_labels[cls]
-            boxes = {
-                "ground_truth": {"box_data": box_data, "class_labels": class_labels}
-            }  # inference-space
-            table.add_data(
-                si,
-                self.wandb.Image(paths, classes=class_set, boxes=boxes),
-                list(img_classes.values()),
-                Path(paths).name,
-            )
-        artifact.add(table, name)
-        return artifact
+    #     for si, (img, labels, paths, shapes) in enumerate(tqdm(dataset)):
+    #         box_data, img_classes = [], {}
+    #         for cls, *xywh in labels[:, 1:].tolist():
+    #             cls = int(cls)
+    #             box_data.append(
+    #                 {
+    #                     "position": {
+    #                         "middle": [xywh[0], xywh[1]],
+    #                         "width": xywh[2],
+    #                         "height": xywh[3],
+    #                     },
+    #                     "class_id": cls,
+    #                     "box_caption": "%s" % (class_labels[cls]),
+    #                 }
+    #             )
+    #             img_classes[cls] = class_labels[cls]
+    #         boxes = {
+    #             "ground_truth": {"box_data": box_data, "class_labels": class_labels}
+    #         }  # inference-space
+    #         table.add_data(
+    #             si,
+    #             self.wandb.Image(paths, classes=class_set, boxes=boxes),
+    #             list(img_classes.values()),
+    #             Path(paths).name,
+    #         )
+    #     artifact.add(table, name)
+    #     return artifact
 
     def log_checkpoint(self, path, total_epochs, best_model=False):
         """

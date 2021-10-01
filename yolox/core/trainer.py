@@ -353,7 +353,7 @@ class Trainer:
             )
 
             if self.rank == 0:
-                self.wandb_logger.save(self.file_name)
+                self.wandb_logger.wandb.save(self.file_name)
                 if self.wandb_logger:
                     self.wandb_logger.log_checkpoint(
                         self.file_name, self.max_epoch, update_best_ckpt
