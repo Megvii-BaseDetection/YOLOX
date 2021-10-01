@@ -23,7 +23,7 @@ from yolox.utils import (
     occupy_mem,
     save_checkpoint,
     setup_logger,
-    synchronize
+    synchronize,
 )
 from yolox.utils.wandb import WandBLogger
 
@@ -179,9 +179,7 @@ class Trainer:
             self.tblogger = SummaryWriter(self.file_name)
             if self.args.wandb:
                 self.wandb_logger = WandBLogger(
-                    model=self.model,
-                    config=self.args,
-                    rank = self.rank
+                    model=self.model, config=self.args, rank=self.rank
                 )
             else:
                 self.wandb_logger = None
@@ -248,7 +246,9 @@ class Trainer:
                     k = "Train/" + str(k)
                     self.wandb_logger.log_metrics(k, v.latest)
                     self.wandb_logger.log_metrics("LR", self.meter["lr"].latest)
-                    self.wandb_logger.wandb.config.update({"LR": self.meter["lr"].latest}, allow_val_change = True)
+                    self.wandb_logger.wandb.config.update(
+                        {"LR": self.meter["lr"].latest}, allow_val_change=True
+                    )
 
             time_meter = self.meter.get_filtered_meter("time")
             time_str = ", ".join(
@@ -320,7 +320,10 @@ class Trainer:
                 evalmodel = evalmodel.module
 
         ap50_95, ap50, summary = self.exp.eval(
-            evalmodel, self.evaluator, self.is_distributed, wandb_logger=self.wandb_logger
+            evalmodel,
+            self.evaluator,
+            self.is_distributed,
+            wandb_logger=self.wandb_logger,
         )
         self.model.train()
         if self.rank == 0:
@@ -334,7 +337,9 @@ class Trainer:
         self.save_ckpt("last_epoch", ap50_95 > self.best_ap)
         self.best_ap = max(self.best_ap, ap50_95)
         if self.rank == 0:
-            self.wandb_logger.wandb.config.update({"Best_AP": self.best_ap}, allow_val_change = True)
+            self.wandb_logger.wandb.config.update(
+                {"Best_AP": self.best_ap}, allow_val_change=True
+            )
 
     def save_ckpt(self, ckpt_name, update_best_ckpt=False):
         if self.rank == 0:
