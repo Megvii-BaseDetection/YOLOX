@@ -29,7 +29,8 @@
 
 #define YOLOX_NMS_THRESH  0.45 // nms threshold
 #define YOLOX_CONF_THRESH 0.25 // threshold of bounding box prob
-#define YOLOX_TARGET_SIZE 640  // target image size after resize, might use 416 for small model
+#define INPUT_W 640  // target image size after resize, might use 416 for small model
+#define INPUT_H 640
 
 // YOLOX use the same focus in yolov5
 class YoloV5Focus : public ncnn::Layer
@@ -179,15 +180,16 @@ static void nms_sorted_bboxes(const std::vector<Object>& faceobjects, std::vecto
     }
 }
 
-static void generate_grids_and_stride(const int target_size, std::vector<int>& strides, std::vector<GridAndStride>& grid_strides)
+static void generate_grids_and_stride(const int target_w, const int target_h, std::vector<int>& strides, std::vector<GridAndStride>& grid_strides)
 {
     for (int i = 0; i < (int)strides.size(); i++)
     {
         int stride = strides[i];
-        int num_grid = target_size / stride;
-        for (int g1 = 0; g1 < num_grid; g1++)
+        int num_grid_w = target_w / stride;
+        int num_grid_h = target_h / stride;
+        for (int g1 = 0; g1 < num_grid_h; g1++)
         {
-            for (int g0 = 0; g0 < num_grid; g0++)
+            for (int g0 = 0; g0 < num_grid_w; g0++)
             {
                 GridAndStride gs;
                 gs.grid0 = g0;
@@ -269,21 +271,21 @@ static int detect_yolox(const cv::Mat& bgr, std::vector<Object>& objects)
     float scale = 1.f;
     if (w > h)
     {
-        scale = (float)YOLOX_TARGET_SIZE / w;
-        w = YOLOX_TARGET_SIZE;
+        scale = (float)INPUT_W / w;
+        w = INPUT_W;
         h = h * scale;
     }
     else
     {
-        scale = (float)YOLOX_TARGET_SIZE / h;
-        h = YOLOX_TARGET_SIZE;
+        scale = (float)INPUT_H / h;
+        h = INPUT_H;
         w = w * scale;
     }
     ncnn::Mat in = ncnn::Mat::from_pixels_resize(bgr.data, ncnn::Mat::PIXEL_BGR, img_w, img_h, w, h);
 
-    // pad to YOLOX_TARGET_SIZE rectangle
-    int wpad = YOLOX_TARGET_SIZE - w;
-    int hpad = YOLOX_TARGET_SIZE - h;
+    // pad to INPUT_W x INPUT_H rectangle
+    int wpad = INPUT_W - w;
+    int hpad = INPUT_H - h;
     ncnn::Mat in_pad;
     // different from yolov5, yolox only pad on bottom and right side,
     // which means users don't need to extra padding info to decode boxes coordinate.
@@ -302,7 +304,7 @@ static int detect_yolox(const cv::Mat& bgr, std::vector<Object>& objects)
         static const int stride_arr[] = {8, 16, 32}; // might have stride=64 in YOLOX
         std::vector<int> strides(stride_arr, stride_arr + sizeof(stride_arr) / sizeof(stride_arr[0]));
         std::vector<GridAndStride> grid_strides;
-        generate_grids_and_stride(YOLOX_TARGET_SIZE, strides, grid_strides);
+        generate_grids_and_stride(INPUT_W, INPUT_H, strides, grid_strides);
         generate_yolox_proposals(grid_strides, out, YOLOX_CONF_THRESH, proposals);
     }
 
