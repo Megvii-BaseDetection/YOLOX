@@ -9,7 +9,7 @@ import numpy as np
 
 from yolox.utils import adjust_box_anns, get_local_rank
 
-from ..data_augment import box_candidates, random_affine
+from ..data_augment import random_affine
 from .datasets_wrapper import Dataset
 
 
@@ -40,7 +40,7 @@ class MosaicDetection(Dataset):
     def __init__(
         self, dataset, img_size, mosaic=True, preproc=None,
         degrees=10.0, translate=0.1, mosaic_scale=(0.5, 1.5),
-        mixup_scale=(0.5, 1.5), shear=2.0, enable_mixup=True, 
+        mixup_scale=(0.5, 1.5), shear=2.0, enable_mixup=True,
         mosaic_prob=1.0, mixup_prob=1.0, *args
     ):
         """

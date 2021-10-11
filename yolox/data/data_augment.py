@@ -19,8 +19,8 @@ from yolox.utils import xyxy2cxcywh
 
 
 def augment_hsv(img, hgain=5, sgain=30, vgain=30):
-    hsv_augs = np.random.uniform(-1, 1, 3) * [hgain, sgain, vgain]   # random gains
-    hsv_augs *= np.random.randint(0, 2, 3) # random selection of h, s, v
+    hsv_augs = np.random.uniform(-1, 1, 3) * [hgain, sgain, vgain]  # random gains
+    hsv_augs *= np.random.randint(0, 2, 3)  # random selection of h, s, v
     img_hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
     dtype = img.dtype  # uint8
 
@@ -38,8 +38,12 @@ def get_aug_params(value, center=0):
     elif len(value) == 2:
         return random.uniform(value[0], value[1])
     else:
-        raise ValueError("Affine params should be either a sequence containing two values\
-                          or single float values. Got {}".format(value))
+        raise ValueError(
+            "Affine params should be either a sequence containing two values\
+                          or single float values. Got {}".format(
+                value
+            )
+        )
 
 
 def get_affine_matrix(
@@ -58,16 +62,12 @@ def get_affine_matrix(
     if scale <= 0.0:
         raise ValueError("Argument scale should be positive")
 
-    R = cv2.getRotationMatrix2D(
-                angle=angle,
-                center=(0, 0),
-                scale=scale
-        )
+    R = cv2.getRotationMatrix2D(angle=angle, center=(0, 0), scale=scale)
 
     M = np.ones([2, 3])
     # Shear
-    shear_x =  math.tan(get_aug_params(shear) * math.pi / 180)
-    shear_y =  math.tan(get_aug_params(shear) * math.pi / 180)
+    shear_x = math.tan(get_aug_params(shear) * math.pi / 180)
+    shear_y = math.tan(get_aug_params(shear) * math.pi / 180)
 
     M[0] = R[0] + shear_y * R[1]
     M[1] = R[1] + shear_x * R[0]
@@ -102,10 +102,13 @@ def apply_affine_to_bboxes(targets, target_size, M, scale):
     # create new boxes
     corner_xs = corner_points[:, 0::2]
     corner_ys = corner_points[:, 1::2]
-    new_bboxes = np.concatenate((corner_xs.min(1), 
-                         corner_ys.min(1),
-                         corner_xs.max(1),
-                         corner_ys.max(1))).reshape(4, num_gts).T
+    new_bboxes = (
+        np.concatenate(
+            (corner_xs.min(1), corner_ys.min(1), corner_xs.max(1), corner_ys.max(1))
+        )
+        .reshape(4, num_gts)
+        .T
+    )
 
     # clip boxes
     new_bboxes[:, 0::2] = new_bboxes[:, 0::2].clip(0, twidth)
@@ -125,17 +128,9 @@ def random_affine(
     scales=0.1,
     shear=10,
 ):
-    M, scale = get_affine_matrix(
-            target_size,
-            degrees,
-            translate,
-            scales,
-            shear
-        )
+    M, scale = get_affine_matrix(target_size, degrees, translate, scales, shear)
 
-    img = cv2.warpAffine(
-        img, M[:2], dsize=target_size, borderValue=(114, 114, 114)
-    )
+    img = cv2.warpAffine(img, M[:2], dsize=target_size, borderValue=(114, 114, 114))
 
     # Transform label coordinates
     if len(targets) > 0:
