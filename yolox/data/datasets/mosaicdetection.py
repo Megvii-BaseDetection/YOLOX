@@ -9,7 +9,7 @@ import numpy as np
 
 from yolox.utils import adjust_box_anns, get_local_rank
 
-from ..data_augment import box_candidates, random_perspective
+from ..data_augment import box_candidates, random_affine
 from .datasets_wrapper import Dataset
 
 
@@ -40,8 +40,8 @@ class MosaicDetection(Dataset):
     def __init__(
         self, dataset, img_size, mosaic=True, preproc=None,
         degrees=10.0, translate=0.1, mosaic_scale=(0.5, 1.5),
-        mixup_scale=(0.5, 1.5), shear=2.0, perspective=0.0,
-        enable_mixup=True, mosaic_prob=1.0, mixup_prob=1.0, *args
+        mixup_scale=(0.5, 1.5), shear=2.0, enable_mixup=True, 
+        mosaic_prob=1.0, mixup_prob=1.0, *args
     ):
         """
 
@@ -55,7 +55,6 @@ class MosaicDetection(Dataset):
             mosaic_scale (tuple):
             mixup_scale (tuple):
             shear (float):
-            perspective (float):
             enable_mixup (bool):
             *args(tuple) : Additional arguments for mixup random sampler.
         """
@@ -66,7 +65,6 @@ class MosaicDetection(Dataset):
         self.translate = translate
         self.scale = mosaic_scale
         self.shear = shear
-        self.perspective = perspective
         self.mixup_scale = mixup_scale
         self.enable_mosaic = mosaic
         self.enable_mixup = enable_mixup
@@ -127,16 +125,15 @@ class MosaicDetection(Dataset):
                 np.clip(mosaic_labels[:, 2], 0, 2 * input_w, out=mosaic_labels[:, 2])
                 np.clip(mosaic_labels[:, 3], 0, 2 * input_h, out=mosaic_labels[:, 3])
 
-            mosaic_img, mosaic_labels = random_perspective(
+            mosaic_img, mosaic_labels = random_affine(
                 mosaic_img,
                 mosaic_labels,
+                target_size=(input_w, input_h),
                 degrees=self.degrees,
                 translate=self.translate,
-                scale=self.scale,
+                scales=self.scale,
                 shear=self.shear,
-                perspective=self.perspective,
-                border=[-input_h // 2, -input_w // 2],
-            )  # border to remove
+            )
 
             # -----------------------------------------------------------------
             # CopyPaste: https://arxiv.org/abs/2012.07177
@@ -226,14 +223,12 @@ class MosaicDetection(Dataset):
         cp_bboxes_transformed_np[:, 1::2] = np.clip(
             cp_bboxes_transformed_np[:, 1::2] - y_offset, 0, target_h
         )
-        keep_list = box_candidates(cp_bboxes_origin_np.T, cp_bboxes_transformed_np.T, 5)
 
-        if keep_list.sum() >= 1.0:
-            cls_labels = cp_labels[keep_list, 4:5].copy()
-            box_labels = cp_bboxes_transformed_np[keep_list]
-            labels = np.hstack((box_labels, cls_labels))
-            origin_labels = np.vstack((origin_labels, labels))
-            origin_img = origin_img.astype(np.float32)
-            origin_img = 0.5 * origin_img + 0.5 * padded_cropped_img.astype(np.float32)
+        cls_labels = cp_labels[:, 4:5].copy()
+        box_labels = cp_bboxes_transformed_np
+        labels = np.hstack((box_labels, cls_labels))
+        origin_labels = np.vstack((origin_labels, labels))
+        origin_img = origin_img.astype(np.float32)
+        origin_img = 0.5 * origin_img + 0.5 * padded_cropped_img.astype(np.float32)
 
         return origin_img.astype(np.uint8), origin_labels
