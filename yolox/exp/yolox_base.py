@@ -46,7 +46,6 @@ class Exp(BaseExp):
         self.mosaic_scale = (0.1, 2)
         self.mixup_scale = (0.5, 1.5)
         self.shear = 2.0
-        self.perspective = 0.0
         self.enable_mixup = True
 
         # --------------  training config --------------------- #
@@ -133,7 +132,6 @@ class Exp(BaseExp):
             mosaic_scale=self.mosaic_scale,
             mixup_scale=self.mixup_scale,
             shear=self.shear,
-            perspective=self.perspective,
             enable_mixup=self.enable_mixup,
             mosaic_prob=self.mosaic_prob,
             mixup_prob=self.mixup_prob,
