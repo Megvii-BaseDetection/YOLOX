@@ -353,10 +353,6 @@ JNIEXPORT jobjectArray JNICALL Java_com_megvii_yoloXncnn_YOLOXncnn_Detect(JNIEnv
     const float prob_threshold = 0.3f;
     const float nms_threshold = 0.65f;
     std::vector<int> strides = {8, 16, 32}; // might have stride=64
-    // python 0-1 input tensor with rgb_means = (0.485, 0.456, 0.406), std = (0.229, 0.224, 0.225)
-    // so for 0-255 input image, rgb_mean should multiply 255 and norm should div by std.
-    const float mean_vals[3] = {255.f * 0.485f, 255.f * 0.456, 255.f * 0.406f};
-    const float norm_vals[3] = {1 / (255.f * 0.229f), 1 / (255.f * 0.224f), 1 / (255.f * 0.225f)};
 
     int w = width;
     int h = height;
@@ -374,7 +370,7 @@ JNIEXPORT jobjectArray JNICALL Java_com_megvii_yoloXncnn_YOLOXncnn_Detect(JNIEnv
         w = w * scale;
     }
 
-    ncnn::Mat in = ncnn::Mat::from_android_bitmap_resize(env, bitmap, ncnn::Mat::PIXEL_RGB, w, h);
+    ncnn::Mat in = ncnn::Mat::from_android_bitmap_resize(env, bitmap, ncnn::Mat::PIXEL_RGB2BGR, w, h);
 
     // pad to target_size rectangle
     int wpad = target_size - w;
@@ -387,8 +383,6 @@ JNIEXPORT jobjectArray JNICALL Java_com_megvii_yoloXncnn_YOLOXncnn_Detect(JNIEnv
     // yolox
     std::vector<Object> objects;
     {
-
-        in_pad.substract_mean_normalize(mean_vals, norm_vals);
 
         ncnn::Extractor ex = yoloX.create_extractor();
 

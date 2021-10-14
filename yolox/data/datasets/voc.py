@@ -152,7 +152,7 @@ class VOCDetection(Dataset):
         cache_file = self.root + "/img_resized_cache_" + self.name + ".array"
         if not os.path.exists(cache_file):
             logger.info(
-                "Caching images for the frist time. This might take about 3 minutes for VOC"
+                "Caching images for the first time. This might take about 3 minutes for VOC"
             )
             self.imgs = np.memmap(
                 cache_file,
@@ -175,7 +175,9 @@ class VOCDetection(Dataset):
             pbar.close()
         else:
             logger.warning(
-                "You are using cached imgs! Make sure your dataset is not changed!!"
+                "You are using cached imgs! Make sure your dataset is not changed!!\n"
+                "Everytime the self.input_size is changed in your exp file, you need to delete\n"
+                "the cached data and re-generate them.\n"
             )
 
         logger.info("Loading cached imgs...")

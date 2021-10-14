@@ -100,7 +100,9 @@ class COCODataset(Dataset):
             pbar.close()
         else:
             logger.warning(
-                "You are using cached imgs! Make sure your dataset is not changed!!"
+                "You are using cached imgs! Make sure your dataset is not changed!!\n"
+                "Everytime the self.input_size is changed in your exp file, you need to delete\n"
+                "the cached data and re-generate them.\n"
             )
 
         logger.info("Loading cached imgs...")

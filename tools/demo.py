@@ -43,7 +43,7 @@ def make_parser():
         "--exp_file",
         default=None,
         type=str,
-        help="pls input your expriment description file",
+        help="pls input your experiment description file",
     )
     parser.add_argument("-c", "--ckpt", default=None, type=str, help="ckpt for eval")
     parser.add_argument(
@@ -106,6 +106,7 @@ class Predictor(object):
         trt_file=None,
         decoder=None,
         device="cpu",
+        fp16=False,
         legacy=False,
     ):
         self.model = model
@@ -116,6 +117,7 @@ class Predictor(object):
         self.nmsthre = exp.nmsthre
         self.test_size = exp.test_size
         self.device = device
+        self.fp16 = fp16
         self.preproc = ValTransform(legacy=legacy)
         if trt_file is not None:
             from torch2trt import TRTModule
@@ -145,8 +147,11 @@ class Predictor(object):
 
         img, _ = self.preproc(img, None, self.test_size)
         img = torch.from_numpy(img).unsqueeze(0)
+        img = img.float()
         if self.device == "gpu":
             img = img.cuda()
+            if self.fp16:
+                img = img.half()  # to FP16
 
         with torch.no_grad():
             t0 = time.time()
@@ -261,6 +266,8 @@ def main(exp, args):
 
     if args.device == "gpu":
         model.cuda()
+        if args.fp16:
+            model.half()  # to FP16
     model.eval()
 
     if not args.trt:
@@ -291,7 +298,7 @@ def main(exp, args):
         trt_file = None
         decoder = None
 
-    predictor = Predictor(model, exp, COCO_CLASSES, trt_file, decoder, args.device, args.legacy)
+    predictor = Predictor(model, exp, COCO_CLASSES, trt_file, decoder, args.device, args.fp16, args.legacy)
     current_time = time.localtime()
     if args.demo == "image":
         image_demo(predictor, vis_folder, args.path, current_time, args.save_result)
