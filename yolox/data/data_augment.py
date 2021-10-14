@@ -79,11 +79,6 @@ def get_affine_matrix(
     M[0, 2] = translation_x
     M[1, 2] = translation_y
 
-    ###########################
-    # For Aug out of Mosaic
-    # M = np.eye(3)
-    ###########################
-
     return M, scale
 
 
