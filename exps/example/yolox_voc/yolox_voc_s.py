@@ -65,7 +65,6 @@ class Exp(MyExp):
             mosaic_scale=self.mosaic_scale,
             mixup_scale=self.mixup_scale,
             shear=self.shear,
-            perspective=self.perspective,
             enable_mixup=self.enable_mixup,
             mosaic_prob=self.mosaic_prob,
             mixup_prob=self.mixup_prob,
