@@ -21,15 +21,14 @@ from yolox.utils import xyxy2cxcywh
 def augment_hsv(img, hgain=5, sgain=30, vgain=30):
     hsv_augs = np.random.uniform(-1, 1, 3) * [hgain, sgain, vgain]  # random gains
     hsv_augs *= np.random.randint(0, 2, 3)  # random selection of h, s, v
-    img_hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
-    dtype = img.dtype  # uint8
+    hsv_augs = hsv_augs.astype(np.int16)
+    img_hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV).astype(np.int16)
 
-    hsv_augs = hsv_augs.astype(dtype)
     img_hsv[..., 0] = (img_hsv[..., 0] + hsv_augs[0]) % 180
     img_hsv[..., 1] = np.clip(img_hsv[..., 1] + hsv_augs[1], 0, 255)
     img_hsv[..., 2] = np.clip(img_hsv[..., 2] + hsv_augs[2], 0, 255)
 
-    cv2.cvtColor(img_hsv, cv2.COLOR_HSV2BGR, dst=img)  # no return needed
+    cv2.cvtColor(img_hsv.astype(img.dtype), cv2.COLOR_HSV2BGR, dst=img)  # no return needed
 
 
 def get_aug_params(value, center=0):
