@@ -4,72 +4,124 @@
 
 import os
 from loguru import logger
+from tqdm import tqdm
 
 import cv2
 import numpy as np
-from pycocotools.coco import COCO
 
-from ..dataloading import get_yolox_datadir
 from .datasets_wrapper import Dataset
 
 
-class COCODataset(Dataset):
+class YoloFormatDataset(Dataset):
     """
-    COCO dataset class.
+    Dataset with data and annotations like YOLO.
     """
 
     def __init__(
-        self,
-        data_dir=None,
-        json_file="instances_train2017.json",
-        name="train2017",
-        img_size=(416, 416),
-        preproc=None,
-        cache=False,
+        self, data_dir, anno_file="train.txt",
+        normalized_anno=True, anno_format="cxcywh",
+        label_first_anno=True, img_size=(416, 416),
+        preproc=None, cache=False,
     ):
         """
-        COCO dataset initialization. Annotation data are read into memory by COCO API.
+        YOLO dataformat dataset initialization. Annotation data are read into memory by COCO API.
         Args:
-            data_dir (str): dataset root directory
-            json_file (str): COCO json file name
-            name (str): COCO data name (e.g. 'train2017' or 'val2017')
+            data_dir (str): path of dataset folder.
+            anno_file (str): path of annotations. If not given, use `labels` under data_dir folder.
+            normalized_anno (bool): annotation data is normalized or not. Default to `True`.
+            anno_format (string): format of annotation. Now support
+                `xyxy`: (x1, y1, x2, y2)
+                `cxcywh`: (centerX, centerY, width, height).
+                Default to "cxcywh".
+            label_first_anno (bool): label is the 1st of annotation or not. Default to `True`.
             img_size (int): target image size after pre-processing
-            preproc: data augmentation strategy
+            preproc: data augmentation strategy.
+            cache (bool): cache images or not.
         """
         super().__init__(img_size)
-        if data_dir is None:
-            data_dir = os.path.join(get_yolox_datadir(), "COCO")
         self.data_dir = data_dir
-        self.json_file = json_file
+        self.anno_file = anno_file
+        self.normalized_anno = normalized_anno
+        assert anno_format in ("cxcywh", "xyxy"), "unspported format {}".format(anno_format)
+        self.anno_format = anno_format
+        self.label_first_anno = label_first_anno
 
-        self.coco = COCO(os.path.join(self.data_dir, "annotations", self.json_file))
-        self.ids = self.coco.getImgIds()
-        self.class_ids = sorted(self.coco.getCatIds())
-        cats = self.coco.loadCats(self.coco.getCatIds())
-        self._classes = tuple([c["name"] for c in cats])
-        self.name = name
+        self.image_path = self.generate_image_path()
+        # TODO add class label file and backgroud label
+        self.name = "YoloFormat"
         self.img_size = img_size
+        self.annotations = self._load_annotations()
         self.preproc = preproc
-        self.annotations = self._load_coco_annotations()
-        self.imgs = None
+        self.cached_imgs = None
         if cache:
             self._cache_images()
 
     def __len__(self):
-        return len(self.ids)
+        return len(self.image_path)
 
     def __del__(self):
-        del self.imgs
+        del self.cached_imgs
 
-    def _load_coco_annotations(self):
-        return [self.load_anno_from_ids(_ids) for _ids in self.ids]
+    def generate_image_path(self):
+        with open(os.path.join(self.data_dir, self.anno_file), "r") as f:
+            path_list = [_.strip() for _ in f.readlines()]
+        return [os.path.join(self.data_dir, p) for p in path_list]
+
+    def _load_annotations(self):
+        logger.info("loading annoations...")
+        # TODO: multiprocess loading could be faster
+        return [self.load_anno_from_img_path(path) for path in tqdm(self.image_path)]
+
+    def load_anno_from_img_path(self, path):
+        """
+        Args:
+            path(str): path of image.
+        """
+        def get_anno_filename(path, suffix="txt"):
+            path_list = []
+            for x in path.split(os.sep):
+                if x == "images":
+                    x = "labels"
+                path_list.append(x)
+            # change suffix
+            path_list[-1] = ".".join(path_list[-1].split(".")[:-1] + [suffix])
+            return os.sep.join(path_list)
+
+        anno_file = get_anno_filename(path)
+        # suppose that only contains 4 coord and 1 label
+        anno = np.loadtxt(anno_file).reshape(-1, 5)
+        if self.label_first_anno:
+            # label to last dim
+            anno = np.concatenate((anno[..., 1:], anno[..., None, 0]), axis=-1)
+
+        img = cv2.imread(path)
+        img_name = os.path.basename(path)
+        assert img is not None, "Could not find image named {}".format(path)
+        height, width, _ = img.shape
+
+        if self.normalized_anno:
+            anno[..., 0:4:2] *= width
+            anno[..., 1:4:2] *= height
+
+        # convert different anno format to xyxy
+        if self.anno_format == "cxcywh":
+            anno[..., 0] -= anno[..., 2] / 2
+            anno[..., 1] -= anno[..., 3] / 2
+
+        scale = min(self.img_size[0] / height, self.img_size[1] / width)
+        anno[..., 0:4] *= scale
+
+        img_info = (height, width)
+        resized_info = (int(height * scale), int(width * scale))
+
+        return (anno, img_info, resized_info, img_name)
 
     def _cache_images(self):
         logger.warning(
             "\n********************************************************************************\n"
             "You are using cached images in RAM to accelerate training.\n"
             "This requires large system RAM.\n"
-            "Make sure you have 200G+ RAM and 136G available disk space for training COCO.\n"
+            "Make sure you have enough RAM and disk space to train your own dataset.\n"
             "********************************************************************************\n"
         )
         max_h = self.img_size[0]
@@ -100,57 +152,16 @@ class COCODataset(Dataset):
             pbar.close()
         else:
             logger.warning(
-                "You are using cached imgs! Make sure your dataset is not changed!!\n"
-                "Everytime the self.input_size is changed in your exp file, you need to delete\n"
-                "the cached data and re-generate them.\n"
+                "You are using cached imgs! Make sure your dataset is not changed!!"
             )
 
         logger.info("Loading cached imgs...")
-        self.imgs = np.memmap(
+        self.cached_imgs = np.memmap(
             cache_file,
             shape=(len(self.ids), max_h, max_w, 3),
             dtype=np.uint8,
             mode="r+",
         )
-
-    def load_anno_from_ids(self, id_):
-        im_ann = self.coco.loadImgs(id_)[0]
-        width = im_ann["width"]
-        height = im_ann["height"]
-        anno_ids = self.coco.getAnnIds(imgIds=[int(id_)], iscrowd=False)
-        annotations = self.coco.loadAnns(anno_ids)
-        objs = []
-        for obj in annotations:
-            x1 = np.max((0, obj["bbox"][0]))
-            y1 = np.max((0, obj["bbox"][1]))
-            x2 = np.min((width, x1 + np.max((0, obj["bbox"][2]))))
-            y2 = np.min((height, y1 + np.max((0, obj["bbox"][3]))))
-            if obj["area"] > 0 and x2 >= x1 and y2 >= y1:
-                obj["clean_bbox"] = [x1, y1, x2, y2]
-                objs.append(obj)
-
-        num_objs = len(objs)
-
-        res = np.zeros((num_objs, 5))
-
-        for ix, obj in enumerate(objs):
-            cls = self.class_ids.index(obj["category_id"])
-            res[ix, 0:4] = obj["clean_bbox"]
-            res[ix, 4] = cls
-
-        r = min(self.img_size[0] / height, self.img_size[1] / width)
-        res[:, :4] *= r
-
-        img_info = (height, width)
-        resized_info = (int(height * r), int(width * r))
-
-        file_name = (
-            im_ann["file_name"]
-            if "file_name" in im_ann
-            else "{:012}".format(id_) + ".jpg"
-        )
-
-        return (res, img_info, resized_info, file_name)
 
     def load_anno(self, index):
         return self.annotations[index][0]
@@ -166,26 +177,23 @@ class COCODataset(Dataset):
         return resized_img
 
     def load_image(self, index):
-        file_name = self.annotations[index][3]
-
+        file_name = self.image_path[index]
         img_file = os.path.join(self.data_dir, self.name, file_name)
 
         img = cv2.imread(img_file)
-        assert img is not None
+        assert img is not None, "Could not found image named: {}".format(file_name)
 
         return img
 
     def pull_item(self, index):
-        id_ = self.ids[index]
-
         res, img_info, resized_info, _ = self.annotations[index]
-        if self.imgs is not None:
+        if self.cached_imgs is not None:
             pad_img = self.imgs[index]
             img = pad_img[: resized_info[0], : resized_info[1], :].copy()
         else:
             img = self.load_resized_img(index)
 
-        return img, res.copy(), img_info, np.array([id_])
+        return img, res.copy(), img_info, np.array([index])
 
     @Dataset.mosaic_getitem
     def __getitem__(self, index):

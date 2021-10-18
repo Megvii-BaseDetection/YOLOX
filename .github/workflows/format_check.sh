@@ -9,8 +9,15 @@ if [ "$flake8_ret" ]; then
     exit $flake8_ret
 fi
 echo "All flake check passed!"
+
 isort --check-only -rc yolox || isort_ret=$?
 if [ "$isort_ret" ]; then
     exit $isort_ret
 fi
+
+isort --check-only -rc tools || isort_ret=$?
+if [ "$isort_ret" ]; then
+    exit $isort_ret
+fi
+
 echo "All isort check passed!"
