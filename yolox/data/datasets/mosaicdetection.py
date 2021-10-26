@@ -2,6 +2,8 @@
 # -*- coding:utf-8 -*-
 # Copyright (c) Megvii, Inc. and its affiliates.
 
+import random
+
 import cv2
 import numpy as np
 
@@ -42,7 +44,6 @@ class MosaicDetection(Dataset):
         mosaic_prob=1.0, mixup_prob=1.0, *args
     ):
         """
-
         Args:
             dataset(Dataset) : Pytorch dataset object.
             img_size (tuple):
