@@ -20,6 +20,7 @@ class Exp(BaseExp):
         self.num_classes = 80
         self.depth = 1.00
         self.width = 1.00
+        self.act = 'silu'
 
         # ---------------- dataloader config ---------------- #
         # set worker to 4 for shorter dataloader init time
@@ -45,7 +46,6 @@ class Exp(BaseExp):
         self.mosaic_scale = (0.1, 2)
         self.mixup_scale = (0.5, 1.5)
         self.shear = 2.0
-        self.perspective = 0.0
         self.enable_mixup = True
 
         # --------------  training config --------------------- #
@@ -80,8 +80,8 @@ class Exp(BaseExp):
 
         if getattr(self, "model", None) is None:
             in_channels = [256, 512, 1024]
-            backbone = YOLOPAFPN(self.depth, self.width, in_channels=in_channels)
-            head = YOLOXHead(self.num_classes, self.width, in_channels=in_channels)
+            backbone = YOLOPAFPN(self.depth, self.width, in_channels=in_channels, act=self.act)
+            head = YOLOXHead(self.num_classes, self.width, in_channels=in_channels, act=self.act)
             self.model = YOLOX(backbone, head)
 
         self.model.apply(init_yolo)
@@ -127,7 +127,6 @@ class Exp(BaseExp):
             mosaic_scale=self.mosaic_scale,
             mixup_scale=self.mixup_scale,
             shear=self.shear,
-            perspective=self.perspective,
             enable_mixup=self.enable_mixup,
             mosaic_prob=self.mosaic_prob,
             mixup_prob=self.mixup_prob,
