@@ -6,6 +6,7 @@
 from tqdm import tqdm
 
 import cv2
+import numpy as np
 
 from torch import Tensor
 
@@ -153,6 +154,9 @@ class WandBLogger:
             image = cv2.imread(image)
             if image is None:
                 raise ValueError("test image path is invalid!")
+        elif isinstance(image, np.ndarray):
+            image = image
+
 
         all_boxes = []
 
