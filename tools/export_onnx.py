@@ -101,7 +101,7 @@ def main():
         from onnxsim import simplify
 
         input_shapes = {args.input: list(dummy_input.shape)} if args.dynamic else None
-        
+
         # use onnxsimplify to reduce reduent model.
         onnx_model = onnx.load(args.output_name)
         model_simp, check = simplify(onnx_model,

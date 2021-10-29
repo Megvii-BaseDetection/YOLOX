@@ -33,8 +33,14 @@ class Exp(MyExp):
             from yolox.models import YOLOX, YOLOPAFPN, YOLOXHead
             in_channels = [256, 512, 1024]
             # NANO model use depthwise = True, which is main difference.
-            backbone = YOLOPAFPN(self.depth, self.width, in_channels=in_channels, self.act, depthwise=True)
-            head = YOLOXHead(self.num_classes, self.width, in_channels=in_channels, self.act, depthwise=True)
+            backbone = YOLOPAFPN(
+                self.depth, self.width, in_channels=in_channels,
+                act=self.act, depthwise=True,
+            )
+            head = YOLOXHead(
+                self.num_classes, self.width, in_channels=in_channels,
+                act=self.act, depthwise=True
+            )
             self.model = YOLOX(backbone, head)
 
         self.model.apply(init_yolo)
