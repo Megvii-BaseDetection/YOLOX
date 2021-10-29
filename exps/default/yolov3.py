@@ -4,7 +4,6 @@
 
 import os
 
-import torch
 import torch.nn as nn
 
 from yolox.exp import Exp as MyExp
@@ -32,4 +31,3 @@ class Exp(MyExp):
         self.model.head.initialize_biases(1e-2)
 
         return self.model
-
