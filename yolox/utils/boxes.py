@@ -76,30 +76,68 @@ def postprocess(prediction, num_classes, conf_thre=0.7, nms_thre=0.45, class_agn
     return output
 
 
-def bboxes_iou(bboxes_a, bboxes_b, xyxy=True):
+def bboxes_iou(bboxes_a, bboxes_b, xyxy=True, inplace=False):
     if bboxes_a.shape[1] != 4 or bboxes_b.shape[1] != 4:
         raise IndexError
 
-    if xyxy:
-        tl = torch.max(bboxes_a[:, None, :2], bboxes_b[:, :2])
-        br = torch.min(bboxes_a[:, None, 2:], bboxes_b[:, 2:])
-        area_a = torch.prod(bboxes_a[:, 2:] - bboxes_a[:, :2], 1)
-        area_b = torch.prod(bboxes_b[:, 2:] - bboxes_b[:, :2], 1)
-    else:
-        tl = torch.max(
-            (bboxes_a[:, None, :2] - bboxes_a[:, None, 2:] / 2),
-            (bboxes_b[:, :2] - bboxes_b[:, 2:] / 2),
-        )
-        br = torch.min(
-            (bboxes_a[:, None, :2] + bboxes_a[:, None, 2:] / 2),
-            (bboxes_b[:, :2] + bboxes_b[:, 2:] / 2),
-        )
+    if inplace:
+        if xyxy:
+            tl = torch.max(bboxes_a[:, None, :2], bboxes_b[:, :2])
+            br_hw = torch.min(bboxes_a[:, None, 2:], bboxes_b[:, 2:])
+            br_hw.sub_(tl)
+            br_hw.clamp_min_(0)
+            del tl
+            area_ious = torch.prod(br_hw, 2)
+            del br_hw
+            area_a = torch.prod(bboxes_a[:, 2:] - bboxes_a[:, :2], 1)
+            area_b = torch.prod(bboxes_b[:, 2:] - bboxes_b[:, :2], 1)
+        else:
+            tl = torch.max(
+                (bboxes_a[:, None, :2] - bboxes_a[:, None, 2:] / 2),
+                (bboxes_b[:, :2] - bboxes_b[:, 2:] / 2),
+            )
+            br_hw = torch.min(
+                (bboxes_a[:, None, :2] + bboxes_a[:, None, 2:] / 2),
+                (bboxes_b[:, :2] + bboxes_b[:, 2:] / 2),
+            )
+            br_hw.sub_(tl)
+            br_hw.clamp_min_(0)
+            del tl
+            area_ious = torch.prod(br_hw, 2)
+            del br_hw
+            area_a = torch.prod(bboxes_a[:, 2:], 1)
+            area_b = torch.prod(bboxes_b[:, 2:], 1)
 
-        area_a = torch.prod(bboxes_a[:, 2:], 1)
-        area_b = torch.prod(bboxes_b[:, 2:], 1)
-    en = (tl < br).type(tl.type()).prod(dim=2)
-    area_i = torch.prod(br - tl, 2) * en  # * ((tl < br).all())
-    return area_i / (area_a[:, None] + area_b - area_i)
+        union = (area_a[:, None] + area_b - area_ious)
+        area_ious.div_(union)
+        return area_ious
+    else:
+        if xyxy:
+            tl = torch.max(bboxes_a[:, None, :2], bboxes_b[:, :2])
+            br = torch.min(bboxes_a[:, None, 2:], bboxes_b[:, 2:])
+            area_a = torch.prod(bboxes_a[:, 2:] - bboxes_a[:, :2], 1)
+            area_b = torch.prod(bboxes_b[:, 2:] - bboxes_b[:, :2], 1)
+        else:
+            tl = torch.max(
+                (bboxes_a[:, None, :2] - bboxes_a[:, None, 2:] / 2),
+                (bboxes_b[:, :2] - bboxes_b[:, 2:] / 2),
+            )
+            br = torch.min(
+                (bboxes_a[:, None, :2] + bboxes_a[:, None, 2:] / 2),
+                (bboxes_b[:, :2] + bboxes_b[:, 2:] / 2),
+            )
+
+            area_a = torch.prod(bboxes_a[:, 2:], 1)
+            area_b = torch.prod(bboxes_b[:, 2:], 1)
+
+        # en = (tl < br).type(tl.type()).prod(dim=2)
+        # area_i = torch.prod(br - tl, 2) * en  # * ((tl < br).all())
+        # return area_i / (area_a[:, None] + area_b - area_i)
+        hw = (br - tl).clamp(min=0)  # [rows, 2]
+        area_i = torch.prod(hw, 2)
+        ious = area_i / (area_a[:, None] + area_b - area_i)
+        return ious
+
 
 
 def matrix_iou(a, b):
