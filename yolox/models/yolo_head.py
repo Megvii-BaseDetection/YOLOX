@@ -458,7 +458,7 @@ class YOLOXHead(nn.Module):
             total_num_anchors,
             num_gt,
         )
-        
+
         # NOTE: Fix `selected index k out of range`
         npa: int = fg_mask.sum().item()  # number of positive anchors
         if npa == 0:
