@@ -139,7 +139,6 @@ def bboxes_iou(bboxes_a, bboxes_b, xyxy=True, inplace=False):
         return ious
 
 
-
 def matrix_iou(a, b):
     """
     return iou of a and b, numpy version for data augenmentation
