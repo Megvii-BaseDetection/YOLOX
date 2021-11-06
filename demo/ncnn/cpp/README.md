@@ -22,7 +22,7 @@ Generate ncnn param and bin file.
 ```shell
 cd <path of ncnn>
 cd build/tools/ncnn
-./onnx2ncnn yolox.onnx yolox.param yolox.bin
+./onnx2ncnn yolox.onnx model.param model.bin
 ```
 
 Since Focus module is not supported in ncnn. Warnings like:
@@ -32,7 +32,7 @@ Unsupported slice step !
 will be printed. However, don't  worry!  C++ version of Focus layer is already implemented in yolox.cpp.
 
 ### Step4
-Open **yolox.param**, and modify it.
+Open **model.param**, and modify it.
 Before (just an example):
 ```
 295 328
@@ -55,7 +55,7 @@ Concat           Concat_40                4 1 652 672 662 682 683 0=0
 ```
 YoloV5Focus      focus                    1 1 images 683
 ```
-After(just an exmaple):
+After(just an example):
 ```
 286 328
 Input            images                   0 1 images
