@@ -32,7 +32,7 @@ Unsupported slice step !
 will be printed. However, don't  worry!  C++ version of Focus layer is already implemented in yolox.cpp.
 
 ### Step4
-Open **yolox.param**, and modify it.
+Open **model.param**, and modify it.
 Before (just an example):
 ```
 295 328
