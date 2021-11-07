@@ -2,7 +2,7 @@
 # -*- coding:utf-8 -*-
 # Copyright (c) Megvii, Inc. and its affiliates.
 
-import datetime
+from datetime import datetime
 import os
 import time
 from loguru import logger
@@ -320,6 +320,7 @@ class Trainer:
                 "start_epoch": self.epoch + 1,
                 "model": save_model.state_dict(),
                 "optimizer": self.optimizer.state_dict(),
+                "date": datetime.now().isoformat(),
             }
             save_checkpoint(
                 ckpt_state,
