@@ -2,9 +2,9 @@
 # -*- coding:utf-8 -*-
 # Copyright (c) Megvii, Inc. and its affiliates.
 
-from datetime import datetime
 import os
 import time
+from datetime import datetime
 from loguru import logger
 
 import torch
