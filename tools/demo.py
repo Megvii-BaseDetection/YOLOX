@@ -16,7 +16,7 @@ from yolox.data.datasets import COCO_CLASSES
 from yolox.exp import get_exp
 from yolox.utils import fuse_model, get_model_info, postprocess, vis
 
-IMAGE_EXT = [".jpg", ".jpeg", ".webp", ".bmp", ".png"]
+IMAGE_EXT = [".jpg", ".jpeg", ".webp", ".bmp", ".png", ".tif"]
 
 
 def make_parser():
