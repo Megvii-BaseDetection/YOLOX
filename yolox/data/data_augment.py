@@ -148,12 +148,16 @@ def preproc(img, input_size, swap=(2, 0, 1)):
         padded_img = np.ones(input_size, dtype=np.uint8) * 114
 
     r = min(input_size[0] / img.shape[0], input_size[1] / img.shape[1])
+    res_w = int(img.shape[1] * r)
+    res_h = int(img.shape[0] * r)
     resized_img = cv2.resize(
         img,
-        (int(img.shape[1] * r), int(img.shape[0] * r)),
+        (res_w, res_h),
         interpolation=cv2.INTER_LINEAR,
     ).astype(np.uint8)
-    padded_img[: int(img.shape[0] * r), : int(img.shape[1] * r)] = resized_img
+    left_pad = int((input_size[0]-res_w)/2)
+    upper_pad = int((input_size[1]-res_h)/2)
+    padded_img[upper_pad:upper_pad+res_h, left_pad:left_pad+res_w] = resized_img
 
     padded_img = padded_img.transpose(swap)
     padded_img = np.ascontiguousarray(padded_img, dtype=np.float32)
