@@ -75,7 +75,6 @@ def _batched_nms_coordinate_trick(
     keep = nms(boxes_for_nms, scores, iou_threshold)
     return keep
 
-
 def postprocess(prediction, num_classes, conf_thre=0.7, nms_thre=0.45, class_agnostic=False):
     box_corner = prediction.new(prediction.shape)
     box_corner[:, :, 0] = prediction[:, :, 0] - prediction[:, :, 2] / 2
@@ -100,12 +99,20 @@ def postprocess(prediction, num_classes, conf_thre=0.7, nms_thre=0.45, class_agn
         if not detections.size(0):
             continue
 
-        nms_out_index = _batched_nms_coordinate_trick(
-            detections[:, :4],
-            detections[:, 4] * detections[:, 5],
-            detections[:, 6],
-            nms_thre,
-        )
+        if class_agnostic:
+            nms_out_index = torchvision.ops.nms(
+                detections[:, :4],
+                detections[:, 4] * detections[:, 5],
+                nms_thre,
+            )
+        else:
+            nms_out_index = _batched_nms_coordinate_trick(
+                detections[:, :4],
+                detections[:, 4] * detections[:, 5],
+                detections[:, 6],
+                nms_thre,
+            )
+
         detections = detections[nms_out_index]
         if output[i] is None:
             output[i] = detections
