@@ -113,7 +113,7 @@ def postprocess(prediction, num_classes, conf_thre=0.7, nms_thre=0.45, class_agn
                 nms_thre,
             )
 
-        detections = detections[nms_out_index]
+        detections = detections[nms_out_index,:]
         if output[i] is None:
             output[i] = detections
         else:
