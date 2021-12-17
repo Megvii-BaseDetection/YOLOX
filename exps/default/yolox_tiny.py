@@ -20,3 +20,5 @@ class Exp(MyExp):
         self.enable_mixup = False
         self.output_dir =  pathlib.Path(__file__).parents[2]
         self.num_classes = 1
+        
+   
