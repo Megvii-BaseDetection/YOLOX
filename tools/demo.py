@@ -194,11 +194,8 @@ def image_demo(predictor, vis_folder, path, current_time, save_result):
         outputs, img_info = predictor.inference(image_name)
         result_image = predictor.visual(outputs[0], img_info, predictor.confthre)
         if save_result:
-            save_folder = os.path.join(
-                vis_folder, time.strftime("%Y_%m_%d_%H_%M_%S", current_time)
-            )
-            os.makedirs(save_folder, exist_ok=True)
-            save_file_name = os.path.join(save_folder, os.path.basename(image_name))
+            os.makedirs(vis_folder, exist_ok=True)
+            save_file_name = os.path.join(vis_folder, os.path.basename(image_name))
             logger.info("Saving detection result in {}".format(save_file_name))
             cv2.imwrite(save_file_name, result_image)
         ch = cv2.waitKey(0)
@@ -241,12 +238,12 @@ def main(exp, args):
     if not args.experiment_name:
         args.experiment_name = exp.exp_name
 
-    file_name = os.path.join(exp.output_dir, args.experiment_name)
+    file_name = exp.output_dir
     os.makedirs(file_name, exist_ok=True)
 
     vis_folder = None
     if args.save_result:
-        vis_folder = os.path.join(file_name, "vis_res")
+        vis_folder = os.path.join(file_name, "results")
         os.makedirs(vis_folder, exist_ok=True)
 
     if args.trt:
