@@ -1,6 +1,9 @@
 # TODO: Update with exact module version
 numpy
-torch>=1.7
+--find-links https://download.pytorch.org/whl/torch_stable.html
+torch==1.7.1+cu110
+torchvision==0.8.2+cu110
+torchaudio==0.7.2
 opencv_python
 loguru
 scikit-image
