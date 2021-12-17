@@ -44,7 +44,7 @@ def vis(img, boxes, scores, cls_ids, conf=0.5, class_names=None):
 
 _COLORS = np.array(
     [
-        0.000, 0.447, 0.741,
+        0.000, 0.000, 1.000,
         0.850, 0.325, 0.098,
         0.929, 0.694, 0.125,
         0.494, 0.184, 0.556,
