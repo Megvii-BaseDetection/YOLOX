@@ -3,5 +3,5 @@
 # Copyright (c) Megvii, Inc. and its affiliates.
 
 COCO_CLASSES = (
-  "grape",
+  "target",
 )
