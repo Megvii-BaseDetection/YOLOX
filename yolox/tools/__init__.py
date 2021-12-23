@@ -2,7 +2,7 @@
 # -*- coding:utf-8 -*-
 # Copyright (c) 2014-2021 Megvii Inc. All rights reserved.
 
-# This file is used for package installation
+# This file is used for package installation. Script of train/eval/export will be available.
 
 import importlib
 import sys
