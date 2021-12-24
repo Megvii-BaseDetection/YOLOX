@@ -8,10 +8,11 @@ import itertools
 import json
 import tempfile
 import time
-import numpy as np
 from loguru import logger
 from tabulate import tabulate
 from tqdm import tqdm
+
+import numpy as np
 
 import torch
 
