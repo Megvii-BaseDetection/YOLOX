@@ -128,8 +128,10 @@ def xyxy2xywh(bboxes):
 
 
 def xyxy2cxcywh(bboxes):
-    bboxes[:, 2] = bboxes[:, 2] - bboxes[:, 0]
-    bboxes[:, 3] = bboxes[:, 3] - bboxes[:, 1]
-    bboxes[:, 0] = bboxes[:, 0] + bboxes[:, 2] * 0.5
-    bboxes[:, 1] = bboxes[:, 1] + bboxes[:, 3] * 0.5
-    return bboxes
+    new_boxes = bboxes.clone() if isinstance(bboxes, torch.Tensor) else np.copy(bboxes)
+    new_boxes[:, 2] = bboxes[:, 2] - bboxes[:, 0]
+    new_boxes[:, 3] = bboxes[:, 3] - bboxes[:, 1]
+    new_boxes[:, 0] = bboxes[:, 0] + bboxes[:, 2] * 0.5
+    new_boxes[:, 1] = bboxes[:, 1] + bboxes[:, 3] * 0.5
+    return new_boxes
+    
