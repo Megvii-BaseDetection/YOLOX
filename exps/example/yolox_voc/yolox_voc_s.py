@@ -1,8 +1,12 @@
-# encoding: utf-8
+#!/usr/bin/env python3
+# -*- coding:utf-8 -*-
+# Copyright (c) Megvii, Inc. and its affiliates.
+
 import os
 
 import torch
 import torch.distributed as dist
+from torch.utils.data import BatchSampler, DataLoader
 
 from yolox.data import get_yolox_datadir
 from yolox.exp import Exp as MyExp
@@ -28,22 +32,17 @@ class Exp(MyExp):
         from yolox.data import (
             VOCDetection,
             TrainTransform,
-            YoloBatchSampler,
-            DataLoader,
             InfiniteSampler,
             MosaicDetection,
             worker_init_reset_seed,
         )
-        from yolox.utils import (
-            wait_for_the_master,
-            get_local_rank,
-        )
+        from yolox.utils import get_local_rank, wait_for_the_master
         local_rank = get_local_rank()
 
         with wait_for_the_master(local_rank):
             dataset = VOCDetection(
                 data_dir=os.path.join(get_yolox_datadir(), "VOCdevkit"),
-                image_sets=[('2007', 'trainval'), ('2012', 'trainval')],
+                image_sets=[("2007", "trainval"), ("2012", "trainval")],
                 img_size=self.input_size,
                 preproc=TrainTransform(
                     max_labels=50,
@@ -79,11 +78,10 @@ class Exp(MyExp):
             len(self.dataset), seed=self.seed if self.seed else 0
         )
 
-        batch_sampler = YoloBatchSampler(
+        batch_sampler = BatchSampler(
             sampler=sampler,
             batch_size=batch_size,
             drop_last=False,
-            mosaic=not no_aug,
         )
 
         dataloader_kwargs = {"num_workers": self.data_num_workers, "pin_memory": True}
@@ -101,7 +99,7 @@ class Exp(MyExp):
 
         valdataset = VOCDetection(
             data_dir=os.path.join(get_yolox_datadir(), "VOCdevkit"),
-            image_sets=[('2007', 'test')],
+            image_sets=[("2007", "test")],
             img_size=self.test_size,
             preproc=ValTransform(legacy=legacy),
         )

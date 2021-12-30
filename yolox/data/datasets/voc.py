@@ -231,6 +231,7 @@ class VOCDetection(Dataset):
 
         Argument:
             index (int): index of img to show
+
         Return:
             img, target
         """
@@ -244,7 +245,6 @@ class VOCDetection(Dataset):
 
         return img, target, img_info, index
 
-    @Dataset.mosaic_getitem
     def __getitem__(self, index):
         img, target, img_info, img_id = self.pull_item(index)
 

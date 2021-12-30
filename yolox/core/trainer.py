@@ -11,7 +11,7 @@ import torch
 from torch.nn.parallel import DistributedDataParallel as DDP
 from torch.utils.tensorboard import SummaryWriter
 
-from yolox.data import DataPrefetcher
+from yolox.data import DataPrefetcher, close_mosaic
 from yolox.utils import (
     MeterBuffer,
     ModelEMA,
@@ -188,8 +188,9 @@ class Trainer:
         logger.info("---> start train epoch{}".format(self.epoch + 1))
 
         if self.epoch + 1 == self.max_epoch - self.exp.no_aug_epochs or self.no_aug:
-            logger.info("--->No mosaic aug now!")
-            self.train_loader.close_mosaic()
+            logger.info("--->Close mosaic aug in dataloader now, this might take a while!")
+            del self.prefetcher.loader  # release dataloader first
+            self.prefetcher.loader = close_mosaic(self.train_loader)
             logger.info("--->Add additional L1 loss now!")
             if self.is_distributed:
                 self.model.module.head.use_l1 = True
