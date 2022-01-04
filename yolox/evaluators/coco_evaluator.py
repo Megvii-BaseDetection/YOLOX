@@ -26,10 +26,33 @@ from yolox.utils import (
     xyxy2xywh
 )
 
+def per_class_AR_table(coco_eval, iou=0.5, class_names=COCO_CLASSES, headers=["class", "AR"], colums=6):
+    per_class_AR = {}
+    recalls = coco_eval.eval["recall"]
+    # dimension of recalls: [TxKxAxM]
+    # precision has dims (iou, cls, area range, max dets)
+    assert len(class_names) == recalls.shape[1]
+
+    for idx, name in enumerate(class_names):
+        recall = recalls[:, idx, 0, -1]
+        recall = recall[recall > -1]
+        ar = np.mean(recall) if recall.size else float("nan")
+        per_class_AR[name] = float(ar * 100)
+
+    num_cols = min(colums, len(per_class_AR) * len(headers))
+    result_pair = [x for pair in per_class_AR.items() for x in pair]
+    row_pair = itertools.zip_longest(*[result_pair[i::num_cols] for i in range(num_cols)])
+    table_headers = headers * (num_cols // len(headers))
+    table = tabulate(
+        row_pair, tablefmt="pipe", floatfmt=".3f", headers=table_headers, numalign="left",
+    )
+    return table
+
 
 def per_class_mAP_table(coco_eval, class_names=COCO_CLASSES, headers=["class", "AP"], colums=6):
     per_class_mAP = {}
     precisions = coco_eval.eval["precision"]
+    # dimension of precisions: [TxRxKxAxM]
     # precision has dims (iou, recall, cls, area range, max dets)
     assert len(class_names) == precisions.shape[2]
 
@@ -66,6 +89,7 @@ class COCOEvaluator:
         num_classes: int,
         testdev: bool = False,
         per_class_mAP: bool = False,
+        per_class_AR: bool = False,
     ):
         """
         Args:
@@ -254,7 +278,9 @@ class COCOEvaluator:
                 cocoEval.summarize()
             info += redirect_string.getvalue()
             if self.per_class_mAP:
-                info += "per class mAP:\n" + per_class_mAP_table(cocoEval)
+                info += "per class mAP:\n" + per_class_mAP_table(cocoEval) + "\n"
+            if self.per_class_AR:
+                info += "per class AR:\n" + per_class_AR_table(cocoEval) + "\n"
             return cocoEval.stats[0], cocoEval.stats[1], info
         else:
             return 0, 0, info
