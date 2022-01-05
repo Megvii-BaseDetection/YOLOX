@@ -26,7 +26,8 @@ from yolox.utils import (
     xyxy2xywh
 )
 
-def per_class_AR_table(coco_eval, iou=0.5, class_names=COCO_CLASSES, headers=["class", "AR"], colums=6):
+
+def per_class_AR_table(coco_eval, class_names=COCO_CLASSES, headers=["class", "AR"], colums=6):
     per_class_AR = {}
     recalls = coco_eval.eval["recall"]
     # dimension of recalls: [TxKxAxM]
