@@ -52,7 +52,7 @@ with open("README.md", "r", encoding="utf-8") as f:
 
 
 setuptools.setup(
-    name="yolox",
+    name="aq-yolox",
     version=version,
     author="basedet team",
     python_requires=">=3.6",
