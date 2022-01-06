@@ -31,7 +31,7 @@ def per_class_AR_table(coco_eval, class_names=COCO_CLASSES, headers=["class", "A
     per_class_AR = {}
     recalls = coco_eval.eval["recall"]
     # dimension of recalls: [TxKxAxM]
-    # precision has dims (iou, cls, area range, max dets)
+    # recall has dims (iou, cls, area range, max dets)
     assert len(class_names) == recalls.shape[1]
 
     for idx, name in enumerate(class_names):
