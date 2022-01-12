@@ -109,6 +109,7 @@ class COCOEvaluator:
         self.num_classes = num_classes
         self.testdev = testdev
         self.per_class_mAP = per_class_mAP
+        self.per_class_AR = per_class_AR
 
     def evaluate(
         self,
