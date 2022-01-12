@@ -35,6 +35,7 @@ class Exp(BaseExp):
         self.data_dir = None
         self.train_ann = "instances_train2017.json"
         self.val_ann = "instances_val2017.json"
+        self.test_ann = "instances_test2017.json"
 
         # --------------- transform config ----------------- #
         self.mosaic_prob = 1.0
@@ -242,7 +243,7 @@ class Exp(BaseExp):
 
         valdataset = COCODataset(
             data_dir=self.data_dir,
-            json_file=self.val_ann if not testdev else "image_info_test-dev2017.json",
+            json_file=self.val_ann if not testdev else self.test_ann,
             name="val2017" if not testdev else "test2017",
             img_size=self.test_size,
             preproc=ValTransform(legacy=legacy),
