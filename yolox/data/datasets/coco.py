@@ -48,7 +48,7 @@ class COCODataset(Dataset):
         """
         COCO dataset initialization. Annotation data are read into memory by COCO API.
         Args:
-            data_dir (str): dataset root directory
+            data_dir (Path): dataset root directory
             json_file (str): COCO json file name
             name (str): COCO data name (e.g. 'train2017' or 'val2017')
             img_size (int): target image size after pre-processing
@@ -56,11 +56,11 @@ class COCODataset(Dataset):
         """
         super().__init__(img_size)
         if data_dir is None:
-            data_dir = os.path.join(get_yolox_datadir(), "COCO")
+            data_dir = get_yolox_datadir() / "COCO"
         self.data_dir = data_dir
         self.json_file = json_file
 
-        self.coco = COCO(os.path.join(self.data_dir, "annotations", self.json_file))
+        self.coco = COCO(str(self.data_dir / "annotations" / self.json_file))
         remove_useless_info(self.coco)
         self.ids = self.coco.getImgIds()
         self.class_ids = sorted(self.coco.getCatIds())
@@ -93,13 +93,13 @@ class COCODataset(Dataset):
         )
         max_h = self.img_size[0]
         max_w = self.img_size[1]
-        cache_file = self.data_dir + "/img_resized_cache_" + self.name + ".array"
-        if not os.path.exists(cache_file):
+        cache_file = self.data_dir / f"img_resized_cache_{self.name}.array"
+        if not cache_file.is_file():
             logger.info(
                 "Caching images for the first time. This might take about 20 minutes for COCO"
             )
             self.imgs = np.memmap(
-                cache_file,
+                str(cache_file),
                 shape=(len(self.ids), max_h, max_w, 3),
                 dtype=np.uint8,
                 mode="w+",
@@ -126,7 +126,7 @@ class COCODataset(Dataset):
 
         logger.info("Loading cached imgs...")
         self.imgs = np.memmap(
-            cache_file,
+            str(cache_file),
             shape=(len(self.ids), max_h, max_w, 3),
             dtype=np.uint8,
             mode="r+",
@@ -187,9 +187,9 @@ class COCODataset(Dataset):
     def load_image(self, index):
         file_name = self.annotations[index][3]
 
-        img_file = os.path.join(self.data_dir, self.name, file_name)
+        img_file = self.data_dir / self.name / file_name
 
-        img = cv2.imread(img_file)
+        img = cv2.imread(str(img_file))
         assert img is not None
 
         return img

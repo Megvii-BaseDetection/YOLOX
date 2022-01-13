@@ -6,7 +6,7 @@
 
 import argparse
 import logging as log
-import os
+from pathlib import Path
 import sys
 
 import cv2
@@ -16,7 +16,7 @@ from openvino.inference_engine import IECore
 
 from yolox.data.data_augment import preproc as preprocess
 from yolox.data.datasets import COCO_CLASSES
-from yolox.utils import mkdir, multiclass_nms, demo_postprocess, vis
+from yolox.utils import multiclass_nms, demo_postprocess, vis
 
 
 def parse_args() -> argparse.Namespace:
@@ -32,18 +32,18 @@ def parse_args() -> argparse.Namespace:
         '-m',
         '--model',
         required=True,
-        type=str,
+        type=Path,
         help='Required. Path to an .xml or .onnx file with a trained model.')
     args.add_argument(
         '-i',
         '--input',
         required=True,
-        type=str,
+        type=Path,
         help='Required. Path to an image file.')
     args.add_argument(
         '-o',
         '--output_dir',
-        type=str,
+        type=Path,
         default='demo_output',
         help='Path to your output dir.')
     args.add_argument(
@@ -86,7 +86,7 @@ def main():
     # ---------------------------Step 2. Read a model in OpenVINO Intermediate Representation or ONNX format---------------
     log.info(f'Reading the network: {args.model}')
     # (.xml and .bin files) or (.onnx file)
-    net = ie.read_network(model=args.model)
+    net = ie.read_network(model=str(args.model))
 
     if len(net.input_info) != 1:
         log.error('Sample supports only single input topologies')
@@ -117,7 +117,7 @@ def main():
     # instance which stores infer requests. So you already created Infer requests in the previous step.
 
     # ---------------------------Step 6. Prepare input---------------------------------------------------------------------
-    origin_img = cv2.imread(args.input)
+    origin_img = cv2.imread(str(args.input))
     _, _, h, w = net.input_info[input_blob].input_data.shape
     image, ratio = preprocess(origin_img, (h, w))
 
@@ -147,9 +147,9 @@ def main():
         origin_img = vis(origin_img, final_boxes, final_scores, final_cls_inds,
                          conf=args.score_thr, class_names=COCO_CLASSES)
 
-    mkdir(args.output_dir)
-    output_path = os.path.join(args.output_dir, args.input.split("/")[-1])
-    cv2.imwrite(output_path, origin_img)
+    args.output_dir.mkdir(parents=True, exist_ok=True)
+    output_path = args.output_dir / args.image_path.name
+    cv2.imwrite(str(output_path), origin_img)
 
 
 if __name__ == '__main__':

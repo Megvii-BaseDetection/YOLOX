@@ -2,7 +2,7 @@
 # -*- coding:utf-8 -*-
 # Copyright (c) Megvii, Inc. and its affiliates.
 
-import os
+from pathlib import Path
 
 import torch.nn as nn
 
@@ -20,7 +20,7 @@ class Exp(MyExp):
         self.test_size = (416, 416)
         self.mosaic_prob = 0.5
         self.enable_mixup = False
-        self.exp_name = os.path.split(os.path.realpath(__file__))[1].split(".")[0]
+        self.exp_name = Path(__file__).resolve().stem
 
     def get_model(self, sublinear=False):
 

@@ -2,16 +2,9 @@
 # -*- coding:utf-8 -*-
 # Copyright (c) 2014-2021 Megvii Inc. All rights reserved.
 
-import os
-
 import numpy as np
 
-__all__ = ["mkdir", "nms", "multiclass_nms", "demo_postprocess"]
-
-
-def mkdir(path):
-    if not os.path.exists(path):
-        os.makedirs(path)
+__all__ = ["nms", "multiclass_nms", "demo_postprocess"]
 
 
 def nms(boxes, scores, nms_thr):

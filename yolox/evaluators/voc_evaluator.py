@@ -2,6 +2,7 @@
 # -*- coding:utf-8 -*-
 # Copyright (c) Megvii, Inc. and its affiliates.
 
+from pathlib import Path
 import sys
 import tempfile
 import time
@@ -203,6 +204,6 @@ class VOCEvaluator:
 
         with tempfile.TemporaryDirectory() as tempdir:
             mAP50, mAP70 = self.dataloader.dataset.evaluate_detections(
-                all_boxes, tempdir
+                all_boxes, Path(tempdir)
             )
             return mAP50, mAP70, info

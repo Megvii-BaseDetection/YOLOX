@@ -2,8 +2,8 @@
 # -*- coding:utf-8 -*-
 # Copyright (c) 2014-2021 Megvii Inc. All rights reserved.
 
-import os
 import random
+from pathlib import Path
 
 import torch
 import torch.distributed as dist
@@ -63,7 +63,7 @@ class Exp(BaseExp):
         self.momentum = 0.9
         self.print_interval = 10
         self.eval_interval = 10
-        self.exp_name = os.path.split(os.path.realpath(__file__))[1].split(".")[0]
+        self.exp_name = Path(__file__).resolve().stem
 
         # -----------------  testing config ------------------ #
         self.test_size = (640, 640)

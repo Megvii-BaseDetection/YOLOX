@@ -3,7 +3,7 @@
 # Copyright (c) Megvii, Inc. and its affiliates.
 
 import argparse
-import os
+from pathlib import Path
 
 import cv2
 import numpy as np
@@ -12,7 +12,7 @@ import onnxruntime
 
 from yolox.data.data_augment import preproc as preprocess
 from yolox.data.datasets import COCO_CLASSES
-from yolox.utils import mkdir, multiclass_nms, demo_postprocess, vis
+from yolox.utils import multiclass_nms, demo_postprocess, vis
 
 
 def make_parser():
@@ -27,14 +27,14 @@ def make_parser():
     parser.add_argument(
         "-i",
         "--image_path",
-        type=str,
+        type=Path,
         default='test_image.png',
         help="Path to your input image.",
     )
     parser.add_argument(
         "-o",
         "--output_dir",
-        type=str,
+        type=Path,
         default='demo_output',
         help="Path to your output directory.",
     )
@@ -63,7 +63,7 @@ if __name__ == '__main__':
     args = make_parser().parse_args()
 
     input_shape = tuple(map(int, args.input_shape.split(',')))
-    origin_img = cv2.imread(args.image_path)
+    origin_img = cv2.imread(str(args.image_path))
     img, ratio = preprocess(origin_img, input_shape)
 
     session = onnxruntime.InferenceSession(args.model)
@@ -87,6 +87,6 @@ if __name__ == '__main__':
         origin_img = vis(origin_img, final_boxes, final_scores, final_cls_inds,
                          conf=args.score_thr, class_names=COCO_CLASSES)
 
-    mkdir(args.output_dir)
-    output_path = os.path.join(args.output_dir, args.image_path.split("/")[-1])
-    cv2.imwrite(output_path, origin_img)
+    args.output_dir.mkdir(parents=True, exist_ok=True)
+    output_path = args.output_dir / args.image_path.name
+    cv2.imwrite(str(output_path), origin_img)

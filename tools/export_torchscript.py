@@ -3,7 +3,7 @@
 # Copyright (c) Megvii, Inc. and its affiliates.
 
 import argparse
-import os
+from pathlib import Path
 from loguru import logger
 
 import torch
@@ -21,12 +21,12 @@ def make_parser():
         "-f",
         "--exp_file",
         default=None,
-        type=str,
+        type=Path,
         help="expriment description file",
     )
     parser.add_argument("-expn", "--experiment-name", type=str, default=None)
     parser.add_argument("-n", "--name", type=str, default=None, help="model name")
-    parser.add_argument("-c", "--ckpt", default=None, type=str, help="ckpt path")
+    parser.add_argument("-c", "--ckpt", default=None, type=Path, help="ckpt path")
     parser.add_argument(
         "opts",
         help="Modify config options using the command-line",
@@ -49,8 +49,8 @@ def main():
 
     model = exp.get_model()
     if args.ckpt is None:
-        file_name = os.path.join(exp.output_dir, args.experiment_name)
-        ckpt_file = os.path.join(file_name, "best_ckpt.pth")
+        file_name = exp.output_dir / args.experiment_name
+        ckpt_file = file_name / "best_ckpt.pth"
     else:
         ckpt_file = args.ckpt
 

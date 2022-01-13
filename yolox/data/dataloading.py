@@ -3,6 +3,7 @@
 # Copyright (c) Megvii, Inc. and its affiliates.
 
 import os
+from pathlib import Path
 import random
 import uuid
 
@@ -24,8 +25,10 @@ def get_yolox_datadir():
     if yolox_datadir is None:
         import yolox
 
-        yolox_path = os.path.dirname(os.path.dirname(yolox.__file__))
-        yolox_datadir = os.path.join(yolox_path, "datasets")
+        yolox_path = Path(yolox.__file__).resolve().parents[1]
+        yolox_datadir = yolox_path / "datasets"
+    else:
+        yolox_datadir = Path(yolox_datadir)
     return yolox_datadir
 
 

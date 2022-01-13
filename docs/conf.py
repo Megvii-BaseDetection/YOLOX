@@ -19,6 +19,7 @@
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
 import os
+from pathlib import Path
 import sys
 from unittest import mock
 from sphinx.domains import Domain
@@ -64,7 +65,7 @@ class GithubURLDomain(Domain):
 # to support markdown
 from recommonmark.parser import CommonMarkParser
 
-sys.path.insert(0, os.path.abspath("../"))
+sys.path.insert(0, str(Path("../").resolve()))
 os.environ["_DOC_BUILDING"] = "True"
 DEPLOY = os.environ.get("READTHEDOCS") == "True"
 

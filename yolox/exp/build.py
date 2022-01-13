@@ -3,21 +3,21 @@
 # Copyright (c) 2014-2021 Megvii Inc. All rights reserved.
 
 import importlib
-import os
 import sys
+from pathlib import Path
 
 
-def get_exp_by_file(exp_file):
+def get_exp_by_file(exp_file: Path):
     try:
-        sys.path.append(os.path.dirname(exp_file))
-        current_exp = importlib.import_module(os.path.basename(exp_file).split(".")[0])
+        sys.path.append(str(exp_file.parent))
+        current_exp = importlib.import_module(str(exp_file.stem))
         exp = current_exp.Exp()
     except Exception:
         raise ImportError("{} doesn't contains class named 'Exp'".format(exp_file))
     return exp
 
 
-def get_exp_by_name(exp_name):
+def get_exp_by_name(exp_name: str):
     exp = exp_name.replace("-", "_")  # convert string like "yolox-s" to "yolox_s"
     module_name = ".".join(["yolox", "exp", "default", exp])
     exp_object = importlib.import_module(module_name).Exp()
@@ -30,7 +30,7 @@ def get_exp(exp_file=None, exp_name=None):
     are both provided, get Exp by exp_file.
 
     Args:
-        exp_file (str): file path of experiment.
+        exp_file (Path): file path of experiment.
         exp_name (str): name of experiment. "yolo-s",
     """
     assert (

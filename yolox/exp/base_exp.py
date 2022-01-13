@@ -7,6 +7,7 @@ import pprint
 from abc import ABCMeta, abstractmethod
 from typing import Dict
 from tabulate import tabulate
+from pathlib import Path
 
 import torch
 from torch.nn import Module
@@ -19,7 +20,7 @@ class BaseExp(metaclass=ABCMeta):
 
     def __init__(self):
         self.seed = None
-        self.output_dir = "./YOLOX_outputs"
+        self.output_dir = Path("./YOLOX_outputs")
         self.print_interval = 100
         self.eval_interval = 10
 
