@@ -3,7 +3,7 @@
 # Copyright (c) 2014-2021 Megvii Inc. All rights reserved.
 
 import inspect
-import os
+from pathlib import Path
 import sys
 from loguru import logger
 
@@ -63,7 +63,7 @@ def redirect_sys_output(log_level="INFO"):
 def setup_logger(save_dir, distributed_rank=0, filename="log.txt", mode="a"):
     """setup logger for training and testing.
     Args:
-        save_dir(str): location to save log file
+        save_dir(Path): location to save log file
         distributed_rank(int): device rank when multi-gpu environment
         filename (string): log save name.
         mode(str): log file write mode, `append` or `override`. default is `a`.
@@ -78,9 +78,10 @@ def setup_logger(save_dir, distributed_rank=0, filename="log.txt", mode="a"):
     )
 
     logger.remove()
-    save_file = os.path.join(save_dir, filename)
-    if mode == "o" and os.path.exists(save_file):
-        os.remove(save_file)
+    save_file = save_dir / filename
+    if mode == "o" and save_file.is_file():
+        save_file.unlink()
+
     # only keep logger in rank0 process
     if distributed_rank == 0:
         logger.add(

@@ -3,7 +3,7 @@
 # Copyright (c) Megvii, Inc. and its affiliates.
 
 import argparse
-import os
+from pathlib import Path
 import shutil
 from loguru import logger
 
@@ -23,10 +23,10 @@ def make_parser():
         "-f",
         "--exp_file",
         default=None,
-        type=str,
+        type=Path,
         help="pls input your expriment description file",
     )
-    parser.add_argument("-c", "--ckpt", default=None, type=str, help="ckpt path")
+    parser.add_argument("-c", "--ckpt", default=None, type=Path, help="ckpt path")
     parser.add_argument(
         "-w", '--workspace', type=int, default=32, help='max workspace size in detect'
     )
@@ -42,10 +42,10 @@ def main():
         args.experiment_name = exp.exp_name
 
     model = exp.get_model()
-    file_name = os.path.join(exp.output_dir, args.experiment_name)
-    os.makedirs(file_name, exist_ok=True)
+    file_name = exp.output_dir / args.experiment_name
+    file_name.mkdir(parents=True, exist_ok=True)
     if args.ckpt is None:
-        ckpt_file = os.path.join(file_name, "best_ckpt.pth")
+        ckpt_file = file_name / "best_ckpt.pth"
     else:
         ckpt_file = args.ckpt
 
@@ -66,14 +66,14 @@ def main():
         max_workspace_size=(1 << args.workspace),
         max_batch_size=args.batch,
     )
-    torch.save(model_trt.state_dict(), os.path.join(file_name, "model_trt.pth"))
+    torch.save(model_trt.state_dict(), file_name /"model_trt.pth")
     logger.info("Converted TensorRT model done.")
-    engine_file = os.path.join(file_name, "model_trt.engine")
-    engine_file_demo = os.path.join("demo", "TensorRT", "cpp", "model_trt.engine")
-    with open(engine_file, "wb") as f:
+    engine_file = file_name / "model_trt.engine"
+    engine_file_demo = Path("demo") / "TensorRT" / "cpp" / "model_trt.engine"
+    with engine_file.open("wb") as f:
         f.write(model_trt.engine.serialize())
 
-    shutil.copyfile(engine_file, engine_file_demo)
+    shutil.copyfile(str(engine_file), str(engine_file_demo))
 
     logger.info("Converted TensorRT model engine file is saved for C++ inference.")
 

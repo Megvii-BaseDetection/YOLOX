@@ -4,6 +4,7 @@
 
 import datetime
 import os
+from pathlib import Path
 import time
 from loguru import logger
 
@@ -54,10 +55,10 @@ class Trainer:
 
         # metric record
         self.meter = MeterBuffer(window_size=exp.print_interval)
-        self.file_name = os.path.join(exp.output_dir, args.experiment_name)
+        self.file_name = exp.output_dir / args.experiment_name
 
         if self.rank == 0:
-            os.makedirs(self.file_name, exist_ok=True)
+            self.file_name.mkdir(parents=True, exist_ok=True)
 
         setup_logger(
             self.file_name,
@@ -261,7 +262,7 @@ class Trainer:
         if self.args.resume:
             logger.info("resume training")
             if self.args.ckpt is None:
-                ckpt_file = os.path.join(self.file_name, "latest" + "_ckpt.pth")
+                ckpt_file = self.file_name / "latest_ckpt.pth"
             else:
                 ckpt_file = self.args.ckpt
 

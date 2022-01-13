@@ -2,7 +2,7 @@
 # -*- coding:utf-8 -*-
 # Copyright (c) Megvii, Inc. and its affiliates.
 
-import os
+from pathlib import Path
 
 from yolox.exp import Exp as MyExp
 
@@ -12,4 +12,4 @@ class Exp(MyExp):
         super(Exp, self).__init__()
         self.depth = 1.33
         self.width = 1.25
-        self.exp_name = os.path.split(os.path.realpath(__file__))[1].split(".")[0]
+        self.exp_name = Path(__file__).resolve().stem

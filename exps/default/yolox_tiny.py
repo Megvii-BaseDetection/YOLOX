@@ -2,7 +2,7 @@
 # -*- coding:utf-8 -*-
 # Copyright (c) Megvii, Inc. and its affiliates.
 
-import os
+from pathlib import Path
 
 from yolox.exp import Exp as MyExp
 
@@ -16,5 +16,5 @@ class Exp(MyExp):
         self.mosaic_scale = (0.5, 1.5)
         self.random_size = (10, 20)
         self.test_size = (416, 416)
-        self.exp_name = os.path.split(os.path.realpath(__file__))[1].split(".")[0]
+        self.exp_name = Path(__file__).resolve().stem
         self.enable_mixup = False

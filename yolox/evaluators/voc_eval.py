@@ -78,28 +78,27 @@ def voc_eval(
     use_07_metric=False,
 ):
     # first load gt
-    if not os.path.isdir(cachedir):
-        os.mkdir(cachedir)
-    cachefile = os.path.join(cachedir, "annots.pkl")
+    cachedir.mkdir(parents=True, exist_ok=True)
+    cachefile = cachedir / "annots.pkl"
     # read list of images
-    with open(imagesetfile, "r") as f:
+    with imagesetfile.open("r") as f:
         lines = f.readlines()
     imagenames = [x.strip() for x in lines]
 
-    if not os.path.isfile(cachefile):
+    if not cachefile.is_file():
         # load annots
         recs = {}
         for i, imagename in enumerate(imagenames):
-            recs[imagename] = parse_rec(annopath.format(imagename))
+            recs[imagename] = parse_rec(str(annopath).format(imagename))
             if i % 100 == 0:
                 print("Reading annotation for {:d}/{:d}".format(i + 1, len(imagenames)))
         # save
         print("Saving cached annotations to {:s}".format(cachefile))
-        with open(cachefile, "wb") as f:
+        with cachefile.open("wb") as f:
             pickle.dump(recs, f)
     else:
         # load
-        with open(cachefile, "rb") as f:
+        with cachefile.open("rb") as f:
             recs = pickle.load(f)
 
     # extract gt objects for this class
@@ -114,7 +113,7 @@ def voc_eval(
         class_recs[imagename] = {"bbox": bbox, "difficult": difficult, "det": det}
 
     # read dets
-    detfile = detpath.format(classname)
+    detfile = str(detpath).format(classname)
     with open(detfile, "r") as f:
         lines = f.readlines()
 

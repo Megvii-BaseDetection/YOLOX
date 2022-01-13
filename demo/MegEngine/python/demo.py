@@ -3,7 +3,7 @@
 # Copyright (c) Megvii, Inc. and its affiliates.
 
 import argparse
-import os
+from pathlib import Path
 import time
 
 import cv2
@@ -26,7 +26,7 @@ def make_parser():
         "demo", default="image", help="demo type, eg. image, video and webcam"
     )
     parser.add_argument("-n", "--name", type=str, default="yolox-s", help="model name")
-    parser.add_argument("--path", default="./test.png", help="path to images or video")
+    parser.add_argument("--path", type=Path, default="./test.png", help="path to images or video")
     parser.add_argument("--camid", type=int, default=0, help="webcam demo camera id")
     parser.add_argument(
         "--save_result",
@@ -34,7 +34,7 @@ def make_parser():
         help="whether to save the inference result of image/video",
     )
 
-    parser.add_argument("-c", "--ckpt", default=None, type=str, help="ckpt for eval")
+    parser.add_argument("-c", "--ckpt", default=None, type=Path, help="ckpt for eval")
     parser.add_argument("--conf", default=None, type=float, help="test conf")
     parser.add_argument("--nms", default=None, type=float, help="test nms threshold")
     parser.add_argument("--tsize", default=None, type=int, help="test img size")
@@ -43,12 +43,11 @@ def make_parser():
 
 def get_image_list(path):
     image_names = []
-    for maindir, subdir, file_name_list in os.walk(path):
-        for filename in file_name_list:
-            apath = os.path.join(maindir, filename)
-            ext = os.path.splitext(apath)[1]
-            if ext in IMAGE_EXT:
-                image_names.append(apath)
+    for file in path.rglob("*.*"):
+        ext = file.suffix
+        if ext in IMAGE_EXT:
+            print(f"file={file}, ext={ext}.")
+            image_names.append(file)
     return image_names
 
 
@@ -110,9 +109,9 @@ class Predictor(object):
 
     def inference(self, img):
         img_info = {"id": 0}
-        if isinstance(img, str):
-            img_info["file_name"] = os.path.basename(img)
-            img = cv2.imread(img)
+        if isinstance(img, Path):
+            img_info["file_name"] = img.name
+            img = cv2.imread(str(img))
             if img is None:
                 raise ValueError("test image path is invalid!")
         else:
@@ -151,7 +150,7 @@ class Predictor(object):
 
 
 def image_demo(predictor, vis_folder, path, current_time, save_result):
-    if os.path.isdir(path):
+    if path.is_dir():
         files = get_image_list(path)
     else:
         files = [path]
@@ -160,34 +159,30 @@ def image_demo(predictor, vis_folder, path, current_time, save_result):
         outputs, img_info = predictor.inference(image_name)
         result_image = predictor.visual(outputs[0], img_info)
         if save_result:
-            save_folder = os.path.join(
-                vis_folder, time.strftime("%Y_%m_%d_%H_%M_%S", current_time)
-            )
-            os.makedirs(save_folder, exist_ok=True)
-            save_file_name = os.path.join(save_folder, os.path.basename(image_name))
+            save_folder = vis_folder / time.strftime("%Y_%m_%d_%H_%M_%S", current_time)
+            save_folder.mkdir(parents=True, exist_ok=True)
+            save_file_name = save_folder / image_name.name
             logger.info("Saving detection result in {}".format(save_file_name))
-            cv2.imwrite(save_file_name, result_image)
+            cv2.imwrite(str(save_file_name), result_image)
         ch = cv2.waitKey(0)
         if ch == 27 or ch == ord("q") or ch == ord("Q"):
             break
 
 
 def imageflow_demo(predictor, vis_folder, current_time, args):
-    cap = cv2.VideoCapture(args.path if args.demo == "video" else args.camid)
+    cap = cv2.VideoCapture(str(args.path) if args.demo == "video" else args.camid)
     width = cap.get(cv2.CAP_PROP_FRAME_WIDTH)  # float
     height = cap.get(cv2.CAP_PROP_FRAME_HEIGHT)  # float
     fps = cap.get(cv2.CAP_PROP_FPS)
-    save_folder = os.path.join(
-        vis_folder, time.strftime("%Y_%m_%d_%H_%M_%S", current_time)
-    )
-    os.makedirs(save_folder, exist_ok=True)
+    save_folder = vis_folder / time.strftime("%Y_%m_%d_%H_%M_%S", current_time)
+    save_folder.mkdir(parents=True, exist_ok=True)
     if args.demo == "video":
-        save_path = os.path.join(save_folder, args.path.split("/")[-1])
+        save_path = save_folder / args.path.name
     else:
-        save_path = os.path.join(save_folder, "camera.mp4")
+        save_path = save_folder / "camera.mp4"
     logger.info(f"video save_path is {save_path}")
     vid_writer = cv2.VideoWriter(
-        save_path, cv2.VideoWriter_fourcc(*"mp4v"), fps, (int(width), int(height))
+        str(save_path), cv2.VideoWriter_fourcc(*"mp4v"), fps, (int(width), int(height))
     )
     while True:
         ret_val, frame = cap.read()
@@ -204,12 +199,12 @@ def imageflow_demo(predictor, vis_folder, current_time, args):
 
 
 def main(args):
-    file_name = os.path.join("./yolox_outputs", args.name)
-    os.makedirs(file_name, exist_ok=True)
+    file_name = Path("./yolox_outputs") / args.name
+    file_name.mkdir(parents=True, exist_ok=True)
 
     if args.save_result:
-        vis_folder = os.path.join(file_name, "vis_res")
-        os.makedirs(vis_folder, exist_ok=True)
+        vis_folder = file_name / "vis_res"
+        vis_folder.mkdir(parents=True, exist_ok=True)
 
     confthre = 0.01
     nmsthre = 0.65

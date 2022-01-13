@@ -3,7 +3,7 @@
 # Copyright (c) Megvii, Inc. and its affiliates.
 
 import argparse
-import os
+from pathlib import Path
 import random
 import warnings
 from loguru import logger
@@ -46,10 +46,10 @@ def make_parser():
         "-f",
         "--exp_file",
         default=None,
-        type=str,
+        type=Path,
         help="pls input your expriment description file",
     )
-    parser.add_argument("-c", "--ckpt", default=None, type=str, help="ckpt for eval")
+    parser.add_argument("-c", "--ckpt", default=None, type=Path, help="ckpt for eval")
     parser.add_argument("--conf", default=None, type=float, help="test conf")
     parser.add_argument("--nms", default=None, type=float, help="test nms threshold")
     parser.add_argument("--tsize", default=None, type=int, help="test img size")
@@ -123,10 +123,10 @@ def main(exp, args, num_gpu):
 
     rank = get_local_rank()
 
-    file_name = os.path.join(exp.output_dir, args.experiment_name)
+    file_name = exp.output_dir / args.experiment_name
 
     if rank == 0:
-        os.makedirs(file_name, exist_ok=True)
+        file_name.mkdir(parents=True, exist_ok=True)
 
     setup_logger(file_name, distributed_rank=rank, filename="val_log.txt", mode="a")
     logger.info("Args: {}".format(args))
@@ -152,7 +152,7 @@ def main(exp, args, num_gpu):
 
     if not args.speed and not args.trt:
         if args.ckpt is None:
-            ckpt_file = os.path.join(file_name, "best_ckpt.pth")
+            ckpt_file = file_name / "best_ckpt.pth"
         else:
             ckpt_file = args.ckpt
         logger.info("loading checkpoint from {}".format(ckpt_file))
@@ -172,10 +172,8 @@ def main(exp, args, num_gpu):
         assert (
             not args.fuse and not is_distributed and args.batch_size == 1
         ), "TensorRT model is not support model fusing and distributed inferencing!"
-        trt_file = os.path.join(file_name, "model_trt.pth")
-        assert os.path.exists(
-            trt_file
-        ), "TensorRT model is not found!\n Run tools/trt.py first!"
+        trt_file = file_name / "model_trt.pth"
+        assert trt_file.is_file(), "TensorRT model is not found!\n Run tools/trt.py first!"
         model.head.decode_in_inference = False
         decoder = model.head.decode_outputs
     else:

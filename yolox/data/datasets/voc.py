@@ -8,6 +8,7 @@
 
 import os
 import os.path
+from pathlib import Path
 import pickle
 import xml.etree.ElementTree as ET
 from loguru import logger
@@ -122,10 +123,8 @@ class VOCDetection(Dataset):
         self.ids = list()
         for (year, name) in image_sets:
             self._year = year
-            rootpath = os.path.join(self.root, "VOC" + year)
-            for line in open(
-                os.path.join(rootpath, "ImageSets", "Main", name + ".txt")
-            ):
+            rootpath = self.root / f"VOC{year}"
+            for line in (rootpath / "ImageSets", "Main", f"{name}.txt").open():
                 self.ids.append((rootpath, line.strip()))
 
         self.annotations = self._load_coco_annotations()
@@ -149,13 +148,13 @@ class VOCDetection(Dataset):
         )
         max_h = self.img_size[0]
         max_w = self.img_size[1]
-        cache_file = self.root + "/img_resized_cache_" + self.name + ".array"
-        if not os.path.exists(cache_file):
+        cache_file = self.root / f"img_resized_cache_{self.name}.array"
+        if not cache_file.is_file():
             logger.info(
                 "Caching images for the first time. This might take about 3 minutes for VOC"
             )
             self.imgs = np.memmap(
-                cache_file,
+                str(cache_file),
                 shape=(len(self.ids), max_h, max_w, 3),
                 dtype=np.uint8,
                 mode="w+",
@@ -182,7 +181,7 @@ class VOCDetection(Dataset):
 
         logger.info("Loading cached imgs...")
         self.imgs = np.memmap(
-            cache_file,
+            str(cache_file),
             shape=(len(self.ids), max_h, max_w, 3),
             dtype=np.uint8,
             mode="r+",
@@ -279,11 +278,11 @@ class VOCDetection(Dataset):
 
     def _get_voc_results_file_template(self):
         filename = "comp4_det_test" + "_{:s}.txt"
-        filedir = os.path.join(self.root, "results", "VOC" + self._year, "Main")
-        if not os.path.exists(filedir):
-            os.makedirs(filedir)
-        path = os.path.join(filedir, filename)
-        return path
+        filedir = self.root / "results" / f"VOC{self._year}" / "Main"
+        if not filedir.is_dir():
+            filedir.mkdir(parents=True, exist_ok=True)
+        path = filedir / filename
+        return str(path)
 
     def _write_voc_results_file(self, all_boxes):
         for cls_ind, cls in enumerate(VOC_CLASSES):
@@ -310,22 +309,22 @@ class VOCDetection(Dataset):
                             )
                         )
 
-    def _do_python_eval(self, output_dir="output", iou=0.5):
-        rootpath = os.path.join(self.root, "VOC" + self._year)
+    def _do_python_eval(self, output_dir=Path("output"), iou=0.5):
+        rootpath = self.root / f"VOC{self._year}"
         name = self.image_set[0][1]
-        annopath = os.path.join(rootpath, "Annotations", "{:s}.xml")
-        imagesetfile = os.path.join(rootpath, "ImageSets", "Main", name + ".txt")
-        cachedir = os.path.join(
-            self.root, "annotations_cache", "VOC" + self._year, name
-        )
-        if not os.path.exists(cachedir):
-            os.makedirs(cachedir)
+        annopath = rootpath / "Annotations" / "{:s}.xml"
+        imagesetfile = rootpath / "ImageSets" / "Main" / f"{name}.txt"
+        cachedir = self.root / "annotations_cache" / f"VOC{self._year}" / name
+
+        cachedir.mkdir(parents=True, exist_ok=True)
+
         aps = []
         # The PASCAL VOC metric changed in 2010
         use_07_metric = True if int(self._year) < 2010 else False
         print("Eval IoU : {:.2f}".format(iou))
-        if output_dir is not None and not os.path.isdir(output_dir):
-            os.mkdir(output_dir)
+        if output_dir is not None:
+            output_dir.mkdir(parents=True, exist_ok=True)
+
         for i, cls in enumerate(VOC_CLASSES):
 
             if cls == "__background__":
@@ -345,7 +344,7 @@ class VOCDetection(Dataset):
             if iou == 0.5:
                 print("AP for {} = {:.4f}".format(cls, ap))
             if output_dir is not None:
-                with open(os.path.join(output_dir, cls + "_pr.pkl"), "wb") as f:
+                with (output_dir / f"{cls}_pr.pkl").open("wb") as f:
                     pickle.dump({"rec": rec, "prec": prec, "ap": ap}, f)
         if iou == 0.5:
             print("Mean AP = {:.4f}".format(np.mean(aps)))
