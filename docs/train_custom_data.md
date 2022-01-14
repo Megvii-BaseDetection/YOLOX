@@ -55,7 +55,7 @@ class Exp(MyExp):
         self.num_classes = 20
         self.depth = 0.33
         self.width = 0.50
-        self.exp_name = os.path.split(os.path.realpath(__file__))[1].split(".")[0]
+        self.exp_name = Path(__file__).resolve().stem
 ```
 
 Besides, you should also overwrite the `dataset` and `evaluator`, prepared before training the model on your own data.
