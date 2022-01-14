@@ -5,6 +5,7 @@
 import argparse
 import random
 import warnings
+from pathlib import Path
 from loguru import logger
 
 import torch
@@ -38,13 +39,13 @@ def make_parser():
         "-f",
         "--exp_file",
         default=None,
-        type=str,
+        type=Path,
         help="plz input your experiment description file",
     )
     parser.add_argument(
         "--resume", default=False, action="store_true", help="resume training"
     )
-    parser.add_argument("-c", "--ckpt", default=None, type=str, help="checkpoint file")
+    parser.add_argument("-c", "--ckpt", default=None, type=Path, help="checkpoint file")
     parser.add_argument(
         "-e",
         "--start_epoch",
