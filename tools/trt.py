@@ -66,7 +66,7 @@ def main():
         max_workspace_size=(1 << args.workspace),
         max_batch_size=args.batch,
     )
-    torch.save(model_trt.state_dict(), file_name /"model_trt.pth")
+    torch.save(model_trt.state_dict(), file_name / "model_trt.pth")
     logger.info("Converted TensorRT model done.")
     engine_file = file_name / "model_trt.engine"
     engine_file_demo = Path("demo") / "TensorRT" / "cpp" / "model_trt.engine"

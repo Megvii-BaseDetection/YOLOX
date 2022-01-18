@@ -5,7 +5,6 @@
 # Copyright (c) Bharath Hariharan.
 # Copyright (c) Megvii, Inc. and its affiliates.
 
-import os
 import pickle
 import xml.etree.ElementTree as ET
 

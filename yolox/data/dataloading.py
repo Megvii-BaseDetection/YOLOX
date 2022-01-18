@@ -3,9 +3,9 @@
 # Copyright (c) Megvii, Inc. and its affiliates.
 
 import os
-from pathlib import Path
 import random
 import uuid
+from pathlib import Path
 
 import numpy as np
 

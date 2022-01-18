@@ -3,8 +3,6 @@
 # Copyright (c) Megvii, Inc. and its affiliates.
 
 import datetime
-import os
-from pathlib import Path
 import time
 from loguru import logger
 

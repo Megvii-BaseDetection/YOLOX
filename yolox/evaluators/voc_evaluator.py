@@ -2,11 +2,11 @@
 # -*- coding:utf-8 -*-
 # Copyright (c) Megvii, Inc. and its affiliates.
 
-from pathlib import Path
 import sys
 import tempfile
 import time
 from collections import ChainMap
+from pathlib import Path
 from loguru import logger
 from tqdm import tqdm
 
