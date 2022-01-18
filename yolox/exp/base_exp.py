@@ -5,9 +5,9 @@
 import ast
 import pprint
 from abc import ABCMeta, abstractmethod
+from pathlib import Path
 from typing import Dict
 from tabulate import tabulate
-from pathlib import Path
 
 import torch
 from torch.nn import Module

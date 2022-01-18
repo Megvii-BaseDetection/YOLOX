@@ -8,9 +8,9 @@
 
 import os
 import os.path
-from pathlib import Path
 import pickle
 import xml.etree.ElementTree as ET
+from pathlib import Path
 from loguru import logger
 
 import cv2

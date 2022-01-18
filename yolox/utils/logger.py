@@ -3,7 +3,6 @@
 # Copyright (c) 2014-2021 Megvii Inc. All rights reserved.
 
 import inspect
-from pathlib import Path
 import sys
 from loguru import logger
 
