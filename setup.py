@@ -84,6 +84,7 @@ setuptools.setup(
     ],
     cmdclass={"build_ext": torch.utils.cpp_extension.BuildExtension},
     packages=setuptools.find_packages(),
+    include_package_data=True,
     project_urls={
         "Documentation": "https://yolox.readthedocs.io",
         "Source": "https://github.com/Megvii-BaseDetection/YOLOX",
