@@ -9,10 +9,14 @@ import json
 import tempfile
 import time
 from loguru import logger
+from tabulate import tabulate
 from tqdm import tqdm
+
+import numpy as np
 
 import torch
 
+from yolox.data.datasets import COCO_CLASSES
 from yolox.utils import (
     gather,
     is_main_process,
@@ -23,6 +27,54 @@ from yolox.utils import (
 )
 
 
+def per_class_AR_table(coco_eval, class_names=COCO_CLASSES, headers=["class", "AR"], colums=6):
+    per_class_AR = {}
+    recalls = coco_eval.eval["recall"]
+    # dimension of recalls: [TxKxAxM]
+    # recall has dims (iou, cls, area range, max dets)
+    assert len(class_names) == recalls.shape[1]
+
+    for idx, name in enumerate(class_names):
+        recall = recalls[:, idx, 0, -1]
+        recall = recall[recall > -1]
+        ar = np.mean(recall) if recall.size else float("nan")
+        per_class_AR[name] = float(ar * 100)
+
+    num_cols = min(colums, len(per_class_AR) * len(headers))
+    result_pair = [x for pair in per_class_AR.items() for x in pair]
+    row_pair = itertools.zip_longest(*[result_pair[i::num_cols] for i in range(num_cols)])
+    table_headers = headers * (num_cols // len(headers))
+    table = tabulate(
+        row_pair, tablefmt="pipe", floatfmt=".3f", headers=table_headers, numalign="left",
+    )
+    return table
+
+
+def per_class_AP_table(coco_eval, class_names=COCO_CLASSES, headers=["class", "AP"], colums=6):
+    per_class_AP = {}
+    precisions = coco_eval.eval["precision"]
+    # dimension of precisions: [TxRxKxAxM]
+    # precision has dims (iou, recall, cls, area range, max dets)
+    assert len(class_names) == precisions.shape[2]
+
+    for idx, name in enumerate(class_names):
+        # area range index 0: all area ranges
+        # max dets index -1: typically 100 per image
+        precision = precisions[:, :, idx, 0, -1]
+        precision = precision[precision > -1]
+        ap = np.mean(precision) if precision.size else float("nan")
+        per_class_AP[name] = float(ap * 100)
+
+    num_cols = min(colums, len(per_class_AP) * len(headers))
+    result_pair = [x for pair in per_class_AP.items() for x in pair]
+    row_pair = itertools.zip_longest(*[result_pair[i::num_cols] for i in range(num_cols)])
+    table_headers = headers * (num_cols // len(headers))
+    table = tabulate(
+        row_pair, tablefmt="pipe", floatfmt=".3f", headers=table_headers, numalign="left",
+    )
+    return table
+
+
 class COCOEvaluator:
     """
     COCO AP Evaluation class.  All the data in the val2017 dataset are processed
@@ -30,16 +82,26 @@ class COCOEvaluator:
     """
 
     def __init__(
-        self, dataloader, img_size, confthre, nmsthre, num_classes, testdev=False
+        self,
+        dataloader,
+        img_size: int,
+        confthre: float,
+        nmsthre: float,
+        num_classes: int,
+        testdev: bool = False,
+        per_class_AP: bool = False,
+        per_class_AR: bool = False,
     ):
         """
         Args:
             dataloader (Dataloader): evaluate dataloader.
-            img_size (int): image size after preprocess. images are resized
+            img_size: image size after preprocess. images are resized
                 to squares whose shape is (img_size, img_size).
-            confthre (float): confidence threshold ranging from 0 to 1, which
+            confthre: confidence threshold ranging from 0 to 1, which
                 is defined in the config file.
-            nmsthre (float): IoU threshold of non-max supression ranging from 0 to 1.
+            nmsthre: IoU threshold of non-max supression ranging from 0 to 1.
+            per_class_AP: Show per class AP during evalution or not. Default to False.
+            per_class_AR: Show per class AR during evalution or not. Default to False.
         """
         self.dataloader = dataloader
         self.img_size = img_size
@@ -47,6 +109,8 @@ class COCOEvaluator:
         self.nmsthre = nmsthre
         self.num_classes = num_classes
         self.testdev = testdev
+        self.per_class_AP = per_class_AP
+        self.per_class_AR = per_class_AR
 
     def evaluate(
         self,
@@ -216,6 +280,10 @@ class COCOEvaluator:
             with contextlib.redirect_stdout(redirect_string):
                 cocoEval.summarize()
             info += redirect_string.getvalue()
+            if self.per_class_AP:
+                info += "per class AP:\n" + per_class_AP_table(cocoEval) + "\n"
+            if self.per_class_AR:
+                info += "per class AR:\n" + per_class_AR_table(cocoEval) + "\n"
             return cocoEval.stats[0], cocoEval.stats[1], info
         else:
             return 0, 0, info

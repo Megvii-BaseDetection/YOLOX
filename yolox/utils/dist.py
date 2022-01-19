@@ -100,11 +100,13 @@ def get_local_rank() -> int:
     Returns:
         The rank of the current process within the local (per-machine) process group.
     """
+    if _LOCAL_PROCESS_GROUP is None:
+        return get_rank()
+
     if not dist.is_available():
         return 0
     if not dist.is_initialized():
         return 0
-    assert _LOCAL_PROCESS_GROUP is not None
     return dist.get_rank(group=_LOCAL_PROCESS_GROUP)
 
 
