@@ -47,8 +47,8 @@ class Exp(MyExp):
 
         # -----------------  testing config ------------------ #
         self.test_size = (576, 768)
-        self.test_conf = 0.01
-        self.nmsthre = 0.65
+        self.test_conf = 0.25
+        self.nmsthre = 0.3
 
     def get_data_loader(self, batch_size, is_distributed, no_aug=False, cache_img=False):
         from yolox.data import (
