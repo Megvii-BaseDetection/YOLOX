@@ -209,6 +209,8 @@ def image_demo(predictor, vis_folder, path, current_time, save_result):
             logger.info("Saving detection result in {}".format(save_file_name))
             cv2.imwrite(save_file_name, result_image)
 
+            if outputs[0] is None:
+                continue
             output = outputs[0].cpu()
             bboxes = output[:, 0:4]
             # preprocessing: resize
