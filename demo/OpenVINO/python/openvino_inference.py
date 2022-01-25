@@ -148,7 +148,7 @@ def main():
                          conf=args.score_thr, class_names=COCO_CLASSES)
 
     mkdir(args.output_dir)
-    output_path = os.path.join(args.output_dir, args.input.split("/")[-1])
+    output_path = os.path.join(args.output_dir, os.path.split(args.input)[1])
     cv2.imwrite(output_path, origin_img)
 
 
