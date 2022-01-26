@@ -1,12 +1,11 @@
 python tools/train.py \
--f /home/ecnu-lzw/bwz/ocr-gy/YOLOX/myconfig/voc_ocr_2027_noaug30.py \
+-f /home/ecnu-lzw/bwz/ocr-gy/YOLOX/myconfig/voc_ocr_2029.py \
 -d 2 -b 64 --fp16 -o \
--c /home/ecnu-lzw/bwz/ocr-gy/YOLOX/models/yolox_s.pth \
+-c /home/ecnu-lzw/bwz/ocr-gy/YOLOX/YOLOX_outputs/voc_ocr_2028/best_ckpt.pth \
 --cache
 
-# cd /home/ecnu-lzw/bwz/ocr-gy/YOLOX
-# ./train.sh
-# tensorboard --logdir='/home/ecnu-lzw/bwz/ocr-gy/YOLOX/YOLOX_outputs/voc_ocr_2027_noaug30'
+# /home/ecnu-lzw/bwz/ocr-gy/YOLOX/train.sh
+# tensorboard --logdir='/home/ecnu-lzw/bwz/ocr-gy/YOLOX/YOLOX_outputs/voc_ocr_2029'
 
 # tmux new -s bwz
 # tmux detach  //离开终端后台运行
