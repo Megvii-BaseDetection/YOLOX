@@ -44,7 +44,6 @@ class MosaicDetection(Dataset):
         mosaic_prob=1.0, mixup_prob=1.0, *args
     ):
         """
-
         Args:
             dataset(Dataset) : Pytorch dataset object.
             img_size (tuple):
@@ -75,7 +74,6 @@ class MosaicDetection(Dataset):
     def __len__(self):
         return len(self._dataset)
 
-    @Dataset.mosaic_getitem
     def __getitem__(self, idx):
         if self.enable_mosaic and random.random() < self.mosaic_prob:
             mosaic_labels = []
@@ -135,9 +133,7 @@ class MosaicDetection(Dataset):
                 shear=self.shear,
             )
 
-            # -----------------------------------------------------------------
             # CopyPaste: https://arxiv.org/abs/2012.07177
-            # -----------------------------------------------------------------
             if (
                 self.enable_mixup
                 and not len(mosaic_labels) == 0
@@ -147,10 +143,8 @@ class MosaicDetection(Dataset):
             mix_img, padded_labels = self.preproc(mosaic_img, mosaic_labels, self.input_dim)
             img_info = (mix_img.shape[1], mix_img.shape[0])
 
-            # -----------------------------------------------------------------
             # img_info and img_id are not used for training.
             # They are also hard to be specified on a mosaic image.
-            # -----------------------------------------------------------------
             return mix_img, padded_labels, img_info, img_id
 
         else:
@@ -213,9 +207,7 @@ class MosaicDetection(Dataset):
             cp_labels[:, :4].copy(), cp_scale_ratio, 0, 0, origin_w, origin_h
         )
         if FLIP:
-            cp_bboxes_origin_np[:, 0::2] = (
-                origin_w - cp_bboxes_origin_np[:, 0::2][:, ::-1]
-            )
+            cp_bboxes_origin_np[:, 0::2] = (origin_w - cp_bboxes_origin_np[:, 0::2][:, ::-1])
         cp_bboxes_transformed_np = cp_bboxes_origin_np.copy()
         cp_bboxes_transformed_np[:, 0::2] = np.clip(
             cp_bboxes_transformed_np[:, 0::2] - x_offset, 0, target_w

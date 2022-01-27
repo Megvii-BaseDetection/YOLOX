@@ -8,6 +8,7 @@ import random
 import torch
 import torch.distributed as dist
 import torch.nn as nn
+from torch.utils.data import BatchSampler, DataLoader
 
 from .base_exp import BaseExp
 
@@ -20,17 +21,17 @@ class Exp(BaseExp):
         self.num_classes = 80
         self.depth = 1.00
         self.width = 1.00
-        self.act = 'silu'
+        self.act = "silu"
 
         # ---------------- dataloader config ---------------- #
         # set worker to 4 for shorter dataloader init time
         self.data_num_workers = 4
         self.input_size = (640, 640)  # (height, width)
-        # Actual multiscale ranges: [640-5*32, 640+5*32].
+        # Actual multiscale ranges: [640 - 5 * 32, 640 + 5 * 32].
         # To disable multiscale training, set the
         # self.multiscale_range to 0.
         self.multiscale_range = 5
-        # You can uncomment this line to specify a multiscale range
+        # You can uncomment next line to specify a multiscale range
         # self.random_size = (14, 26)
         self.data_dir = None
         self.train_ann = "instances_train2017.json"
@@ -89,22 +90,15 @@ class Exp(BaseExp):
         self.model.head.initialize_biases(1e-2)
         return self.model
 
-    def get_data_loader(
-        self, batch_size, is_distributed, no_aug=False, cache_img=False
-    ):
+    def get_data_loader(self, batch_size, is_distributed, no_aug=False, cache_img=False):
         from yolox.data import (
             COCODataset,
-            TrainTransform,
-            YoloBatchSampler,
-            DataLoader,
             InfiniteSampler,
+            TrainTransform,
             MosaicDetection,
             worker_init_reset_seed,
         )
-        from yolox.utils import (
-            wait_for_the_master,
-            get_local_rank,
-        )
+        from yolox.utils import get_local_rank, wait_for_the_master
 
         local_rank = get_local_rank()
 
@@ -127,7 +121,8 @@ class Exp(BaseExp):
             preproc=TrainTransform(
                 max_labels=120,
                 flip_prob=self.flip_prob,
-                hsv_prob=self.hsv_prob),
+                hsv_prob=self.hsv_prob,
+            ),
             degrees=self.degrees,
             translate=self.translate,
             mosaic_scale=self.mosaic_scale,
@@ -145,11 +140,10 @@ class Exp(BaseExp):
 
         sampler = InfiniteSampler(len(self.dataset), seed=self.seed if self.seed else 0)
 
-        batch_sampler = YoloBatchSampler(
+        batch_sampler = BatchSampler(
             sampler=sampler,
             batch_size=batch_size,
             drop_last=False,
-            mosaic=not no_aug,
         )
 
         dataloader_kwargs = {"num_workers": self.data_num_workers, "pin_memory": True}
@@ -168,7 +162,7 @@ class Exp(BaseExp):
 
         if rank == 0:
             size_factor = self.input_size[1] * 1.0 / self.input_size[0]
-            if not hasattr(self, 'random_size'):
+            if not hasattr(self, "random_size"):
                 min_size = int(self.input_size[0] / 32) - self.multiscale_range
                 max_size = int(self.input_size[0] / 32) + self.multiscale_range
                 self.random_size = (min_size, max_size)

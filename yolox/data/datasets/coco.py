@@ -163,11 +163,7 @@ class COCODataset(Dataset):
         img_info = (height, width)
         resized_info = (int(height * r), int(width * r))
 
-        file_name = (
-            im_ann["file_name"]
-            if "file_name" in im_ann
-            else "{:012}".format(id_) + ".jpg"
-        )
+        file_name = im_ann["file_name"] if "file_name" in im_ann else "{:012}".format(id_) + ".jpg"
 
         return (res, img_info, resized_info, file_name)
 
@@ -190,7 +186,7 @@ class COCODataset(Dataset):
         img_file = os.path.join(self.data_dir, self.name, file_name)
 
         img = cv2.imread(img_file)
-        assert img is not None
+        assert img is not None, "Plz check {} carefully!".format(img_file)
 
         return img
 
@@ -206,7 +202,6 @@ class COCODataset(Dataset):
 
         return img, res.copy(), img_info, np.array([id_])
 
-    @Dataset.mosaic_getitem
     def __getitem__(self, index):
         """
         One image / label pair for the given index is picked up and pre-processed.
@@ -222,8 +217,7 @@ class COCODataset(Dataset):
                     class (float): class index.
                     xc, yc (float) : center of bbox whose values range from 0 to 1.
                     w, h (float) : size of bbox whose values range from 0 to 1.
-            info_img : tuple of h, w.
-                h, w (int): original shape of the image
+            info_img : tuple of h, w.  h, w (int): original shape of the image
             img_id (int): same as the input index. Used for evaluation.
         """
         img, target, img_info, img_id = self.pull_item(index)
