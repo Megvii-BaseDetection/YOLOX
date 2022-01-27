@@ -46,6 +46,7 @@ class Trainer:
         self.local_rank = get_local_rank()
         self.device = "cuda:{}".format(self.local_rank)
         self.use_model_ema = exp.ema
+        self.save_history_ckpt = exp.save_history_ckpt
 
         # data/dataloader related attr
         self.data_type = torch.float16 if args.fp16 else torch.float32
@@ -314,7 +315,8 @@ class Trainer:
         synchronize()
 
         self.save_ckpt("last_epoch", update_best_ckpt)
-        self.save_ckpt(f"epoch_{self.epoch + 1}")
+        if self.save_history_ckpt:
+            self.save_ckpt(f"epoch_{self.epoch + 1}")
 
     def save_ckpt(self, ckpt_name, update_best_ckpt=False):
         if self.rank == 0:

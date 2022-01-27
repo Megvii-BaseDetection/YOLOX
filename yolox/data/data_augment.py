@@ -39,9 +39,7 @@ def get_aug_params(value, center=0):
     else:
         raise ValueError(
             "Affine params should be either a sequence containing two values\
-                          or single float values. Got {}".format(
-                value
-            )
+             or single float values. Got {}".format(value)
         )
 
 
