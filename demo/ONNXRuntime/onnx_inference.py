@@ -88,5 +88,5 @@ if __name__ == '__main__':
                          conf=args.score_thr, class_names=COCO_CLASSES)
 
     mkdir(args.output_dir)
-    output_path = os.path.join(args.output_dir, args.image_path.split("/")[-1])
+    output_path = os.path.join(args.output_dir, os.path.basename(args.image_path))
     cv2.imwrite(output_path, origin_img)

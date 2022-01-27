@@ -149,7 +149,7 @@ class VOCDetection(Dataset):
         )
         max_h = self.img_size[0]
         max_w = self.img_size[1]
-        cache_file = self.root + "/img_resized_cache_" + self.name + ".array"
+        cache_file = os.path.join(self.root, f"img_resized_cache_{self.name}.array")
         if not os.path.exists(cache_file):
             logger.info(
                 "Caching images for the first time. This might take about 3 minutes for VOC"

@@ -216,7 +216,7 @@ def imageflow_demo(predictor, vis_folder, current_time, args):
     )
     os.makedirs(save_folder, exist_ok=True)
     if args.demo == "video":
-        save_path = os.path.join(save_folder, args.path.split("/")[-1])
+        save_path = os.path.join(save_folder, os.path.basename(args.path))
     else:
         save_path = os.path.join(save_folder, "camera.mp4")
     logger.info(f"video save_path is {save_path}")
