@@ -69,8 +69,9 @@ if __name__ == '__main__':
     session = onnxruntime.InferenceSession(args.model)
 
     ort_inputs = {session.get_inputs()[0].name: img[None, :, :, :]}
-    output = session.run(None, ort_inputs)
-    predictions = demo_postprocess(output[0], input_shape, p6=args.with_p6)[0]
+    output = session.run(None, ort_inputs)  # [(1, 9072, 45)]
+    # predictions = demo_postprocess(output[0], input_shape, p6=args.with_p6)[0]
+    predictions = output[0][0]  # 9072, 45
 
     boxes = predictions[:, :4]
     scores = predictions[:, 4:5] * predictions[:, 5:]

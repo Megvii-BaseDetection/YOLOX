@@ -56,7 +56,7 @@ def main():
     logger.info("loaded checkpoint done.")
     model.eval()
     model.cuda()
-    model.head.decode_in_inference = False
+    model.head.decode_in_inference = True
     x = torch.ones(1, 3, exp.test_size[0], exp.test_size[1]).cuda()
     model_trt = torch2trt(
         model,

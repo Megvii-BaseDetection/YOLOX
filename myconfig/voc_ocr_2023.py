@@ -25,23 +25,23 @@ class Exp(MyExp):
         self.mosaic_prob = 1.0
         self.mixup_prob = 1.0
         self.hsv_prob = 1.0
-        # self.flip_prob = 0.5  # 上下翻转
+        self.flip_prob = 0.0  # 上下翻转
 
         self.exp_name = os.path.split(os.path.realpath(__file__))[1].split(".")[0]
 
         # --------------  training config --------------------- #
         self.warmup_epochs = 5
-        self.max_epoch = 300
+        self.max_epoch = 150
         self.warmup_lr = 0
         self.basic_lr_per_img = 0.01 / 64.0
         self.scheduler = "yoloxwarmcos"
-        self.no_aug_epochs = 15
+        self.no_aug_epochs = 25
         self.min_lr_ratio = 0.05
         self.ema = True
 
         self.weight_decay = 5e-4
         self.momentum = 0.9
-        self.print_interval = 10
+        self.print_interval = 30
         self.eval_interval = 10
         self.exp_name = os.path.split(os.path.realpath(__file__))[1].split(".")[0]
 
@@ -69,7 +69,7 @@ class Exp(MyExp):
         with wait_for_the_master(local_rank):
             dataset = VOCDetection(
                 data_dir=os.path.join(get_yolox_datadir(), "VOCdevkit"),
-                image_sets=[('2023', 'train')],
+                image_sets=[('2023', 'trainval')],
                 img_size=self.input_size,
                 preproc=TrainTransform(
                     max_labels=50,
