@@ -24,7 +24,7 @@ class Exp(BaseExp):
         # factor of model width
         self.width = 1.00
         # activation name. For example, if using "relu", then "silu" will be replaced to "relu".
-        self.act = "silu"
+        self.act = "silu" # Activation function
 
         # ---------------- dataloader config ---------------- #
         # set worker to 4 for shorter dataloader init time
@@ -67,11 +67,14 @@ class Exp(BaseExp):
 
         # --------------  training config --------------------- #
         # epoch number used for warmup
-        self.warmup_epochs = 5
+        self.warmup_epochs = 5 
         # max training epoch
         self.max_epoch = 300
         # minimum learning rate during warmup
-        self.warmup_lr = 0
+        # warmup => 시작 시에는 매우 작은 learning rate를 사용하고,
+        # 훈련 과정이 안정화되었을 때 learning rate 초기값을 사용
+        
+        self.warmup_lr = 0 # lr => learning rate
         self.min_lr_ratio = 0.05
         # learning rate for one image. During traing, lr will multiply batchsize.
         self.basic_lr_per_img = 0.01 / 64.0
@@ -83,7 +86,7 @@ class Exp(BaseExp):
         self.ema = True
 
         # weight decay of optimizer
-        self.weight_decay = 5e-4
+        self.weight_decay = 5e-4 # overfit 방지 => weight 값이 커질 경우 fenalty 적용
         # momentum of optimizer
         self.momentum = 0.9
         # log period in iter, for example,
@@ -103,9 +106,9 @@ class Exp(BaseExp):
         self.test_size = (640, 640)
         # confidence threshold during evalulation/test,
         # boxes whose scores are less than test_conf will be filtered
-        self.test_conf = 0.01
+        self.test_conf = 0.01 # conf_threshold 값 => 설정한 값을 넘기면 bounding box 생성
         # nms threshold
-        self.nmsthre = 0.65
+        self.nmsthre = 0.65 # 얼마나 겹쳐 있는지를 판단 하고, 일정 크기 이상 겹칠 경우 삭제
 
     def get_model(self):
         from yolox.models import YOLOX, YOLOPAFPN, YOLOXHead
@@ -248,8 +251,9 @@ class Exp(BaseExp):
                     pg0.append(v.weight)  # no decay
                 elif hasattr(v, "weight") and isinstance(v.weight, nn.Parameter):
                     pg1.append(v.weight)  # apply decay
-
-            optimizer = torch.optim.SGD(
+                    
+            # optimizer => SGD(Stochastic Gradient Descent) 확률적 경사 하강법
+            optimizer = torch.optim.SGD( 
                 pg0, lr=lr, momentum=self.momentum, nesterov=True
             )
             optimizer.add_param_group(
@@ -260,6 +264,7 @@ class Exp(BaseExp):
 
         return self.optimizer
 
+    # learning rate 조절
     def get_lr_scheduler(self, lr, iters_per_epoch):
         from yolox.utils import LRScheduler
 

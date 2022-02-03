@@ -91,7 +91,7 @@ class Trainer:
     def train_one_iter(self):
         iter_start_time = time.time()
 
-        inps, targets = self.prefetcher.next()
+        inps, targets = self.prefetcher.next() # 모델에 들어갈 input 이미지와 target의 정보
         inps = inps.to(self.data_type)
         targets = targets.to(self.data_type)
         targets.requires_grad = False
