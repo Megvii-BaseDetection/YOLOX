@@ -40,7 +40,7 @@ def make_parser():
         help="pls input where to save augmented images",
     )
     parser.add_argument("-n", "--samples", default=None, type=int, help="Samples to visualize")
-    # parser.add_argument("-b", "--draw-bbox", action='store_true', help="Draw bbox on images")
+    # parser.add_argument("-b", "--draw-bbox", action="store_true", help="Draw bbox on images")
     return parser
 
 
@@ -53,7 +53,7 @@ def main(exp, args):
         cache_img=False,
     )
 
-    with open(args.cls_file, 'r', encoding='utf-8') as f_in:
+    with open(args.cls_file, "r", encoding="utf-8") as f_in:
         classes = f_in.read().split()
 
     for i, (img, target, *rest) in enumerate(loader, 1):
