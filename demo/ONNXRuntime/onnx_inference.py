@@ -10,9 +10,14 @@ import numpy as np
 
 import onnxruntime
 
-from yolox.data.data_augment import preproc as preprocess
-from yolox.data.datasets import COCO_CLASSES
-from yolox.utils import mkdir, multiclass_nms, demo_postprocess, vis
+# from yolox.data.data_augment import preproc as preprocess
+# from yolox.data.datasets import COCO_CLASSES
+# from yolox.utils import mkdir, multiclass_nms, demo_postprocess, vis
+import sys
+sys.path.append('.')
+from onnx_infer_utils import preproc as preprocess
+from onnx_infer_utils import COCO_CLASSES
+from onnx_infer_utils import mkdir, multiclass_nms, vis
 
 
 def make_parser():
