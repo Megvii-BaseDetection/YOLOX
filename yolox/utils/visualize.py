@@ -9,7 +9,7 @@ __all__ = ["vis"]
 
 
 def vis(img, boxes, scores, cls_ids, conf=0.5, class_names=None):
-
+    down,broken = 0,0
     for i in range(len(boxes)):
         box = boxes[i]
         cls_id = int(cls_ids[i])
@@ -23,6 +23,12 @@ def vis(img, boxes, scores, cls_ids, conf=0.5, class_names=None):
 
         color = (_COLORS[cls_id] * 255).astype(np.uint8).tolist()
         text = '{}:{:.1f}%'.format(class_names[cls_id], score * 100)
+        if class_names[cls_id] == "down":
+          down+=1
+        elif class_names[cls_id] =="broken":
+            broken+=1
+        print("=== cls_name : ",class_names[cls_id])
+        
         txt_color = (0, 0, 0) if np.mean(_COLORS[cls_id]) > 0.5 else (255, 255, 255)
         font = cv2.FONT_HERSHEY_SIMPLEX
 
@@ -38,6 +44,7 @@ def vis(img, boxes, scores, cls_ids, conf=0.5, class_names=None):
             -1
         )
         cv2.putText(img, text, (x0, y0 + txt_size[1]), font, 0.4, txt_color, thickness=1)
+    print("=== down 개수 : ",down," / broken 개수 : ",broken)
 
     return img
 
