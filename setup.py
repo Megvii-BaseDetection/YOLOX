@@ -51,11 +51,21 @@ with open("README.md", "r", encoding="utf-8") as f:
     long_description = f.read()
 
 
+thelibFolder =  path.dirname(path.realpath(__file__))
+requirementPath = thelibFolder + '/requirements.txt'
+install_requires = [] 
+if os.path.isfile(requirementPath):
+    with open(requirementPath) as f:
+        install_requires = f.read().splitlines()
+
+
+
 setuptools.setup(
     name="aq-yolox",
     version=version,
     author="basedet team",
     python_requires=">=3.6",
+    install_requires=install_requires,
     long_description=long_description,
     ext_modules=get_extensions(),
     classifiers=["Programming Language :: Python :: 3", "Operating System :: OS Independent"],
