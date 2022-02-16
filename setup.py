@@ -5,7 +5,11 @@ import re
 import setuptools
 import glob
 from os import path
+import torch
+from torch.utils.cpp_extension import CppExtension
 
+torch_ver = [int(x) for x in torch.__version__.split(".")[:2]]
+assert torch_ver >= [1, 4], "Requires PyTorch >= 1.4"
 
 
 def get_extensions():
@@ -33,6 +37,7 @@ def get_extensions():
         )
     ]
 
+    print(ext_modules)
     return ext_modules
 
 
@@ -50,7 +55,7 @@ with open("README.md", "r", encoding="utf-8") as f:
 thelibFolder =  path.dirname(path.realpath(__file__))
 requirementPath = thelibFolder + '/requirements.txt'
 install_requires = [] 
-if os.path.isfile(requirementPath):
+if path.isfile(requirementPath):
     with open(requirementPath) as f:
         install_requires = f.read().splitlines()
 

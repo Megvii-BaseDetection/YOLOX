@@ -1,10 +1,12 @@
-numpy
-torch>=1.7
-opencv_python
+numpy==1.18.*
+torch==1.4.*
+opencv_python==4.3.*
+scipy==1.5
+matplotlib==3.3.*
 loguru
-scikit-image
+scikit-image==0.14.*
 tqdm
-torchvision
+torchvision==0.5.*
 Pillow
 thop
 ninja
