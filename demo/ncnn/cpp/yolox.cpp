@@ -258,8 +258,8 @@ static int detect_yolox(const cv::Mat& bgr, std::vector<Object>& objects)
 
     // original pretrained model from https://github.com/Megvii-BaseDetection/YOLOX
     // ncnn model param: https://github.com/Megvii-BaseDetection/storage/releases/download/0.0.1/yolox_s_ncnn.tar.gz
-    yolox.load_param("yolox.param");
-    yolox.load_model("yolox.bin");
+    yolox.load_param("yolox_s2023_fix.param");
+    yolox.load_model("yolox_s2023_fix.bin");
 
     int img_w = bgr.cols;
     int img_h = bgr.rows;
@@ -303,7 +303,7 @@ static int detect_yolox(const cv::Mat& bgr, std::vector<Object>& objects)
         std::vector<int> strides(stride_arr, stride_arr + sizeof(stride_arr) / sizeof(stride_arr[0]));
         std::vector<GridAndStride> grid_strides;
         generate_grids_and_stride(YOLOX_TARGET_SIZE, strides, grid_strides);
-        generate_yolox_proposals(grid_strides, out, YOLOX_CONF_THRESH, proposals);
+        // generate_yolox_proposals(grid_strides, out, YOLOX_CONF_THRESH, proposals);
     }
 
     // sort all proposals by score from highest to lowest
