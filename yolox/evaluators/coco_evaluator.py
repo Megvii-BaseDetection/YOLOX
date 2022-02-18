@@ -280,12 +280,14 @@ class COCOEvaluator:
             with contextlib.redirect_stdout(redirect_string):
                 cocoEval.summarize()
             info += redirect_string.getvalue()
-            datasetCatsIds = list(cocoGt.cats.keys())
-            datasetCatsNames = [cocoGt.cats[catId]['name'] for catId in sorted(datasetCatsIds)]
+            cat_ids = list(cocoGt.cats.keys())
+            cat_names = [cocoGt.cats[catId]['name'] for catId in sorted(cat_ids)]
             if self.per_class_AP:
-                info += "per class AP:\n" + per_class_AP_table(cocoEval, class_names=datasetCatsNames) + "\n"
+                per_class_AP_table_str = per_class_AP_table(cocoEval, class_names=cat_names)
+                info += "per class AP:\n" + per_class_AP_table_str + "\n"
             if self.per_class_AR:
-                info += "per class AR:\n" + per_class_AR_table(cocoEval, class_names=datasetCatsNames) + "\n"
+                per_class_AR_table_str = per_class_AR_table(cocoEval, class_names=cat_names)
+                info += "per class AR:\n" + per_class_AR_table_str + "\n"
             return cocoEval.stats[0], cocoEval.stats[1], info
         else:
             return 0, 0, info
