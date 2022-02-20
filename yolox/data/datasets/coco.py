@@ -27,8 +27,9 @@ def remove_useless_info(coco):
             img.pop("coco_url", None)
             img.pop("date_captured", None)
             img.pop("flickr_url", None)
-        for anno in coco.dataset["annotations"]:
-            anno.pop("segmentation", None)
+        if "annotations" in coco.dataset:
+            for anno in coco.dataset["annotations"]:
+                anno.pop("segmentation", None)
 
 
 class COCODataset(Dataset):
