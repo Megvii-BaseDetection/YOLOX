@@ -24,6 +24,9 @@ def get_total_and_free_memory_in_Mb(cuda_device):
         "nvidia-smi --query-gpu=memory.total,memory.used --format=csv,nounits,noheader"
     )
     devices_info = devices_info_str.read().strip().split("\n")
+    if "CUDA_VISIBLE_DEVICES" in os.environ:
+        visible_devices = os.environ["CUDA_VISIBLE_DEVICES"].split(',')
+        cuda_device = int(visible_devices[cuda_device])
     total, used = devices_info[int(cuda_device)].split(",")
     return int(total), int(used)
 
