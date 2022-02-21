@@ -12,6 +12,7 @@ from torch.nn.parallel import DistributedDataParallel as DDP
 from torch.utils.tensorboard import SummaryWriter
 
 from yolox.data import DataPrefetcher
+from yolox.utils.result_plot import ResultPlot
 from yolox.utils import (
     MeterBuffer,
     ModelEMA,
@@ -26,7 +27,7 @@ from yolox.utils import (
     occupy_mem,
     save_checkpoint,
     setup_logger,
-    synchronize
+    synchronize,
 )
 
 
@@ -56,6 +57,10 @@ class Trainer:
         # metric record
         self.meter = MeterBuffer(window_size=exp.print_interval)
         self.file_name = os.path.join(exp.output_dir, args.experiment_name)
+
+        # Test purpose (Collection of mAP)
+        self.result_plot = ResultPlot()
+        self.list_mAP = []
 
         if self.rank == 0:
             os.makedirs(self.file_name, exist_ok=True)
@@ -91,7 +96,7 @@ class Trainer:
     def train_one_iter(self):
         iter_start_time = time.time()
 
-        inps, targets = self.prefetcher.next() # 모델에 들어갈 input 이미지와 target의 정보
+        inps, targets = self.prefetcher.next()
         inps = inps.to(self.data_type)
         targets = targets.to(self.data_type)
         targets.requires_grad = False
@@ -181,9 +186,11 @@ class Trainer:
         logger.info("\n{}".format(model))
 
     def after_train(self):
+        print(f"Current Absolute path of working directory: {os.path.abspath(__file__)}")
         logger.info(
             "Training of experiment is done and the best AP is {:.2f}".format(self.best_ap * 100)
         )
+        self.result_plot.plot_and_save()
 
     def before_epoch(self):
         logger.info("---> start train epoch{}".format(self.epoch + 1))
@@ -271,6 +278,10 @@ class Trainer:
             model.load_state_dict(ckpt["model"])
             self.optimizer.load_state_dict(ckpt["optimizer"])
             self.best_ap = ckpt.pop("best_ap", 0)
+
+            # Testing Purpose
+            # print(ckpt.pop("best_ap"))
+
             # resume the training states variables
             start_epoch = (
                 self.args.start_epoch - 1
@@ -307,6 +318,10 @@ class Trainer:
         update_best_ckpt = ap50_95 > self.best_ap
         self.best_ap = max(self.best_ap, ap50_95)
 
+        # Test purpose (mAP collection)
+        # self.list_mAP.append(max(self.best_ap, ap50))
+        self.result_plot.add_new_mAP(max(self.best_ap, ap50))
+
         self.model.train()
         if self.rank == 0:
             self.tblogger.add_scalar("val/COCOAP50", ap50, self.epoch + 1)
@@ -334,3 +349,4 @@ class Trainer:
                 self.file_name,
                 ckpt_name,
             )
+
