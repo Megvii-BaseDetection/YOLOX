@@ -26,6 +26,7 @@ from yolox.utils import (
     occupy_mem,
     save_checkpoint,
     setup_logger,
+    WandbLogger,
     synchronize
 )
 
@@ -173,9 +174,16 @@ class Trainer:
         self.evaluator = self.exp.get_evaluator(
             batch_size=self.args.batch_size, is_distributed=self.is_distributed
         )
-        # Tensorboard logger
+        # Tensorboard and Wandb loggers
         if self.rank == 0:
-            self.tblogger = SummaryWriter(os.path.join(self.file_name, "tensorboard"))
+            if self.args.logger == "tensorboard":
+                self.tblogger = SummaryWriter(os.path.join(self.file_name, "tensorboard"))
+            elif self.args.logger == "wandb":
+                wandb_params = dict()
+                for k, v in zip(self.args.opts[0::2], self.args.opts[1::2]):
+                    if k.startswith("wandb-"):
+                        wandb_params.update({k.lstrip("wandb-"): v})
+                self.wandb_logger = WandbLogger(config=vars(self.exp), **wandb_params)
 
         logger.info("Training start...")
         logger.info("\n{}".format(model))
@@ -184,6 +192,8 @@ class Trainer:
         logger.info(
             "Training of experiment is done and the best AP is {:.2f}".format(self.best_ap * 100)
         )
+        if self.args.logger == "wandb":
+            self.wandb_logger.finish()
 
     def before_epoch(self):
         logger.info("---> start train epoch{}".format(self.epoch + 1))
@@ -246,6 +256,12 @@ class Trainer:
                 )
                 + (", size: {:d}, {}".format(self.input_size[0], eta_str))
             )
+
+            if self.rank == 0:
+                if self.args.logger == "wandb":
+                    self.wandb_logger.log_metrics({k: v.latest for k, v in loss_meter.items()})
+                    self.wandb_logger.log_metrics({"lr": self.meter["lr"].latest})
+
             self.meter.clear_meters()
 
         # random resizing
@@ -309,8 +325,15 @@ class Trainer:
 
         self.model.train()
         if self.rank == 0:
-            self.tblogger.add_scalar("val/COCOAP50", ap50, self.epoch + 1)
-            self.tblogger.add_scalar("val/COCOAP50_95", ap50_95, self.epoch + 1)
+            if self.args.logger == "tensorboard":
+                self.tblogger.add_scalar("val/COCOAP50", ap50, self.epoch + 1)
+                self.tblogger.add_scalar("val/COCOAP50_95", ap50_95, self.epoch + 1)
+            if self.args.logger == "wandb":
+                self.wandb_logger.log_metrics({
+                    "val/COCOAP50": ap50,
+                    "val/COCOAP50_95": ap50_95,
+                    "epoch": self.epoch + 1,
+                })
             logger.info("\n" + summary)
         synchronize()
 

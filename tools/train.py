@@ -81,6 +81,13 @@ def make_parser():
         help="occupy GPU memory first for training.",
     )
     parser.add_argument(
+        "-l",
+        "--logger",
+        type=str,
+        help="Logger to be used for metrics",
+        default="tensorboard"
+    )
+    parser.add_argument(
         "opts",
         help="Modify config options using the command-line",
         default=None,

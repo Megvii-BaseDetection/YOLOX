@@ -6,7 +6,7 @@ import inspect
 import os
 import sys
 from loguru import logger
-
+import torch
 
 def get_caller_name(depth=0):
     """
@@ -93,3 +93,76 @@ def setup_logger(save_dir, distributed_rank=0, filename="log.txt", mode="a"):
 
     # redirect stdout/stderr to loguru
     redirect_sys_output("INFO")
+
+class WandbLogger(object):
+    def __init__(self, project=None, name=None, id=None, save_dir=None, config=None, **kwargs):
+        """
+        Args:
+            project (str): wandb project name.
+            name (str): wandb run name.
+            id (str): wandb run id.
+            save_dir (str): save directory.
+            config (dict): config dict.
+            **kwargs: other kwargs.
+        """
+        try:
+            import wandb
+            self.wandb = wandb
+        except:
+            raise ModuleNotFoundError("wandb is not installed. Please install wandb using pip install wandb")
+
+        self.project = project
+        self.name = name
+        self.id = id
+        self.save_dir = save_dir
+        self.config = config
+        self.kwargs = kwargs
+        self._run = None
+        self._wandb_init = dict(
+            project=self.project,
+            name=self.name,
+            id=self.id,
+            dir=self.save_dir,
+            resume="allow"
+        )
+        self._wandb_init.update(**kwargs)
+
+        _ = self.run
+
+        if self.config:
+            self.run.config.update(self.config)
+        
+        self.run.define_metric("epoch")
+        self.run.define_metric("val/", step_metric="epoch")
+    
+    @property
+    def run(self):
+        if self._run is None:
+            if self.wandb.run is not None:
+                logger.info(
+                    "There is a wandb run already in progress and newly created instances of `WandbLogger` will reuse"
+                    " this run. If this is not desired, call `wandb.finish()` before instantiating `WandbLogger`."
+                )
+                self._run = self.wandb.run
+            else:
+                self._run = self.wandb.init(**self._wandb_init)
+        return self._run
+    
+    def log_metrics(self, metrics, step=None):
+        """
+        Args:
+            metrics (dict): metrics dict.
+            step (int): step number.
+        """
+
+        for k, v in metrics.items():
+            if isinstance(v, torch.Tensor):
+                metrics[k] = v.item()
+
+        if step is not None:
+            self.run.log(metrics, step=step)
+        else:
+            self.run.log(metrics)
+
+    def finish(self):
+        self.run.finish()
