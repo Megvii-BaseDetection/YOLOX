@@ -17,7 +17,7 @@ import sys
 sys.path.append('.')
 from onnx_infer_utils import preproc as preprocess
 from onnx_infer_utils import COCO_CLASSES
-from onnx_infer_utils import mkdir, multiclass_nms, vis
+from onnx_infer_utils import mkdir, multiclass_nms, vis, demo_postprocess
 
 
 def make_parser():
@@ -53,7 +53,7 @@ def make_parser():
     parser.add_argument(
         "--input_shape",
         type=str,
-        default="640,640",
+        default="576,768",
         help="Specify an input shape for inference.",
     )
     parser.add_argument(
@@ -67,7 +67,7 @@ def make_parser():
 if __name__ == '__main__':
     args = make_parser().parse_args()
 
-    input_shape = tuple(map(int, args.input_shape.split(',')))
+    input_shape = tuple(map(int, args.input_shape.split(',')))  # 576, 768
     origin_img = cv2.imread(args.image_path)
     img, ratio = preprocess(origin_img, input_shape)
 
@@ -75,8 +75,8 @@ if __name__ == '__main__':
 
     ort_inputs = {session.get_inputs()[0].name: img[None, :, :, :]}
     output = session.run(None, ort_inputs)  # [(1, 9072, 45)]
-    # predictions = demo_postprocess(output[0], input_shape, p6=args.with_p6)[0]
-    predictions = output[0][0]  # 9072, 45
+    predictions = demo_postprocess(output[0], input_shape, p6=args.with_p6)[0]
+    # predictions = output[0][0]  # 9072, 45
 
     boxes = predictions[:, :4]
     scores = predictions[:, 4:5] * predictions[:, 5:]

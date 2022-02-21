@@ -97,7 +97,7 @@ COCO_CLASSES = ('0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
 
 def preproc(img, input_size, swap=(2, 0, 1)):
     if len(img.shape) == 3:
-        padded_img = np.ones((input_size[0], input_size[1], 3), dtype=np.uint8) * 114
+        padded_img = np.ones((input_size[0], input_size[1], 3), dtype=np.uint8) * 114  # 576, 768
     else:
         padded_img = np.ones(input_size, dtype=np.uint8) * 114
 
@@ -112,6 +112,33 @@ def preproc(img, input_size, swap=(2, 0, 1)):
     padded_img = padded_img.transpose(swap)
     padded_img = np.ascontiguousarray(padded_img, dtype=np.float32)
     return padded_img, r
+
+def demo_postprocess(outputs, img_size, p6=False):
+    
+    grids = []
+    expanded_strides = []
+
+    if not p6:
+        strides = [8, 16, 32]
+    else:
+        strides = [8, 16, 32, 64]
+
+    hsizes = [img_size[0] // stride for stride in strides]
+    wsizes = [img_size[1] // stride for stride in strides]
+
+    for hsize, wsize, stride in zip(hsizes, wsizes, strides):
+        xv, yv = np.meshgrid(np.arange(wsize), np.arange(hsize))
+        grid = np.stack((xv, yv), 2).reshape(1, -1, 2)
+        grids.append(grid)
+        shape = grid.shape[:2]
+        expanded_strides.append(np.full((*shape, 1), stride))
+
+    grids = np.concatenate(grids, 1)
+    expanded_strides = np.concatenate(expanded_strides, 1)
+    outputs[..., :2] = (outputs[..., :2] + grids) * expanded_strides
+    outputs[..., 2:4] = np.exp(outputs[..., 2:4]) * expanded_strides
+
+    return outputs
 
 def vis(img, boxes, scores, cls_ids, conf=0.5, class_names=None):
     

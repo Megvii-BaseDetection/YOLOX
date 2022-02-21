@@ -32,6 +32,9 @@ def make_parser():
     parser.add_argument(
         "--dynamic", action="store_true", help="whether the input shape should be dynamic or not"
     )
+    parser.add_argument(
+        "--decode_in_inference", action="store_true", help="whether decode the outputs"
+    )
     parser.add_argument("--no-onnxsim", action="store_true", help="use onnxsim or not")
     parser.add_argument(
         "-f",
@@ -78,7 +81,7 @@ def main():
         ckpt = ckpt["model"]
     model.load_state_dict(ckpt)
     model = replace_module(model, nn.SiLU, SiLU)
-    model.head.decode_in_inference = True
+    model.head.decode_in_inference = args.decode_in_inference
 
     logger.info("loading checkpoint done.")
     dummy_input = torch.randn(args.batch_size, 3, exp.test_size[0], exp.test_size[1])

@@ -26,10 +26,13 @@
 #include <float.h>
 #include <stdio.h>
 #include <vector>
+#include <algorithm>
+using namespace std;
 
 #define YOLOX_NMS_THRESH  0.45 // nms threshold
 #define YOLOX_CONF_THRESH 0.25 // threshold of bounding box prob
-#define YOLOX_TARGET_SIZE 640  // target image size after resize, might use 416 for small model
+#define YOLOX_TARGET_SIZE_H 576  // target image size after resize, might use 416 for small model
+#define YOLOX_TARGET_SIZE_W 768
 
 // YOLOX use the same focus in yolov5
 class YoloV5Focus : public ncnn::Layer
@@ -179,15 +182,16 @@ static void nms_sorted_bboxes(const std::vector<Object>& faceobjects, std::vecto
     }
 }
 
-static void generate_grids_and_stride(const int target_size, std::vector<int>& strides, std::vector<GridAndStride>& grid_strides)
+static void generate_grids_and_stride(const int img_h, const int img_w, std::vector<int>& strides, std::vector<GridAndStride>& grid_strides)
 {
     for (int i = 0; i < (int)strides.size(); i++)
     {
         int stride = strides[i];
-        int num_grid = target_size / stride;
-        for (int g1 = 0; g1 < num_grid; g1++)
+        int num_grid0 = img_h / stride;
+        int num_grid1 = img_w / stride;
+        for (int g1 = 0; g1 < num_grid0; g1++)
         {
-            for (int g0 = 0; g0 < num_grid; g0++)
+            for (int g0 = 0; g0 < num_grid1; g0++)
             {
                 GridAndStride gs;
                 gs.grid0 = g0;
@@ -258,32 +262,23 @@ static int detect_yolox(const cv::Mat& bgr, std::vector<Object>& objects)
 
     // original pretrained model from https://github.com/Megvii-BaseDetection/YOLOX
     // ncnn model param: https://github.com/Megvii-BaseDetection/storage/releases/download/0.0.1/yolox_s_ncnn.tar.gz
-    yolox.load_param("yolox_s2023_fix.param");
-    yolox.load_model("yolox_s2023_fix.bin");
+    yolox.load_param("/home/ecnu-lzw/bwz/ocr-gy/ncnn/outputs/yolox_s2023_encodedout_final.param");
+    yolox.load_model("/home/ecnu-lzw/bwz/ocr-gy/ncnn/outputs/yolox_s2023_encodedout_final.bin");
 
     int img_w = bgr.cols;
     int img_h = bgr.rows;
 
-    int w = img_w;
-    int h = img_h;
+    float i_w = img_w;
+    float i_h = img_h;
     float scale = 1.f;
-    if (w > h)
-    {
-        scale = (float)YOLOX_TARGET_SIZE / w;
-        w = YOLOX_TARGET_SIZE;
-        h = h * scale;
-    }
-    else
-    {
-        scale = (float)YOLOX_TARGET_SIZE / h;
-        h = YOLOX_TARGET_SIZE;
-        w = w * scale;
-    }
-    ncnn::Mat in = ncnn::Mat::from_pixels_resize(bgr.data, ncnn::Mat::PIXEL_BGR, img_w, img_h, w, h);
+    scale = min<float>(YOLOX_TARGET_SIZE_W / i_w, YOLOX_TARGET_SIZE_H / i_h);
+    float resized_w = img_w*scale;
+    float resized_h = img_h*scale;
+    ncnn::Mat in = ncnn::Mat::from_pixels_resize(bgr.data, ncnn::Mat::PIXEL_BGR, img_w, img_h, resized_w, resized_h);
 
     // pad to YOLOX_TARGET_SIZE rectangle
-    int wpad = YOLOX_TARGET_SIZE - w;
-    int hpad = YOLOX_TARGET_SIZE - h;
+    int wpad = 768 - resized_w;
+    int hpad = 576 - resized_h;
     ncnn::Mat in_pad;
     // different from yolov5, yolox only pad on bottom and right side,
     // which means users don't need to extra padding info to decode boxes coordinate.
@@ -302,8 +297,8 @@ static int detect_yolox(const cv::Mat& bgr, std::vector<Object>& objects)
         static const int stride_arr[] = {8, 16, 32}; // might have stride=64 in YOLOX
         std::vector<int> strides(stride_arr, stride_arr + sizeof(stride_arr) / sizeof(stride_arr[0]));
         std::vector<GridAndStride> grid_strides;
-        generate_grids_and_stride(YOLOX_TARGET_SIZE, strides, grid_strides);
-        // generate_yolox_proposals(grid_strides, out, YOLOX_CONF_THRESH, proposals);
+        generate_grids_and_stride(YOLOX_TARGET_SIZE_H, YOLOX_TARGET_SIZE_W, strides, grid_strides);
+        generate_yolox_proposals(grid_strides, out, YOLOX_CONF_THRESH, proposals);
     }
 
     // sort all proposals by score from highest to lowest
@@ -380,9 +375,11 @@ static void draw_objects(const cv::Mat& bgr, const std::vector<Object>& objects)
         cv::putText(image, text, cv::Point(x, y + label_size.height),
                     cv::FONT_HERSHEY_SIMPLEX, 0.5, cv::Scalar(0, 0, 0));
     }
-
-    cv::imshow("image", image);
-    cv::waitKey(0);
+    int obj_num = objects.size();
+    printf("obj_num: %d \n", obj_num);
+    cv::imwrite("/home/ecnu-lzw/bwz/ocr-gy/ncnn/outputs/out.jpg", image);
+    // cv::imshow("image", image);
+    // cv::waitKey(0);
 }
 
 int main(int argc, char** argv)
