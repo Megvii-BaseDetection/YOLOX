@@ -56,6 +56,26 @@ python tools/train.py -n yolox-s -d 8 -b 64 --fp16 -o [--cache]
 * --fp16: mixed precision training
 * --cache: caching imgs into RAM to accelarate training, which need large system RAM.
 
+**Weights & Biases for Logging**
+
+To use W&B for logging, install wandb in your environment and log in to your W&B account using
+
+```shell
+pip install wandb
+wandb login
+```
+
+Log in to your W&B account
+
+To start logging metrics to W&B during training add the flag `--logger` to the previous command and use the prefix "wandb-" to specify arguments for initializing the wandb run.
+
+```shell
+python tools/train.py -n yolox-s -d 8 -b 64 --fp16 -o [--cache] --logger wandb wandb-project <project name>
+                         yolox-m
+                         yolox-l
+                         yolox-x
+```
+
 **Multi Machine Training**
 
 We also support multi-nodes training. Just add the following args:

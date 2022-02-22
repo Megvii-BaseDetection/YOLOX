@@ -184,6 +184,8 @@ class Trainer:
                     if k.startswith("wandb-"):
                         wandb_params.update({k.lstrip("wandb-"): v})
                 self.wandb_logger = WandbLogger(config=vars(self.exp), **wandb_params)
+            else:
+                raise ValueError("logger must be either 'tensorboard' or 'wandb'")
 
         logger.info("Training start...")
         logger.info("\n{}".format(model))
