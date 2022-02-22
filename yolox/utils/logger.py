@@ -102,14 +102,15 @@ class WandbLogger(object):
     and basic data metrics and analyses.
 
     For more information, please refer to:
-    https://docs.wandb.ai/
+    https://docs.wandb.ai/guides/track
     """
-    def __init__(self, project=None, name=None, id=None, save_dir=None, config=None, **kwargs):
+    def __init__(self, project=None, name=None, id=None, entity=None, save_dir=None, config=None, **kwargs):
         """
         Args:
             project (str): wandb project name.
             name (str): wandb run name.
             id (str): wandb run id.
+            entity (str): wandb entity name.ßß
             save_dir (str): save directory.
             config (dict): config dict.
             **kwargs: other kwargs.
@@ -126,11 +127,13 @@ class WandbLogger(object):
         self.save_dir = save_dir
         self.config = config
         self.kwargs = kwargs
+        self.entity = entity
         self._run = None
         self._wandb_init = dict(
             project=self.project,
             name=self.name,
             id=self.id,
+            entity=self.entity,
             dir=self.save_dir,
             resume="allow"
         )
