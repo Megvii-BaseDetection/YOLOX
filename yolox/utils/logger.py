@@ -95,6 +95,15 @@ def setup_logger(save_dir, distributed_rank=0, filename="log.txt", mode="a"):
     redirect_sys_output("INFO")
 
 class WandbLogger(object):
+    """
+    Log training runs, datasets, models, and predictions to Weights & Biases.
+    This logger sends information to W&B at wandb.ai. By default, this information
+    includes hyperparameters, system configuration and metrics, model metrics,
+    and basic data metrics and analyses.
+
+    For more information, please refer to:
+    https://docs.wandb.ai/
+    """
     def __init__(self, project=None, name=None, id=None, save_dir=None, config=None, **kwargs):
         """
         Args:
