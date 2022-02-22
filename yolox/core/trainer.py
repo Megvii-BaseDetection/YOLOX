@@ -192,8 +192,9 @@ class Trainer:
         logger.info(
             "Training of experiment is done and the best AP is {:.2f}".format(self.best_ap * 100)
         )
-        if self.args.logger == "wandb":
-            self.wandb_logger.finish()
+        if self.rank == 0:
+            if self.args.logger == "wandb":
+                self.wandb_logger.finish()
 
     def before_epoch(self):
         logger.info("---> start train epoch{}".format(self.epoch + 1))
@@ -357,3 +358,6 @@ class Trainer:
                 self.file_name,
                 ckpt_name,
             )
+
+            if self.args.logger == 'wandb':
+                self.wandb_logger.save_checkpoint(self.file_name, ckpt_name, update_best_ckpt)

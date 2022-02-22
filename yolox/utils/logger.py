@@ -164,5 +164,23 @@ class WandbLogger(object):
         else:
             self.run.log(metrics)
 
+    def save_checkpoint(self, save_dir, model_name, is_best):
+        """
+        Args:
+            save_dir (str): save directory.
+            model_name (str): model name.
+            is_best (bool): whether the model is the best model.
+        """
+        filename = os.path.join(save_dir, model_name + "_ckpt.pth")
+        artifact = self.wandb.Artifact(name=f"model-{self.run.id}", type="model")
+        artifact.add_file(filename, name="model_ckpt.pth")
+
+        aliases = ["latest"]
+
+        if is_best:
+            aliases.append("best")
+
+        self.run.log_artifact(artifact, aliases=aliases)
+
     def finish(self):
         self.run.finish()
