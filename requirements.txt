@@ -1,8 +1,8 @@
 numpy==1.19.*
 torch==1.4.*
-opencv_python==4.3.*
-scipy==1.5
-matplotlib==3.3.*
+opencv_python==4.5.1.48
+scipy==1.5.4
+matplotlib==2.1.1
 loguru
 scikit-image==0.14.*
 tqdm
