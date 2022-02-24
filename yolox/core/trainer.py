@@ -15,6 +15,7 @@ from yolox.data import DataPrefetcher
 from yolox.utils import (
     MeterBuffer,
     ModelEMA,
+    WandbLogger,
     all_reduce_norm,
     get_local_rank,
     get_model_info,
@@ -26,7 +27,6 @@ from yolox.utils import (
     occupy_mem,
     save_checkpoint,
     setup_logger,
-    WandbLogger,
     synchronize
 )
 
@@ -361,5 +361,5 @@ class Trainer:
                 ckpt_name,
             )
 
-            if self.args.logger == 'wandb':
+            if self.args.logger == "wandb":
                 self.wandb_logger.save_checkpoint(self.file_name, ckpt_name, update_best_ckpt)
