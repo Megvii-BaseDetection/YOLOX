@@ -8,7 +8,7 @@ from .checkpoint import load_ckpt, save_checkpoint
 from .demo_utils import *
 from .dist import *
 from .ema import *
-from .logger import setup_logger
+from .logger import WandbLogger, setup_logger
 from .lr_scheduler import LRScheduler
 from .metric import *
 from .model_utils import *
