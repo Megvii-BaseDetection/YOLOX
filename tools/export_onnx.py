@@ -49,6 +49,11 @@ def make_parser():
         default=None,
         nargs=argparse.REMAINDER,
     )
+    parser.add_argument(
+        "--decode_in_inference",
+        action="store_true",
+        help="decode in inference or not"
+    )
 
     return parser
 
@@ -78,7 +83,7 @@ def main():
         ckpt = ckpt["model"]
     model.load_state_dict(ckpt)
     model = replace_module(model, nn.SiLU, SiLU)
-    model.head.decode_in_inference = False
+    model.head.decode_in_inference = args.decode_in_inference
 
     logger.info("loading checkpoint done.")
     dummy_input = torch.randn(args.batch_size, 3, exp.test_size[0], exp.test_size[1])
