@@ -73,7 +73,7 @@ class Exp(BaseExp):
         # minimum learning rate during warmup
         self.warmup_lr = 0
         self.min_lr_ratio = 0.05
-        # learning rate for one image. During traing, lr will multiply batchsize.
+        # learning rate for one image. During training, lr will multiply batchsize.
         self.basic_lr_per_img = 0.01 / 64.0
         # name of LRScheduler
         self.scheduler = "yoloxwarmcos"
@@ -101,7 +101,7 @@ class Exp(BaseExp):
         # -----------------  testing config ------------------ #
         # output image size during evaluation/test
         self.test_size = (640, 640)
-        # confidence threshold during evalulation/test,
+        # confidence threshold during evaluation/test,
         # boxes whose scores are less than test_conf will be filtered
         self.test_conf = 0.01
         # nms threshold
