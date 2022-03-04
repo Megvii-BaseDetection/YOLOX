@@ -188,6 +188,7 @@ python -m yolox.tools.eval -n  yolox-s -c yolox_s.pth -b 1 -d 1 --conf 0.001 --f
 
 *  [Training on custom data](docs/train_custom_data.md)
 *  [Manipulating training image size](docs/manipulate_training_image_size.md)
+*  [Freezing model](docs/freeze_module.md)
 
 </details>
 
