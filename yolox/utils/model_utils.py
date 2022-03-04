@@ -127,20 +127,31 @@ def replace_module(module, replaced_module_type, new_module_type, replace_func=N
     return model
 
 
-def freeze_module(module: nn.Module) -> nn.Module:
+def freeze_module(module: nn.Module, name=None) -> nn.Module:
     """freeze module inplace
 
     Args:
         module (nn.Module): module to freeze.
+        name (str, optional): name to freeze. If not given, freeze the whole module.
+            Note that fuzzy match is not supported. Defaults to None.
 
     Examples:
         freeze the backbone of model
         >>> freeze_moudle(model.backbone)
-    """
-    for name, parameter in module.named_parameters():
-        parameter.requires_grad = False
 
-    module.eval()  # ensure module like BN and dropout are freezed
+        or freeze the backbone of model by name
+        >>> freeze_moudle(model, name="backbone")
+    """
+    for param_name, parameter in module.named_parameters():
+        if name is None or name in param_name:
+            parameter.requires_grad = False
+
+    # ensure module like BN and dropout are freezed
+    for module_name, sub_module in module.named_modules():
+        # actually there are no needs to call eval for every single sub_module
+        if name is None or name in module_name:
+            sub_module.eval()
+
     return module
 
 
