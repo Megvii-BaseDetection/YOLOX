@@ -124,6 +124,7 @@ class Exp(BaseExp):
 
         self.model.apply(init_yolo)
         self.model.head.initialize_biases(1e-2)
+        self.model.train()
         return self.model
 
     def get_data_loader(
