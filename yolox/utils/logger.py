@@ -7,6 +7,9 @@ import os
 import sys
 from loguru import logger
 
+import cv2
+import numpy as np
+
 import torch
 
 
@@ -116,6 +119,8 @@ class WandbLogger(object):
                  entity=None,
                  save_dir=None,
                  config=None,
+                 val_dataset=None,
+                 num_log_images=100,
                  **kwargs):
         """
         Args:
@@ -125,6 +130,8 @@ class WandbLogger(object):
             entity (str): wandb entity name.
             save_dir (str): save directory.
             config (dict): config dict.
+            val_dataset (Dataset): validation dataset.
+            num_log_images (int): number of images to log.
             **kwargs: other kwargs.
         """
         try:
@@ -144,6 +151,8 @@ class WandbLogger(object):
         self.kwargs = kwargs
         self.entity = entity
         self._run = None
+        self.val_artifact = None
+        self.num_log_images = min(num_log_images, len(val_dataset))
         self._wandb_init = dict(
             project=self.project,
             name=self.name,
@@ -159,7 +168,13 @@ class WandbLogger(object):
         if self.config:
             self.run.config.update(self.config)
         self.run.define_metric("epoch")
-        self.run.define_metric("val/", step_metric="epoch")
+        self.run.define_metric("val/*", step_metric="epoch")
+        self.run.define_metric("train/step")
+        self.run.define_metric("train/*", step_metric="train/step")
+
+        if val_dataset:
+            self.cats = val_dataset.cats
+            self._log_validation_set(val_dataset)
 
     @property
     def run(self):
@@ -176,6 +191,32 @@ class WandbLogger(object):
                 self._run = self.wandb.init(**self._wandb_init)
         return self._run
 
+    def _log_validation_set(self, val_dataset):
+        """
+        Log validation set to wandb.
+
+        Args:
+            val_dataset (Dataset): validation dataset.
+        """
+        if self.val_artifact is None:
+            self.val_artifact = self.wandb.Artifact(name="validation_images", type="dataset")
+            self.val_table = self.wandb.Table(columns=["id", "input"])
+
+            for i in range(self.num_log_images):
+                data_point = val_dataset[i]
+                img = data_point[0]
+                id = data_point[3]
+                img = np.transpose(img, (1, 2, 0))
+                img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+                self.val_table.add_data(
+                    id.item(),
+                    self.wandb.Image(img)
+                )
+
+            self.val_artifact.add(self.val_table, "validation_images_table")
+            self.run.use_artifact(self.val_artifact)
+            self.val_artifact.wait()
+
     def log_metrics(self, metrics, step=None):
         """
         Args:
@@ -188,9 +229,57 @@ class WandbLogger(object):
                 metrics[k] = v.item()
 
         if step is not None:
-            self.run.log(metrics, step=step)
+            metrics.update({"train/step": step})
+            self.run.log(metrics)
         else:
             self.run.log(metrics)
+
+    def log_images(self, predictions):
+        if len(predictions) == 0 or self.val_artifact is None:
+            return
+
+        table_ref = self.val_artifact.get("validation_images_table")
+
+        result_table = self.wandb.Table(columns=["id", "Annotated Image"])
+        for idx, val in table_ref.iterrows():
+            if val[0] in predictions:
+                prediction = predictions[val[0]]
+                boxes = []
+
+                for i in range(len(prediction["bboxes"])):
+                    bbox = prediction["bboxes"][i]
+                    x0 = bbox[0]
+                    y0 = bbox[1]
+                    x1 = bbox[2]
+                    y1 = bbox[3]
+                    box = {
+                        "position": {
+                            "minX": min(x0, x1),
+                            "minY": min(y0, y1),
+                            "maxX": max(x0, x1),
+                            "maxY": max(y0, y1)
+                        },
+                        "class_id": prediction["categories"][i],
+                        "domain": "pixel"
+                    }
+                    boxes.append(box)
+            else:
+                boxes = []
+            result_table.add_data(
+                idx,
+                self.wandb.Image(val[1], boxes={
+                        "prediction": {
+                            "box_data": boxes,
+                            "class_labels": {
+                                cls['id']: cls['name'] for cls in
+                                self.cats
+                            }
+                        }
+                    }
+                )
+            )
+
+        self.wandb.log({"results/result_table": result_table})
 
     def save_checkpoint(self, save_dir, model_name, is_best):
         """
