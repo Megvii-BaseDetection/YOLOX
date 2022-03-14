@@ -6,6 +6,7 @@ import inspect
 import os
 import sys
 from loguru import logger
+from collections import defaultdict
 
 import cv2
 import numpy as np
@@ -167,13 +168,16 @@ class WandbLogger(object):
 
         if self.config:
             self.run.config.update(self.config)
-        self.run.define_metric("epoch")
-        self.run.define_metric("val/*", step_metric="epoch")
+        self.run.define_metric("train/epoch")
+        self.run.define_metric("val/*", step_metric="train/epoch")
         self.run.define_metric("train/step")
         self.run.define_metric("train/*", step_metric="train/step")
 
         if val_dataset:
             self.cats = val_dataset.cats
+            self.id_to_class = {
+                cls['id']: cls['name'] for cls in self.cats
+            }
             self._log_validation_set(val_dataset)
 
     @property
@@ -240,11 +244,20 @@ class WandbLogger(object):
 
         table_ref = self.val_artifact.get("validation_images_table")
 
-        result_table = self.wandb.Table(columns=["id", "Annotated Image"])
+        columns = []
+        for cls in self.cats:
+            columns.append(cls["name"])
+
+        columns.extend(["id", "predicted"])
+
+        result_table = self.wandb.Table(columns=columns)
         for idx, val in table_ref.iterrows():
             if val[0] in predictions:
                 prediction = predictions[val[0]]
                 boxes = []
+
+                avg_scores = defaultdict(int)
+                num_occurrences = defaultdict(int)
 
                 for i in range(len(prediction["bboxes"])):
                     bbox = prediction["bboxes"][i]
@@ -262,24 +275,32 @@ class WandbLogger(object):
                         "class_id": prediction["categories"][i],
                         "domain": "pixel"
                     }
+                    avg_scores[self.id_to_class[prediction["categories"][i]]] += prediction["scores"][i]
+                    num_occurrences[self.id_to_class[prediction["categories"][i]]] += 1
                     boxes.append(box)
             else:
                 boxes = []
+
+            average_class_score = []
+            for cls in self.cats:
+                if cls["name"] not in num_occurrences:
+                    score = 0
+                else:
+                    score = avg_scores[cls["name"]] / num_occurrences[cls["name"]]
+                average_class_score.append(score)
             result_table.add_data(
+                *average_class_score,
                 idx,
                 self.wandb.Image(val[1], boxes={
                         "prediction": {
                             "box_data": boxes,
-                            "class_labels": {
-                                cls['id']: cls['name'] for cls in
-                                self.cats
-                            }
+                            "class_labels": self.id_to_class
                         }
                     }
                 )
             )
 
-        self.wandb.log({"results/result_table": result_table})
+        self.wandb.log({"val_results/result_table": result_table})
 
     def save_checkpoint(self, save_dir, model_name, is_best):
         """

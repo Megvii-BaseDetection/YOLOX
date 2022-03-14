@@ -341,7 +341,7 @@ class Trainer:
                 self.wandb_logger.log_metrics({
                     "val/COCOAP50": ap50,
                     "val/COCOAP50_95": ap50_95,
-                    "epoch": self.epoch + 1,
+                    "train/epoch": self.epoch + 1,
                 })
                 self.wandb_logger.log_images(predictions)
             logger.info("\n" + summary)
