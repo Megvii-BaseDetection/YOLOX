@@ -16,6 +16,7 @@ from yolox.utils import (
     MeterBuffer,
     ModelEMA,
     WandbLogger,
+    adjust_status,
     all_reduce_norm,
     get_local_rank,
     get_model_info,
@@ -169,7 +170,6 @@ class Trainer:
             self.ema_model.updates = self.max_iter * self.start_epoch
 
         self.model = model
-        self.model.train()
 
         self.evaluator = self.exp.get_evaluator(
             batch_size=self.args.batch_size, is_distributed=self.is_distributed
@@ -326,13 +326,14 @@ class Trainer:
             if is_parallel(evalmodel):
                 evalmodel = evalmodel.module
 
-        (ap50_95, ap50, summary), predictions = self.exp.eval(
-            evalmodel, self.evaluator, self.is_distributed, return_outputs=True
-        )
+        with adjust_status(evalmodel, training=False):
+            (ap50_95, ap50, summary), predictions = self.exp.eval(
+                evalmodel, self.evaluator, self.is_distributed
+            )
+
         update_best_ckpt = ap50_95 > self.best_ap
         self.best_ap = max(self.best_ap, ap50_95)
 
-        self.model.train()
         if self.rank == 0:
             if self.args.logger == "tensorboard":
                 self.tblogger.add_scalar("val/COCOAP50", ap50, self.epoch + 1)
