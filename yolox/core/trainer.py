@@ -180,9 +180,13 @@ class Trainer:
                 self.tblogger = SummaryWriter(os.path.join(self.file_name, "tensorboard"))
             elif self.args.logger == "wandb":
                 wandb_params = dict()
+                prefix = "wandb-"
                 for k, v in zip(self.args.opts[0::2], self.args.opts[1::2]):
                     if k.startswith("wandb-"):
-                        wandb_params.update({k.lstrip("wandb-"): v})
+                        try:
+                            wandb_params.update({k[len(prefix):]: int(v)})
+                        except:
+                            wandb_params.update({k[len(prefix):]: v})
                 self.wandb_logger = WandbLogger(
                     config=vars(self.exp),
                     val_dataset=self.evaluator.dataloader.dataset,
@@ -328,7 +332,7 @@ class Trainer:
 
         with adjust_status(evalmodel, training=False):
             (ap50_95, ap50, summary), predictions = self.exp.eval(
-                evalmodel, self.evaluator, self.is_distributed
+                evalmodel, self.evaluator, self.is_distributed, return_outputs=True
             )
 
         update_best_ckpt = ap50_95 > self.best_ap
@@ -348,11 +352,11 @@ class Trainer:
             logger.info("\n" + summary)
         synchronize()
 
-        self.save_ckpt("last_epoch", update_best_ckpt)
+        self.save_ckpt("last_epoch", update_best_ckpt, ap=ap50_95)
         if self.save_history_ckpt:
-            self.save_ckpt(f"epoch_{self.epoch + 1}")
+            self.save_ckpt(f"epoch_{self.epoch + 1}", ap=ap50_95)
 
-    def save_ckpt(self, ckpt_name, update_best_ckpt=False):
+    def save_ckpt(self, ckpt_name, update_best_ckpt=False, ap=None):
         if self.rank == 0:
             save_model = self.ema_model.ema if self.use_model_ema else self.model
             logger.info("Save weights to {}".format(self.file_name))
@@ -361,6 +365,7 @@ class Trainer:
                 "model": save_model.state_dict(),
                 "optimizer": self.optimizer.state_dict(),
                 "best_ap": self.best_ap,
+                "curr_ap": ap,
             }
             save_checkpoint(
                 ckpt_state,
@@ -370,4 +375,9 @@ class Trainer:
             )
 
             if self.args.logger == "wandb":
-                self.wandb_logger.save_checkpoint(self.file_name, ckpt_name, update_best_ckpt)
+                self.wandb_logger.save_checkpoint(self.file_name, ckpt_name, update_best_ckpt, metadata={
+                    "epoch": self.epoch + 1,
+                    "optimizer": self.optimizer.state_dict(),
+                    "best_ap": self.best_ap,
+                    "curr_ap": ap
+                })

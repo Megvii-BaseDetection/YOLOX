@@ -122,6 +122,10 @@ class WandbLogger(object):
                  config=None,
                  val_dataset=None,
                  num_log_images=100,
+                 log_dataset="val",
+                 log_predictions=True,
+                 log_checkpoints=True,
+                 log_checkpoint_metadata=True,
                  **kwargs):
         """
         Args:
@@ -133,6 +137,10 @@ class WandbLogger(object):
             config (dict): config dict.
             val_dataset (Dataset): validation dataset.
             num_log_images (int): number of images to log.
+            log_dataset (str): log validation dataset
+            log_predictions (bool): log predictions on the validation set
+            log_checkpoints (bool): log checkpoints
+            log_checkpoint_metadata (bool): log checkpoint metadata
             **kwargs: other kwargs.
         """
         try:
@@ -154,6 +162,9 @@ class WandbLogger(object):
         self._run = None
         self.val_artifact = None
         self.num_log_images = min(num_log_images, len(val_dataset))
+        self.log_predictions = log_predictions
+        self.log_checkpoints = log_checkpoints
+        self.log_checkpoint_metadata = log_checkpoint_metadata
         self._wandb_init = dict(
             project=self.project,
             name=self.name,
@@ -173,7 +184,7 @@ class WandbLogger(object):
         self.run.define_metric("train/step")
         self.run.define_metric("train/*", step_metric="train/step")
 
-        if val_dataset:
+        if val_dataset and log_dataset == "val":
             self.cats = val_dataset.cats
             self.id_to_class = {
                 cls['id']: cls['name'] for cls in self.cats
@@ -242,6 +253,9 @@ class WandbLogger(object):
         if len(predictions) == 0 or self.val_artifact is None:
             return
 
+        if not self.log_predictions:
+            return
+
         table_ref = self.val_artifact.get("validation_images_table")
 
         columns = []
@@ -252,7 +266,7 @@ class WandbLogger(object):
 
         result_table = self.wandb.Table(columns=columns)
         for idx, val in table_ref.iterrows():
-            
+
             avg_scores = defaultdict(int)
             num_occurrences = defaultdict(int)
 
@@ -303,17 +317,31 @@ class WandbLogger(object):
 
         self.wandb.log({"val_results/result_table": result_table})
 
-    def save_checkpoint(self, save_dir, model_name, is_best):
+    def save_checkpoint(self, save_dir, model_name, is_best, metadata=None):
         """
         Args:
             save_dir (str): save directory.
             model_name (str): model name.
             is_best (bool): whether the model is the best model.
+            metadata (dict): metadata to save corresponding to the checkpoint.
         """
+
+        if not self.log_checkpoints:
+            return
+
+        if "epoch" in metadata:
+            epoch = metadata["epoch"]
+        else:
+            epoch = None
+
+        if not self.log_checkpoint_metadata:
+            metadata = None
+
         filename = os.path.join(save_dir, model_name + "_ckpt.pth")
         artifact = self.wandb.Artifact(
             name=f"model-{self.run.id}",
-            type="model"
+            type="model",
+            metadata=metadata
         )
         artifact.add_file(filename, name="model_ckpt.pth")
 
@@ -321,6 +349,9 @@ class WandbLogger(object):
 
         if is_best:
             aliases.append("best")
+
+        if epoch:
+            aliases.append(f"epoch-{epoch}")
 
         self.run.log_artifact(artifact, aliases=aliases)
 
