@@ -185,7 +185,7 @@ class Trainer:
                     if k.startswith("wandb-"):
                         try:
                             wandb_params.update({k[len(prefix):]: int(v)})
-                        except:
+                        except ValueError:
                             wandb_params.update({k[len(prefix):]: v})
                 self.wandb_logger = WandbLogger(
                     config=vars(self.exp),
@@ -375,9 +375,14 @@ class Trainer:
             )
 
             if self.args.logger == "wandb":
-                self.wandb_logger.save_checkpoint(self.file_name, ckpt_name, update_best_ckpt, metadata={
-                    "epoch": self.epoch + 1,
-                    "optimizer": self.optimizer.state_dict(),
-                    "best_ap": self.best_ap,
-                    "curr_ap": ap
-                })
+                self.wandb_logger.save_checkpoint(
+                    self.file_name,
+                    ckpt_name,
+                    update_best_ckpt,
+                    metadata={
+                        "epoch": self.epoch + 1,
+                        "optimizer": self.optimizer.state_dict(),
+                        "best_ap": self.best_ap,
+                        "curr_ap": ap
+                    }
+                )

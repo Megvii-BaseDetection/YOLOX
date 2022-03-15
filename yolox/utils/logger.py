@@ -5,8 +5,8 @@
 import inspect
 import os
 import sys
-from loguru import logger
 from collections import defaultdict
+from loguru import logger
 
 import cv2
 import numpy as np
@@ -290,7 +290,9 @@ class WandbLogger(object):
                         "class_id": prediction["categories"][i],
                         "domain": "pixel"
                     }
-                    avg_scores[self.id_to_class[prediction["categories"][i]]] += prediction["scores"][i]
+                    avg_scores[
+                        self.id_to_class[prediction["categories"][i]]
+                    ] += prediction["scores"][i]
                     num_occurrences[self.id_to_class[prediction["categories"][i]]] += 1
                     boxes.append(box)
             else:
