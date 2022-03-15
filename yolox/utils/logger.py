@@ -252,12 +252,13 @@ class WandbLogger(object):
 
         result_table = self.wandb.Table(columns=columns)
         for idx, val in table_ref.iterrows():
+            
+            avg_scores = defaultdict(int)
+            num_occurrences = defaultdict(int)
+
             if val[0] in predictions:
                 prediction = predictions[val[0]]
                 boxes = []
-
-                avg_scores = defaultdict(int)
-                num_occurrences = defaultdict(int)
 
                 for i in range(len(prediction["bboxes"])):
                     bbox = prediction["bboxes"][i]
