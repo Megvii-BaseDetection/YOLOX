@@ -121,11 +121,8 @@ class WandbLogger(object):
                  save_dir=None,
                  config=None,
                  val_dataset=None,
-                 num_log_images=100,
-                 log_dataset="val",
-                 log_predictions=True,
-                 log_checkpoints=True,
-                 log_checkpoint_metadata=True,
+                 num_eval_imges=100,
+                 log_checkpoints=False,
                  **kwargs):
         """
         Args:
@@ -136,12 +133,23 @@ class WandbLogger(object):
             save_dir (str): save directory.
             config (dict): config dict.
             val_dataset (Dataset): validation dataset.
-            num_log_images (int): number of images to log.
-            log_dataset (str): log validation dataset
-            log_predictions (bool): log predictions on the validation set
+            num_eval_iamges (int): number of images from the validation set to log.
             log_checkpoints (bool): log checkpoints
-            log_checkpoint_metadata (bool): log checkpoint metadata
             **kwargs: other kwargs.
+
+        Usage:
+            Any arguments for wandb.init can be provided on the command line using
+            the prefix `wandb-`.
+            Example
+            ```
+            python tools/train.py .... --logger wandb wandb-project <project-name> \
+                wandb-name <run-name> \
+                wandb-id <run-id> \
+                wandb-save_dir <save-dir> \
+                wandb-num_eval_imges <num-images> \
+                wandb-log_checkpoints <bool>
+            ```
+            The val_dataset argument is not open to the command line.
         """
         try:
             import wandb
@@ -161,10 +169,11 @@ class WandbLogger(object):
         self.entity = entity
         self._run = None
         self.val_artifact = None
-        self.num_log_images = min(num_log_images, len(val_dataset))
-        self.log_predictions = log_predictions
-        self.log_checkpoints = log_checkpoints
-        self.log_checkpoint_metadata = log_checkpoint_metadata
+        if num_eval_imges == -1:
+            self.num_log_images = len(val_dataset)
+        else:
+            self.num_log_images = min(num_eval_imges, len(val_dataset))
+        self.log_checkpoints = (log_checkpoints == "True" or log_checkpoints == "true")
         self._wandb_init = dict(
             project=self.project,
             name=self.name,
@@ -184,7 +193,7 @@ class WandbLogger(object):
         self.run.define_metric("train/step")
         self.run.define_metric("train/*", step_metric="train/step")
 
-        if val_dataset and log_dataset == "val":
+        if val_dataset and self.num_log_images != 0:
             self.cats = val_dataset.cats
             self.id_to_class = {
                 cls['id']: cls['name'] for cls in self.cats
@@ -250,19 +259,14 @@ class WandbLogger(object):
             self.run.log(metrics)
 
     def log_images(self, predictions):
-        if len(predictions) == 0 or self.val_artifact is None:
-            return
-
-        if not self.log_predictions:
+        if len(predictions) == 0 or self.val_artifact is None or self.num_log_images == 0:
             return
 
         table_ref = self.val_artifact.get("validation_images_table")
 
-        columns = []
+        columns = ["id", "predicted"]
         for cls in self.cats:
             columns.append(cls["name"])
-
-        columns.extend(["id", "predicted"])
 
         result_table = self.wandb.Table(columns=columns)
         for idx, val in table_ref.iterrows():
@@ -306,7 +310,6 @@ class WandbLogger(object):
                     score = avg_scores[cls["name"]] / num_occurrences[cls["name"]]
                 average_class_score.append(score)
             result_table.add_data(
-                *average_class_score,
                 idx,
                 self.wandb.Image(val[1], boxes={
                         "prediction": {
@@ -314,7 +317,8 @@ class WandbLogger(object):
                             "class_labels": self.id_to_class
                         }
                     }
-                )
+                ),
+                *average_class_score
             )
 
         self.wandb.log({"val_results/result_table": result_table})
@@ -336,12 +340,9 @@ class WandbLogger(object):
         else:
             epoch = None
 
-        if not self.log_checkpoint_metadata:
-            metadata = None
-
         filename = os.path.join(save_dir, model_name + "_ckpt.pth")
         artifact = self.wandb.Artifact(
-            name=f"model-{self.run.id}",
+            name=f"run_{self.run.id}_model",
             type="model",
             metadata=metadata
         )
@@ -359,3 +360,16 @@ class WandbLogger(object):
 
     def finish(self):
         self.run.finish()
+
+    @classmethod
+    def initialize_wandb_logger(cls, args, exp, val_dataset):
+        wandb_params = dict()
+        prefix = "wandb-"
+        for k, v in zip(args.opts[0::2], args.opts[1::2]):
+            if k.startswith("wandb-"):
+                try:
+                    wandb_params.update({k[len(prefix):]: int(v)})
+                except ValueError:
+                    wandb_params.update({k[len(prefix):]: v})
+
+        return cls(config=vars(exp), val_dataset=val_dataset, **wandb_params)

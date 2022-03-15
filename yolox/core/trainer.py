@@ -179,18 +179,11 @@ class Trainer:
             if self.args.logger == "tensorboard":
                 self.tblogger = SummaryWriter(os.path.join(self.file_name, "tensorboard"))
             elif self.args.logger == "wandb":
-                wandb_params = dict()
-                prefix = "wandb-"
-                for k, v in zip(self.args.opts[0::2], self.args.opts[1::2]):
-                    if k.startswith("wandb-"):
-                        try:
-                            wandb_params.update({k[len(prefix):]: int(v)})
-                        except ValueError:
-                            wandb_params.update({k[len(prefix):]: v})
-                self.wandb_logger = WandbLogger(
-                    config=vars(self.exp),
-                    val_dataset=self.evaluator.dataloader.dataset,
-                    **wandb_params)
+                self.wandb_logger = WandbLogger.initialize_wandb_logger(
+                    self.args,
+                    self.exp,
+                    self.evaluator.dataloader.dataset
+                )
             else:
                 raise ValueError("logger must be either 'tensorboard' or 'wandb'")
 

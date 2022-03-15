@@ -76,6 +76,17 @@ python tools/train.py -n yolox-s -d 8 -b 64 --fp16 -o [--cache] --logger wandb w
                          yolox-x
 ```
 
+More WandbLogger arguments include
+
+```shell
+python tools/train.py .... --logger wandb wandb-project <project-name> \
+                wandb-name <run-name> \
+                wandb-id <run-id> \
+                wandb-save_dir <save-dir> \
+                wandb-log_val_num_images <num-images> \
+                wandb-log_checkpoints <bool>
+```
+
 **Multi Machine Training**
 
 We also support multi-nodes training. Just add the following args:
