@@ -150,7 +150,7 @@ python tools/train.py -n yolox-s -b 128 --dist-url tcp://123.123.123.123:12312 -
 
 **Logging to Weights & Biases**
 
-To log metrics, predictions and model checkpoints to [W&B](https://docs.wandb.ai/) use the command line argument `--logger wandb` and use the prefix "wandb-" to specify arguments for initializing the wandb run.
+To log metrics, predictions and model checkpoints to [W&B](https://docs.wandb.ai/guides/integrations/other/yolox) use the command line argument `--logger wandb` and use the prefix "wandb-" to specify arguments for initializing the wandb run.
 
 ```shell
 python tools/train.py -n yolox-s -d 8 -b 64 --fp16 -o [--cache] --logger wandb wandb-project <project name>

@@ -112,6 +112,7 @@ class WandbLogger(object):
 
     For more information, please refer to:
     https://docs.wandb.ai/guides/track
+    https://docs.wandb.ai/guides/integrations/other/yolox
     """
     def __init__(self,
                  project=None,

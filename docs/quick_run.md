@@ -87,6 +87,8 @@ python tools/train.py .... --logger wandb wandb-project <project-name> \
                 wandb-log_checkpoints <bool>
 ```
 
+More information available [here](https://docs.wandb.ai/guides/integrations/other/yolox).
+
 **Multi Machine Training**
 
 We also support multi-nodes training. Just add the following args:
