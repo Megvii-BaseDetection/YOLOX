@@ -170,7 +170,7 @@ class WandbLogger(object):
         self.entity = entity
         self._run = None
         self.val_artifact = None
-        if num_eval_imges == -1:
+        if num_eval_images == -1:
             self.num_log_images = len(val_dataset)
         else:
             self.num_log_images = min(num_eval_images, len(val_dataset))
