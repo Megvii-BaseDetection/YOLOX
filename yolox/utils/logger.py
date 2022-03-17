@@ -122,7 +122,7 @@ class WandbLogger(object):
                  save_dir=None,
                  config=None,
                  val_dataset=None,
-                 num_eval_imges=100,
+                 num_eval_images=100,
                  log_checkpoints=False,
                  **kwargs):
         """
@@ -134,7 +134,7 @@ class WandbLogger(object):
             save_dir (str): save directory.
             config (dict): config dict.
             val_dataset (Dataset): validation dataset.
-            num_eval_iamges (int): number of images from the validation set to log.
+            num_eval_images (int): number of images from the validation set to log.
             log_checkpoints (bool): log checkpoints
             **kwargs: other kwargs.
 
@@ -173,7 +173,7 @@ class WandbLogger(object):
         if num_eval_imges == -1:
             self.num_log_images = len(val_dataset)
         else:
-            self.num_log_images = min(num_eval_imges, len(val_dataset))
+            self.num_log_images = min(num_eval_images, len(val_dataset))
         self.log_checkpoints = (log_checkpoints == "True" or log_checkpoints == "true")
         self._wandb_init = dict(
             project=self.project,

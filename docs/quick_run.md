@@ -83,7 +83,7 @@ python tools/train.py .... --logger wandb wandb-project <project-name> \
                 wandb-name <run-name> \
                 wandb-id <run-id> \
                 wandb-save_dir <save-dir> \
-                wandb-log_val_num_images <num-images> \
+                wandb-num_eval_images <num-images> \
                 wandb-log_checkpoints <bool>
 ```
 
