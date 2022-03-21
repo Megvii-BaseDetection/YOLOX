@@ -8,7 +8,7 @@ Usage example:
 """
 dependencies = ["torch"]
 
-from yolox.models import (  # noqa: F401, E402
+from yolox.models import (  # isort:skip  # noqa: F401, E402
     yolox_tiny,
     yolox_nano,
     yolox_s,
