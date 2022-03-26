@@ -104,7 +104,7 @@ def voc_eval(
 
     # extract gt objects for this class
     class_recs = {}
-    npos = 0
+    npos = 0 + 1e-8
     for imagename in imagenames:
         R = [obj for obj in recs[imagename] if obj["name"] == classname]
         bbox = np.array([x["bbox"] for x in R])
