@@ -91,7 +91,6 @@ class COCOEvaluator:
         testdev: bool = False,
         per_class_AP: bool = False,
         per_class_AR: bool = False,
-#         class_names: list = None,
     ):
         """
         Args:
