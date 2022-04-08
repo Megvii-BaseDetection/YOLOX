@@ -130,7 +130,7 @@ class COCODataset(Dataset):
             cache_file,
             shape=(len(self.ids), max_h, max_w, 3),
             dtype=np.uint8,
-            mode="r+",
+            mode="r",
         )
 
     def load_anno_from_ids(self, id_):
