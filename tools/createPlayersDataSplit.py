@@ -98,29 +98,4 @@ if __name__ == "__main__":
     args = make_parser().parse_args()
     main(args)
 
-# root = "./datasets/playersData"
-# image_sets = ['test', 'validation', 'train']
-#
-# newRoot = "/Users/aditya/Documents/Work/YOLOX/pascal_voc-part2"
-#
-# for setName in image_sets:
-#     for line in open(os.path.join(root, "ImageSets", setName + ".txt")):
-#         imagePath = os.path.join(root, "JPEGImages", line.strip() + ".jpeg")
-#         annotPath = os.path.join(root, "Annotations", line.strip() + ".xml")
-#         tree = ET.parse(annotPath)
-#         target = tree.getroot()
-#
-#         for obj in target.findall("object"):
-#             name = obj.find("name").text.strip()
-#             if name not in PLAYERS_CLASSES:
-#                 target.remove(obj)
-#
-#         if len(target.findall("object")) == 0:
-#             continue
-#
-#         newImagePath = os.path.join(newRoot, "JPEGImages", line.strip() + ".jpeg")
-#         newAnnotPath = os.path.join(newRoot, "Annotations", line.strip() + ".xml")
-#
-#         shutil.copy(imagePath, newImagePath)
-#         tree.write(newAnnotPath)
 
