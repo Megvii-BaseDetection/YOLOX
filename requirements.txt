@@ -11,6 +11,8 @@ thop
 ninja
 tabulate
 tensorboard
+pafy
+youtube_dl==2020.12.2
 
 # verified versions
 # pycocotools corresponds to https://github.com/ppwwyyxx/cocoapi

@@ -22,7 +22,7 @@ IMAGE_EXT = [".jpg", ".jpeg", ".webp", ".bmp", ".png"]
 def make_parser():
     parser = argparse.ArgumentParser("YOLOX Demo!")
     parser.add_argument(
-        "demo", default="image", help="demo type, eg. image, video and webcam"
+        "demo", default="image", help="demo type, eg. image, video, stream and webcam"
     )
     parser.add_argument("-expn", "--experiment-name", type=str, default=None)
     parser.add_argument("-n", "--name", type=str, default=None, help="model name")
@@ -201,13 +201,14 @@ def image_demo(predictor, vis_folder, path, current_time, save_result):
             save_file_name = os.path.join(save_folder, os.path.basename(image_name))
             logger.info("Saving detection result in {}".format(save_file_name))
             cv2.imwrite(save_file_name, result_image)
+        cv2.imshow("yolox", result_image)
         ch = cv2.waitKey(0)
         if ch == 27 or ch == ord("q") or ch == ord("Q"):
             break
 
 
 def imageflow_demo(predictor, vis_folder, current_time, args):
-    cap = cv2.VideoCapture(args.path if args.demo == "video" else args.camid)
+    cap = cv2.VideoCapture(args.path if (args.demo == "video" or args.demo == "stream") else args.camid)
     width = cap.get(cv2.CAP_PROP_FRAME_WIDTH)  # float
     height = cap.get(cv2.CAP_PROP_FRAME_HEIGHT)  # float
     fps = cap.get(cv2.CAP_PROP_FPS)
@@ -218,6 +219,8 @@ def imageflow_demo(predictor, vis_folder, current_time, args):
         os.makedirs(save_folder, exist_ok=True)
         if args.demo == "video":
             save_path = os.path.join(save_folder, os.path.basename(args.path))
+        elif args.demo == "stream":
+            save_path = os.path.join(save_folder, "stream.mp4")
         else:
             save_path = os.path.join(save_folder, "camera.mp4")
         logger.info(f"video save_path is {save_path}")
@@ -309,7 +312,7 @@ def main(exp, args):
     current_time = time.localtime()
     if args.demo == "image":
         image_demo(predictor, vis_folder, args.path, current_time, args.save_result)
-    elif args.demo == "video" or args.demo == "webcam":
+    elif args.demo == "video" or args.demo == "stream" or args.demo == "webcam":
         imageflow_demo(predictor, vis_folder, current_time, args)
 
 
