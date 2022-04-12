@@ -49,10 +49,17 @@ def get_num_devices():
 
 
 @contextmanager
-def wait_for_the_master(local_rank: int):
+def wait_for_the_master(local_rank: int = None):
     """
     Make all processes waiting for the master to do some task.
+
+    Args:
+        local_rank (int): the rank of the current process. Default to None.
+            If None, it will use the rank of the current process.
     """
+    if local_rank is None:
+        local_rank = get_local_rank()
+
     if local_rank > 0:
         dist.barrier()
     yield

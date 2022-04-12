@@ -11,9 +11,7 @@ import time
 import numpy as np
 from pycocotools.cocoeval import COCOeval
 
-# import torch first to make yolox._C work without ImportError of libc10.so
-# in YOLOX, env is already set in __init__.py.
-from yolox import _C
+from .jit_ops import FastCOCOEvalOp
 
 
 class COCOeval_opt(COCOeval):
@@ -21,6 +19,9 @@ class COCOeval_opt(COCOeval):
     This is a slightly modified version of the original COCO API, where the functions evaluateImg()
     and accumulate() are implemented in C++ to speedup evaluation
     """
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.module = FastCOCOEvalOp().load()
 
     def evaluate(self):
         """
@@ -72,7 +73,7 @@ class COCOeval_opt(COCOeval):
             # to access in C++
             instances_cpp = []
             for instance in instances:
-                instance_cpp = _C.InstanceAnnotation(
+                instance_cpp = self.module.InstanceAnnotation(
                     int(instance["id"]),
                     instance["score"] if is_det else instance.get("score", 0.0),
                     instance["area"],
@@ -106,7 +107,7 @@ class COCOeval_opt(COCOeval):
             ]
 
         # Call C++ implementation of self.evaluateImgs()
-        self._evalImgs_cpp = _C.COCOevalEvaluateImages(
+        self._evalImgs_cpp = self.module.COCOevalEvaluateImages(
             p.areaRng,
             maxDet,
             p.iouThrs,
@@ -131,7 +132,7 @@ class COCOeval_opt(COCOeval):
         if not hasattr(self, "_evalImgs_cpp"):
             print("Please run evaluate() first")
 
-        self.eval = _C.COCOevalAccumulate(self._paramsEval, self._evalImgs_cpp)
+        self.eval = self.module.COCOevalAccumulate(self._paramsEval, self._evalImgs_cpp)
 
         # recall is num_iou_thresholds X num_categories X num_area_ranges X num_max_detections
         self.eval["recall"] = np.array(self.eval["recall"]).reshape(

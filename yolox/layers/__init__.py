@@ -3,3 +3,4 @@
 # Copyright (c) Megvii Inc. All rights reserved.
 
 from .fast_coco_eval_api import COCOeval_opt
+from .jit_ops import FastCOCOEvalOp, JitOp
