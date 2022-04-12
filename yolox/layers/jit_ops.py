@@ -31,11 +31,20 @@ class JitOp:
         pass
 
     def sources(self) -> List:
-        """Get list of source files for op, relative to root of package."""
+        """Get path list of source files of op.
+
+        NOTE: the path should be elative to root of package.
+            Otherwise, exception will be raised when building package.
+        """
         pass
 
     def include_dirs(self) -> List:
-        """Get list of include paths, relative to root of package."""
+        """
+        Get list of include paths, relative to root of package.
+
+        NOTE: the path should be elative to root of package.
+            Otherwise, exception will be raised when building package.
+        """
         return []
 
     def define_macros(self) -> List:
@@ -116,9 +125,7 @@ class FastCOCOEvalOp(JitOp):
         return f'yolox.layers.{self.name}'
 
     def sources(self):
-        csrc_dir = os.path.dirname(os.path.abspath(__file__))
-        return glob.glob(os.path.join(csrc_dir, "cocoeval", "*.cpp"))
+        return glob.glob(os.path.join("yolox", "layers", "cocoeval", "*.cpp"))
 
     def include_dirs(self):
-        csrc_dir = os.path.dirname(os.path.abspath(__file__))
-        return [os.path.join(csrc_dir, "cocoeval")]
+        return [os.path.join("yolox", "layers", "cocoeval")]

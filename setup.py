@@ -4,7 +4,6 @@
 import re
 import setuptools
 import sys
-from os import path
 
 TORCH_AVAILABLE = True
 try:

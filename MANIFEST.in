@@ -1,2 +1,2 @@
 include requirements.txt
-recursive-include yolox/layers *.cpp *.h *.cu *.cuh *.cc
+recursive-include yolox *.cpp *.h *.cu *.cuh *.cc
