@@ -66,18 +66,18 @@ setuptools.setup(
     author="megvii basedet team",
     url="https://github.com/Megvii-BaseDetection/YOLOX",
     package_dir=get_package_dir(),
+    packages=setuptools.find_packages(exclude=("tests", "tools")) + list(get_package_dir().keys()),
     python_requires=">=3.6",
     install_requires=get_install_requirements(),
     long_description=get_long_description(),
     long_description_content_type="text/markdown",
     include_package_data=True,  # include files in MANIFEST.in
     ext_modules=get_ext_modules(),
+    cmdclass=get_cmd_class(),
     classifiers=[
         "Programming Language :: Python :: 3", "Operating System :: OS Independent",
         "License :: OSI Approved :: Apache Software License",
     ],
-    cmdclass=get_cmd_class(),
-    packages=setuptools.find_packages(),
     project_urls={
         "Documentation": "https://yolox.readthedocs.io",
         "Source": "https://github.com/Megvii-BaseDetection/YOLOX",
