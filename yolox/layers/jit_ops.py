@@ -31,8 +31,9 @@ class JitOp:
     def sources(self) -> List:
         """Get path list of source files of op.
 
-        NOTE: the path should be elative to root of package.
+        NOTE: the path should be elative to root of package during building,
             Otherwise, exception will be raised when building package.
+            However, for runtime building, path will be absolute.
         """
         pass
 
