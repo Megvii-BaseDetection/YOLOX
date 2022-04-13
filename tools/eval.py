@@ -14,7 +14,14 @@ from torch.nn.parallel import DistributedDataParallel as DDP
 
 from yolox.core import launch
 from yolox.exp import get_exp
-from yolox.utils import configure_nccl, fuse_model, get_local_rank, get_model_info, setup_logger
+from yolox.utils import (
+    configure_module,
+    configure_nccl,
+    fuse_model,
+    get_local_rank,
+    get_model_info,
+    setup_logger
+)
 
 
 def make_parser():
@@ -190,6 +197,7 @@ def main(exp, args, num_gpu):
 
 
 if __name__ == "__main__":
+    configure_module()
     args = make_parser().parse_args()
     exp = get_exp(args.exp_file, args.name)
     exp.merge(args.opts)

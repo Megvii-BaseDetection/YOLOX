@@ -7,9 +7,7 @@ import os
 import sys
 import time
 from typing import List
-from loguru import logger
 
-from yolox.utils import wait_for_the_master
 
 __all__ = ["JitOp", "FastCOCOEvalOp"]
 
@@ -83,12 +81,14 @@ class JitOp:
         try:
             return importlib.import_module(self.absolute_name())
         except Exception:
+            from yolox.utils import wait_for_the_master
             # op not compiled, jit load
             with wait_for_the_master():
                 return self.jit_load(verbose)
 
     def jit_load(self, verbose=True):
         from torch.utils.cpp_extension import load
+        from loguru import logger
         try:
             import ninja  # noqa
         except ImportError:
@@ -125,7 +125,13 @@ class FastCOCOEvalOp(JitOp):
         return f'yolox.layers.{self.name}'
 
     def sources(self):
-        return glob.glob(os.path.join("yolox", "layers", "cocoeval", "*.cpp"))
+        sources = glob.glob(os.path.join("yolox", "layers", "cocoeval", "*.cpp"))
+        if not sources:  # source will be empty list if the so file is removed after install
+            # use abosolute path to compile
+            import yolox
+            code_path = os.path.join(yolox.__path__[0], "layers", "cocoeval", "*.cpp")
+            sources = glob.glob(code_path)
+        return sources
 
     def include_dirs(self):
         return [os.path.join("yolox", "layers", "cocoeval")]
