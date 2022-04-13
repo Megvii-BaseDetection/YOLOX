@@ -82,7 +82,7 @@ class JitOp:
     def load(self, verbose=True):
         try:
             return importlib.import_module(self.absolute_name())
-        except ImportError:
+        except Exception:
             # op not compiled, jit load
             with wait_for_the_master():
                 return self.jit_load(verbose)
