@@ -52,12 +52,20 @@ def create_yolox_model(
         device = "cuda:0" if torch.cuda.is_available() else "cpu"
     device = torch.device(device)
 
-    assert name in _CKPT_FULL_PATH, f"user should use one of value in {_CKPT_FULL_PATH.keys()}"
+    assert (
+        name in _CKPT_FULL_PATH
+    ), f"user should use one of value in {_CKPT_FULL_PATH.keys()}"
     exp: Exp = get_exp(exp_name=name)
     exp.backbone_in_channels = backbone_in_channels
     exp.num_classes = num_classes
     yolox_model = exp.get_model()
-    if pretrained and backbone_in_channels == 3 and num_classes == 80:
+    if pretrained:
+        assert (
+            backbone_in_channels == 3
+        ), f"There are no pretrained weights for the model whose number of input channels are {backbone_in_channels}"
+        assert (
+            num_classes == 80
+        ), f"There are no pretrained weights for the model whose number of output classes are {num_classes}"
         weights_url = _CKPT_FULL_PATH[name]
         ckpt = load_state_dict_from_url(weights_url, map_location="cpu")
         if "model" in ckpt:
