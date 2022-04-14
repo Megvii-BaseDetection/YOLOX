@@ -14,6 +14,7 @@ class Exp(MyExp):
         super(Exp, self).__init__()
         self.depth = 0.33
         self.width = 0.25
+        self.backbone_in_channels = 3
         self.input_size = (416, 416)
         self.random_size = (10, 20)
         self.mosaic_scale = (0.5, 1.5)
@@ -34,8 +35,12 @@ class Exp(MyExp):
             in_channels = [256, 512, 1024]
             # NANO model use depthwise = True, which is main difference.
             backbone = YOLOPAFPN(
-                self.depth, self.width, in_channels=in_channels,
-                act=self.act, depthwise=True,
+                self.depth,
+                self.width,
+                backbone_in_channels=self.backbone_in_channels,
+                in_channels=in_channels,
+                act=self.act,
+                depthwise=True,
             )
             head = YOLOXHead(
                 self.num_classes, self.width, in_channels=in_channels,
