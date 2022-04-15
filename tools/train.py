@@ -12,7 +12,7 @@ import torch.backends.cudnn as cudnn
 
 from yolox.core import Trainer, launch
 from yolox.exp import get_exp
-from yolox.utils import configure_nccl, configure_omp, get_num_devices
+from yolox.utils import configure_module, configure_nccl, configure_omp, get_num_devices
 
 
 def make_parser():
@@ -118,6 +118,7 @@ def main(exp, args):
 
 
 if __name__ == "__main__":
+    configure_module()
     args = make_parser().parse_args()
     exp = get_exp(args.exp_file, args.name)
     exp.merge(args.opts)
