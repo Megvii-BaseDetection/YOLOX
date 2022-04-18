@@ -8,6 +8,7 @@ import sys
 TORCH_AVAILABLE = True
 try:
     import torch
+    from torch.utils import cpp_extension
 except ImportError:
     TORCH_AVAILABLE = False
     print("[WARNING] Unable to import torch, pre-compiling ops will be disabled.")
@@ -56,7 +57,7 @@ def get_ext_modules():
 def get_cmd_class():
     cmdclass = {}
     if TORCH_AVAILABLE:
-        cmdclass["build_ext"] = torch.utils.cpp_extension.BuildExtension
+        cmdclass["build_ext"] = cpp_extension.BuildExtension
     return cmdclass
 
 
