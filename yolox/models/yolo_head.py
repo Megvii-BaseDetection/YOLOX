@@ -490,10 +490,27 @@ class YOLOXHead(nn.Module):
                 cls_preds_.float().unsqueeze(0).sigmoid_()
                 * obj_preds_.float().unsqueeze(0).sigmoid_()
             ).sqrt_()
-            pair_wise_cls_loss = F.binary_cross_entropy(
-                cls_preds_.repeat(num_gt, 1, 1), gt_cls_per_image,
-                reduction="none"
-            ).sum(-1)
+
+            try:
+                # may fail to allocate GPU memory when num_gt is large
+                pair_wise_cls_loss = F.binary_cross_entropy(
+                    cls_preds_.repeat(num_gt, 1, 1), gt_cls_per_image,
+                    reduction="none"
+                ).sum(-1)
+            except RuntimeError as e:
+                # TODO: the string might change, consider a better way
+                if mode == "cpu" or "CUDA out of memory. " not in str(e):
+                    raise  # RuntimeError might not caused by CUDA OOM
+                # to work with less GPU memory
+                print('--- break-down mode for cross-entropy calculations ---')
+                pair_wise_cls_loss = torch.empty(
+                    (num_gt, torch.sum(fg_mask)),
+                    dtype=cls_preds_.dtype, device=cls_preds_.device)
+                for i in range(num_gt):
+                    pair_wise_cls_loss[i] = F.binary_cross_entropy(
+                        cls_preds_, gt_cls_per_image[i].unsqueeze(0),
+                        reduction="none"
+                    ).sum(-1)
         del cls_preds_
 
         cost = (
