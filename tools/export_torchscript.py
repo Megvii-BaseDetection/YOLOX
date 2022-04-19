@@ -22,7 +22,7 @@ def make_parser():
         "--exp_file",
         default=None,
         type=str,
-        help="expriment description file",
+        help="experiment description file",
     )
     parser.add_argument("-expn", "--experiment-name", type=str, default=None)
     parser.add_argument("-n", "--name", type=str, default=None, help="model name")

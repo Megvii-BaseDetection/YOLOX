@@ -25,7 +25,7 @@ python tools/train.py -n yolox-s -d 8 -b 64 --fp16 -o [--cache]
 
 ### Higher performance
 
-New models achive **~1%** higher performance! See [Model_Zoo](model_zoo.md) for more details.
+New models achieve **~1%** higher performance! See [Model_Zoo](model_zoo.md) for more details.
 
 ### Support torch amp
 

@@ -164,7 +164,7 @@ class COCOEvaluator:
             with torch.no_grad():
                 imgs = imgs.type(tensor_type)
 
-                # skip the the last iters since batchsize might be not enough for batch inference
+                # skip the last iters since batchsize might be not enough for batch inference
                 is_time_record = cur_iter < len(self.dataloader) - 1
                 if is_time_record:
                     start = time.time()

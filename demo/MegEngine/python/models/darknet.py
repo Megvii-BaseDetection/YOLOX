@@ -18,7 +18,7 @@ class Darknet(M.Module):
         Args:
             depth (int): depth of darknet used in model, usually use [21, 53] for this param.
             in_channels (int): number of input channels, for example, use 3 for RGB image.
-            stem_out_channels (int): number of output chanels of darknet stem.
+            stem_out_channels (int): number of output channels of darknet stem.
                 It decides channels of darknet layer2 to layer5.
             out_features (Tuple[str]): desired output layer name.
         """

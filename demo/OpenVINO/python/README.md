@@ -52,7 +52,7 @@ source ~/.bashrc
 
 1. Export ONNX model
 
-   Please refer to the [ONNX toturial](https://github.com/Megvii-BaseDetection/YOLOX/demo/ONNXRuntime). **Note that you should set --opset to 10, otherwise your next step will fail.**
+   Please refer to the [ONNX tutorial](https://github.com/Megvii-BaseDetection/YOLOX/demo/ONNXRuntime). **Note that you should set --opset to 10, otherwise your next step will fail.**
 
 2. Convert ONNX to OpenVINO
 
