@@ -10,8 +10,8 @@ from loguru import logger
 import torch
 import torch.backends.cudnn as cudnn
 
-from yolox.core import Trainer, launch
-from yolox.exp import get_exp
+from yolox.core import launch
+from yolox.exp import Exp, get_exp
 from yolox.utils import configure_module, configure_nccl, configure_omp, get_num_devices
 
 
@@ -97,7 +97,7 @@ def make_parser():
 
 
 @logger.catch
-def main(exp, args):
+def main(exp: Exp, args):
     if exp.seed is not None:
         random.seed(exp.seed)
         torch.manual_seed(exp.seed)
@@ -113,7 +113,7 @@ def main(exp, args):
     configure_omp()
     cudnn.benchmark = True
 
-    trainer = Trainer(exp, args)
+    trainer = exp.get_trainer(args)
     trainer.train()
 
 
