@@ -27,7 +27,6 @@ def build_yolox(name="yolox-s"):
         width = 1.0
         backbone = YOLOFPN()
         head = YOLOXHead(num_classes, width, in_channels=[128, 256, 512], act="lrelu")
-        model = YOLOX(backbone, head)
     else:
         assert name in param_dict
         kwargs = {}
@@ -37,8 +36,7 @@ def build_yolox(name="yolox-s"):
         in_channels = [256, 512, 1024]
         backbone = YOLOPAFPN(depth, width, in_channels=in_channels, **kwargs)
         head = YOLOXHead(num_classes, width, in_channels=in_channels, **kwargs)
-        model = YOLOX(backbone, head)
-
+    model = YOLOX(backbone, head)
     for m in model.modules():
         if isinstance(m, M.BatchNorm2d):
             m.eps = 1e-3

@@ -146,15 +146,11 @@ class Predictor(object):
         cls = output[:, 6]
         scores = output[:, 4] * output[:, 5]
 
-        vis_res = vis(img, bboxes, scores, cls, cls_conf, self.cls_names)
-        return vis_res
+        return vis(img, bboxes, scores, cls, cls_conf, self.cls_names)
 
 
 def image_demo(predictor, vis_folder, path, current_time, save_result):
-    if os.path.isdir(path):
-        files = get_image_list(path)
-    else:
-        files = [path]
+    files = get_image_list(path) if os.path.isdir(path) else [path]
     files.sort()
     for image_name in files:
         outputs, img_info = predictor.inference(image_name)
@@ -165,10 +161,10 @@ def image_demo(predictor, vis_folder, path, current_time, save_result):
             )
             os.makedirs(save_folder, exist_ok=True)
             save_file_name = os.path.join(save_folder, os.path.basename(image_name))
-            logger.info("Saving detection result in {}".format(save_file_name))
+            logger.info(f"Saving detection result in {save_file_name}")
             cv2.imwrite(save_file_name, result_image)
         ch = cv2.waitKey(0)
-        if ch == 27 or ch == ord("q") or ch == ord("Q"):
+        if ch in [27, ord("q"), ord("Q")]:
             break
 
 
@@ -197,7 +193,7 @@ def imageflow_demo(predictor, vis_folder, current_time, args):
             if args.save_result:
                 vid_writer.write(result_frame)
             ch = cv2.waitKey(1)
-            if ch == 27 or ch == ord("q") or ch == ord("Q"):
+            if ch in [27, ord("q"), ord("Q")]:
                 break
         else:
             break
@@ -211,16 +207,9 @@ def main(args):
         vis_folder = os.path.join(file_name, "vis_res")
         os.makedirs(vis_folder, exist_ok=True)
 
-    confthre = 0.01
-    nmsthre = 0.65
-    test_size = (640, 640)
-    if args.conf is not None:
-        confthre = args.conf
-    if args.nms is not None:
-        nmsthre = args.nms
-    if args.tsize is not None:
-        test_size = (args.tsize, args.tsize)
-
+    confthre = args.conf if args.conf is not None else 0.01
+    nmsthre = args.nms if args.nms is not None else 0.65
+    test_size = (args.tsize, args.tsize) if args.tsize is not None else (640, 640)
     model = build_and_load(args.ckpt, name=args.name)
     model.eval()
 
@@ -228,7 +217,7 @@ def main(args):
     current_time = time.localtime()
     if args.demo == "image":
         image_demo(predictor, vis_folder, args.path, current_time, args.save_result)
-    elif args.demo == "video" or args.demo == "webcam":
+    elif args.demo in ["video", "webcam"]:
         imageflow_demo(predictor, vis_folder, current_time, args)
 
 

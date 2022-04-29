@@ -29,8 +29,7 @@ def dump_static_graph(model, graph_name="model.mge"):
 
     @jit.trace(capture_as_const=True)
     def pred_func(data):
-        outputs = model(data)
-        return outputs
+        return model(data)
 
     pred_func(data)
     pred_func.dump(

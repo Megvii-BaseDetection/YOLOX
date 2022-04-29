@@ -37,18 +37,15 @@ class YOLOFPN(M.Module):
         return BaseConv(_in, _out, ks, stride=1, act="lrelu")
 
     def _make_embedding(self, filters_list, in_filters):
-        m = M.Sequential(
+        return M.Sequential(
             *[
                 self._make_cbl(in_filters, filters_list[0], 1),
                 self._make_cbl(filters_list[0], filters_list[1], 3),
-
                 self._make_cbl(filters_list[1], filters_list[0], 1),
-
                 self._make_cbl(filters_list[0], filters_list[1], 3),
                 self._make_cbl(filters_list[1], filters_list[0], 1),
             ]
         )
-        return m
 
     def forward(self, inputs):
         """
@@ -74,5 +71,4 @@ class YOLOFPN(M.Module):
         x2_in = F.concat([x2_in, x2], 1)
         out_dark3 = self.out2(x2_in)
 
-        outputs = (out_dark3, out_dark4, x0)
-        return outputs
+        return out_dark3, out_dark4, x0

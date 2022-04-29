@@ -44,10 +44,13 @@ def per_class_AR_table(coco_eval, class_names=COCO_CLASSES, headers=["class", "A
     result_pair = [x for pair in per_class_AR.items() for x in pair]
     row_pair = itertools.zip_longest(*[result_pair[i::num_cols] for i in range(num_cols)])
     table_headers = headers * (num_cols // len(headers))
-    table = tabulate(
-        row_pair, tablefmt="pipe", floatfmt=".3f", headers=table_headers, numalign="left",
+    return tabulate(
+        row_pair,
+        tablefmt="pipe",
+        floatfmt=".3f",
+        headers=table_headers,
+        numalign="left",
     )
-    return table
 
 
 def per_class_AP_table(coco_eval, class_names=COCO_CLASSES, headers=["class", "AP"], colums=6):
@@ -69,10 +72,13 @@ def per_class_AP_table(coco_eval, class_names=COCO_CLASSES, headers=["class", "A
     result_pair = [x for pair in per_class_AP.items() for x in pair]
     row_pair = itertools.zip_longest(*[result_pair[i::num_cols] for i in range(num_cols)])
     table_headers = headers * (num_cols // len(headers))
-    table = tabulate(
-        row_pair, tablefmt="pipe", floatfmt=".3f", headers=table_headers, numalign="left",
+    return tabulate(
+        row_pair,
+        tablefmt="pipe",
+        floatfmt=".3f",
+        headers=table_headers,
+        numalign="left",
     )
-    return table
 
 
 class COCOEvaluator:
@@ -234,8 +240,6 @@ class COCOEvaluator:
 
         logger.info("Evaluate in main process...")
 
-        annType = ["segm", "bbox", "keypoints"]
-
         inference_time = statistics[0].item()
         nms_time = statistics[1].item()
         n_samples = statistics[2].item()
@@ -255,39 +259,39 @@ class COCOEvaluator:
 
         info = time_info + "\n"
 
-        # Evaluate the Dt (detection) json comparing with the ground truth
-        if len(data_dict) > 0:
-            cocoGt = self.dataloader.dataset.coco
-            # TODO: since pycocotools can't process dict in py36, write data to json file.
-            if self.testdev:
-                json.dump(data_dict, open("./yolox_testdev_2017.json", "w"))
-                cocoDt = cocoGt.loadRes("./yolox_testdev_2017.json")
-            else:
-                _, tmp = tempfile.mkstemp()
-                json.dump(data_dict, open(tmp, "w"))
-                cocoDt = cocoGt.loadRes(tmp)
-            try:
-                from yolox.layers import COCOeval_opt as COCOeval
-            except ImportError:
-                from pycocotools.cocoeval import COCOeval
-
-                logger.warning("Use standard COCOeval.")
-
-            cocoEval = COCOeval(cocoGt, cocoDt, annType[1])
-            cocoEval.evaluate()
-            cocoEval.accumulate()
-            redirect_string = io.StringIO()
-            with contextlib.redirect_stdout(redirect_string):
-                cocoEval.summarize()
-            info += redirect_string.getvalue()
-            cat_ids = list(cocoGt.cats.keys())
-            cat_names = [cocoGt.cats[catId]['name'] for catId in sorted(cat_ids)]
-            if self.per_class_AP:
-                AP_table = per_class_AP_table(cocoEval, class_names=cat_names)
-                info += "per class AP:\n" + AP_table + "\n"
-            if self.per_class_AR:
-                AR_table = per_class_AR_table(cocoEval, class_names=cat_names)
-                info += "per class AR:\n" + AR_table + "\n"
-            return cocoEval.stats[0], cocoEval.stats[1], info
-        else:
+        if len(data_dict) <= 0:
             return 0, 0, info
+        cocoGt = self.dataloader.dataset.coco
+        # TODO: since pycocotools can't process dict in py36, write data to json file.
+        if self.testdev:
+            json.dump(data_dict, open("./yolox_testdev_2017.json", "w"))
+            cocoDt = cocoGt.loadRes("./yolox_testdev_2017.json")
+        else:
+            _, tmp = tempfile.mkstemp()
+            json.dump(data_dict, open(tmp, "w"))
+            cocoDt = cocoGt.loadRes(tmp)
+        try:
+            from yolox.layers import COCOeval_opt as COCOeval
+        except ImportError:
+            from pycocotools.cocoeval import COCOeval
+
+            logger.warning("Use standard COCOeval.")
+
+        annType = ["segm", "bbox", "keypoints"]
+
+        cocoEval = COCOeval(cocoGt, cocoDt, annType[1])
+        cocoEval.evaluate()
+        cocoEval.accumulate()
+        redirect_string = io.StringIO()
+        with contextlib.redirect_stdout(redirect_string):
+            cocoEval.summarize()
+        info += redirect_string.getvalue()
+        cat_ids = list(cocoGt.cats.keys())
+        cat_names = [cocoGt.cats[catId]['name'] for catId in sorted(cat_ids)]
+        if self.per_class_AP:
+            AP_table = per_class_AP_table(cocoEval, class_names=cat_names)
+            info += "per class AP:\n" + AP_table + "\n"
+        if self.per_class_AR:
+            AR_table = per_class_AR_table(cocoEval, class_names=cat_names)
+            info += "per class AR:\n" + AR_table + "\n"
+        return cocoEval.stats[0], cocoEval.stats[1], info

@@ -15,11 +15,10 @@ except ImportError:
 
 
 def get_package_dir():
-    pkg_dir = {
+    return {
         "yolox.tools": "tools",
         "yolox.exp.default": "exps/default",
     }
-    return pkg_dir
 
 
 def get_install_requirements():
@@ -32,9 +31,9 @@ def get_install_requirements():
 def get_yolox_version():
     with open("yolox/__init__.py", "r") as f:
         version = re.search(
-            r'^__version__\s*=\s*[\'"]([^\'"]*)[\'"]',
-            f.read(), re.MULTILINE
-        ).group(1)
+            r'^__version__\s*=\s*[\'"]([^\'"]*)[\'"]', f.read(), re.MULTILINE
+        )[1]
+
     return version
 
 
