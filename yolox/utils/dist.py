@@ -42,10 +42,9 @@ def get_num_devices():
     gpu_list = os.getenv('CUDA_VISIBLE_DEVICES', None)
     if gpu_list is not None:
         return len(gpu_list.split(','))
-    else:
-        devices_list_info = os.popen("nvidia-smi -L")
-        devices_list_info = devices_list_info.read().strip().split("\n")
-        return len(devices_list_info)
+    devices_list_info = os.popen("nvidia-smi -L")
+    devices_list_info = devices_list_info.read().strip().split("\n")
+    return len(devices_list_info)
 
 
 @contextmanager
@@ -158,8 +157,7 @@ def _serialize_to_tensor(data, group):
             )
         )
     storage = torch.ByteStorage.from_buffer(buffer)
-    tensor = torch.ByteTensor(storage).to(device=device)
-    return tensor
+    return torch.ByteTensor(storage).to(device=device)
 
 
 def _pad_to_largest_tensor(tensor, group):

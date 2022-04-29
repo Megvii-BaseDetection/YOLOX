@@ -117,7 +117,7 @@ class VOCEvaluator:
                     nms_end = time_synchronized()
                     nms_time += nms_end - infer_end
 
-            data_list.update(self.convert_to_voc_format(outputs, info_imgs, ids))
+            data_list |= self.convert_to_voc_format(outputs, info_imgs, ids)
 
         statistics = torch.cuda.FloatTensor([inference_time, nms_time, n_samples])
         if distributed:

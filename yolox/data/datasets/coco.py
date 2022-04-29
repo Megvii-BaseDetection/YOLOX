@@ -18,18 +18,19 @@ def remove_useless_info(coco):
     Remove useless info in coco dataset. COCO object is modified inplace.
     This function is mainly used for saving memory (save about 30% mem).
     """
-    if isinstance(coco, COCO):
-        dataset = coco.dataset
-        dataset.pop("info", None)
-        dataset.pop("licenses", None)
-        for img in dataset["images"]:
-            img.pop("license", None)
-            img.pop("coco_url", None)
-            img.pop("date_captured", None)
-            img.pop("flickr_url", None)
-        if "annotations" in coco.dataset:
-            for anno in coco.dataset["annotations"]:
-                anno.pop("segmentation", None)
+    if not isinstance(coco, COCO):
+        return
+    dataset = coco.dataset
+    dataset.pop("info", None)
+    dataset.pop("licenses", None)
+    for img in dataset["images"]:
+        img.pop("license", None)
+        img.pop("coco_url", None)
+        img.pop("date_captured", None)
+        img.pop("flickr_url", None)
+    if "annotations" in coco.dataset:
+        for anno in coco.dataset["annotations"]:
+            anno.pop("segmentation", None)
 
 
 class COCODataset(Dataset):
@@ -66,7 +67,7 @@ class COCODataset(Dataset):
         self.ids = self.coco.getImgIds()
         self.class_ids = sorted(self.coco.getCatIds())
         cats = self.coco.loadCats(self.coco.getCatIds())
-        self._classes = tuple([c["name"] for c in cats])
+        self._classes = tuple(c["name"] for c in cats)
         self.imgs = None
         self.name = name
         self.img_size = img_size
@@ -178,12 +179,11 @@ class COCODataset(Dataset):
     def load_resized_img(self, index):
         img = self.load_image(index)
         r = min(self.img_size[0] / img.shape[0], self.img_size[1] / img.shape[1])
-        resized_img = cv2.resize(
+        return cv2.resize(
             img,
             (int(img.shape[1] * r), int(img.shape[0] * r)),
             interpolation=cv2.INTER_LINEAR,
         ).astype(np.uint8)
-        return resized_img
 
     def load_image(self, index):
         file_name = self.annotations[index][3]

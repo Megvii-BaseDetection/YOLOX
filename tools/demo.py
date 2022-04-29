@@ -180,15 +180,11 @@ class Predictor(object):
         cls = output[:, 6]
         scores = output[:, 4] * output[:, 5]
 
-        vis_res = vis(img, bboxes, scores, cls, cls_conf, self.cls_names)
-        return vis_res
+        return vis(img, bboxes, scores, cls, cls_conf, self.cls_names)
 
 
 def image_demo(predictor, vis_folder, path, current_time, save_result):
-    if os.path.isdir(path):
-        files = get_image_list(path)
-    else:
-        files = [path]
+    files = get_image_list(path) if os.path.isdir(path) else [path]
     files.sort()
     for image_name in files:
         outputs, img_info = predictor.inference(image_name)
@@ -199,10 +195,10 @@ def image_demo(predictor, vis_folder, path, current_time, save_result):
             )
             os.makedirs(save_folder, exist_ok=True)
             save_file_name = os.path.join(save_folder, os.path.basename(image_name))
-            logger.info("Saving detection result in {}".format(save_file_name))
+            logger.info(f"Saving detection result in {save_file_name}")
             cv2.imwrite(save_file_name, result_image)
         ch = cv2.waitKey(0)
-        if ch == 27 or ch == ord("q") or ch == ord("Q"):
+        if ch in [27, ord("q"), ord("Q")]:
             break
 
 
@@ -235,7 +231,7 @@ def imageflow_demo(predictor, vis_folder, current_time, args):
                 cv2.namedWindow("yolox", cv2.WINDOW_NORMAL)
                 cv2.imshow("yolox", result_frame)
             ch = cv2.waitKey(1)
-            if ch == 27 or ch == ord("q") or ch == ord("Q"):
+            if ch in [27, ord("q"), ord("Q")]:
                 break
         else:
             break
@@ -256,7 +252,7 @@ def main(exp, args):
     if args.trt:
         args.device = "gpu"
 
-    logger.info("Args: {}".format(args))
+    logger.info(f"Args: {args}")
 
     if args.conf is not None:
         exp.test_conf = args.conf
@@ -266,7 +262,7 @@ def main(exp, args):
         exp.test_size = (args.tsize, args.tsize)
 
     model = exp.get_model()
-    logger.info("Model Summary: {}".format(get_model_info(model, exp.test_size)))
+    logger.info(f"Model Summary: {get_model_info(model, exp.test_size)}")
 
     if args.device == "gpu":
         model.cuda()
@@ -309,7 +305,7 @@ def main(exp, args):
     current_time = time.localtime()
     if args.demo == "image":
         image_demo(predictor, vis_folder, args.path, current_time, args.save_result)
-    elif args.demo == "video" or args.demo == "webcam":
+    elif args.demo in ["video", "webcam"]:
         imageflow_demo(predictor, vis_folder, current_time, args)
 
 

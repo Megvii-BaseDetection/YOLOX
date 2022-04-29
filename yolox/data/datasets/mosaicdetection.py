@@ -140,7 +140,7 @@ class MosaicDetection(Dataset):
             # -----------------------------------------------------------------
             if (
                 self.enable_mixup
-                and not len(mosaic_labels) == 0
+                and len(mosaic_labels) != 0
                 and random.random() < self.mixup_prob
             ):
                 mosaic_img, mosaic_labels = self.mixup(mosaic_img, mosaic_labels, self.input_dim)
@@ -163,7 +163,7 @@ class MosaicDetection(Dataset):
         jit_factor = random.uniform(*self.mixup_scale)
         FLIP = random.uniform(0, 1) > 0.5
         cp_labels = []
-        while len(cp_labels) == 0:
+        while not cp_labels:
             cp_index = random.randint(0, self.__len__() - 1)
             cp_labels = self._dataset.load_anno(cp_index)
         img, cp_labels, _, _ = self._dataset.pull_item(cp_index)

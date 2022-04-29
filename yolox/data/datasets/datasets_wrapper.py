@@ -82,9 +82,7 @@ class Dataset(torchDataset):
         Return:
             list: Tuple containing the current width,height
         """
-        if hasattr(self, "_input_dim"):
-            return self._input_dim
-        return self.__input_dim
+        return self._input_dim if hasattr(self, "_input_dim") else self.__input_dim
 
     @staticmethod
     def mosaic_getitem(getitem_fn):
@@ -107,8 +105,6 @@ class Dataset(torchDataset):
                 self.enable_mosaic = index[0]
                 index = index[1]
 
-            ret_val = getitem_fn(self, index)
-
-            return ret_val
+            return getitem_fn(self, index)
 
         return wrapper

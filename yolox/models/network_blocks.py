@@ -22,7 +22,7 @@ def get_activation(name="silu", inplace=True):
     elif name == "lrelu":
         module = nn.LeakyReLU(0.1, inplace=inplace)
     else:
-        raise AttributeError("Unsupported act type: {}".format(name))
+        raise AttributeError(f"Unsupported act type: {name}")
     return module
 
 
