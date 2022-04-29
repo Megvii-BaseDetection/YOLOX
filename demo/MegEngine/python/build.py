@@ -3,7 +3,6 @@
 
 import megengine as mge
 import megengine.module as M
-
 from models.yolo_fpn import YOLOFPN
 from models.yolo_head import YOLOXHead
 from models.yolo_pafpn import YOLOPAFPN

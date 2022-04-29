@@ -7,7 +7,7 @@ Welcome to YOLOX's documentation!
 .. toctree::
    :maxdepth: 2
    :caption: Quick Run
-   
+
    quick_run
    model_zoo
 

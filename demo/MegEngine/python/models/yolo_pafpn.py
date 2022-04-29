@@ -2,8 +2,8 @@
 # -*- encoding: utf-8 -*-
 # Copyright (c) Megvii Inc. All rights reserved.
 
-import megengine.module as M
 import megengine.functional as F
+import megengine.module as M
 
 from .darknet import CSPDarknet
 from .network_blocks import BaseConv, CSPLayer, DWConv, UpSample

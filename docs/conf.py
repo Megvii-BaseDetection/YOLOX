@@ -21,13 +21,15 @@
 import os
 import sys
 from unittest import mock
-from sphinx.domains import Domain
-from typing import Dict, List, Tuple
+
+import yolox  # isort: skip
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
 import sphinx_rtd_theme
+# to support markdown
+from sphinx.domains import Domain
 
 
 class GithubURLDomain(Domain):
@@ -61,8 +63,6 @@ class GithubURLDomain(Domain):
             return []
 
 
-# to support markdown
-from recommonmark.parser import CommonMarkParser
 
 sys.path.insert(0, os.path.abspath("../"))
 os.environ["_DOC_BUILDING"] = "True"
@@ -100,7 +100,6 @@ for m in [
 # fmt: on
 sys.modules["cv2"].__version__ = "3.4"
 
-import yolox  # isort: skip
 
 # if HAS_TORCH:
 #     from detectron2.utils.env import fixup_module_metadata

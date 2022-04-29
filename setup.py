@@ -7,7 +7,6 @@ import sys
 
 TORCH_AVAILABLE = True
 try:
-    import torch
     from torch.utils import cpp_extension
 except ImportError:
     TORCH_AVAILABLE = False

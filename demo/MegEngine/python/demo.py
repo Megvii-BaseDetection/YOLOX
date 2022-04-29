@@ -5,16 +5,16 @@
 import argparse
 import os
 import time
-
-import cv2
-import megengine as mge
-import megengine.functional as F
 from loguru import logger
 
+import cv2
+
+from yolox.data.data_augment import preproc as preprocess
 from yolox.data.datasets import COCO_CLASSES
 from yolox.utils import vis
-from yolox.data.data_augment import preproc as preprocess
 
+import megengine as mge
+import megengine.functional as F
 from build import build_and_load
 
 IMAGE_EXT = [".jpg", ".jpeg", ".webp", ".bmp", ".png"]

@@ -25,7 +25,6 @@ class JitOp:
 
     def absolute_name(self) -> str:
         """Get absolute build path for cases where the op is pre-installed."""
-        pass
 
     def sources(self) -> List:
         """Get path list of source files of op.
@@ -34,7 +33,6 @@ class JitOp:
             Otherwise, exception will be raised when building package.
             However, for runtime building, path will be absolute.
         """
-        pass
 
     def include_dirs(self) -> List:
         """

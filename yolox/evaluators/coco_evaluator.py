@@ -9,7 +9,6 @@ import json
 import tempfile
 import time
 from loguru import logger
-from tabulate import tabulate
 from tqdm import tqdm
 
 import numpy as np
@@ -25,6 +24,8 @@ from yolox.utils import (
     time_synchronized,
     xyxy2xywh
 )
+
+from tabulate import tabulate
 
 
 def per_class_AR_table(coco_eval, class_names=COCO_CLASSES, headers=["class", "AR"], colums=6):

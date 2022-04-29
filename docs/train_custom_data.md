@@ -71,7 +71,7 @@ Once you get the Exp file and the COCO pretrained weights we provided, you can t
 ```bash
 python tools/train.py -f /path/to/your/Exp/file -d 8 -b 64 --fp16 -o -c /path/to/the/pretrained/weights [--cache]
 ```
-* --cache: we now support RAM caching to speed up training! Make sure you have enough system RAM when adopting it. 
+* --cache: we now support RAM caching to speed up training! Make sure you have enough system RAM when adopting it.
 
 or take the `YOLOX-S` VOC training for example:
 ```bash

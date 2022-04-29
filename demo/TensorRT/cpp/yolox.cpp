@@ -212,11 +212,11 @@ float* blobFromImage(cv::Mat& img){
     int channels = 3;
     int img_h = img.rows;
     int img_w = img.cols;
-    for (size_t c = 0; c < channels; c++) 
+    for (size_t c = 0; c < channels; c++)
     {
-        for (size_t  h = 0; h < img_h; h++) 
+        for (size_t  h = 0; h < img_h; h++)
         {
-            for (size_t w = 0; w < img_w; w++) 
+            for (size_t w = 0; w < img_w; w++)
             {
                 blob[c * img_w * img_h + h * img_w + w] =
                     (float)img.at<cv::Vec3b>(h, w)[c];
@@ -490,7 +490,7 @@ int main(int argc, char** argv) {
     IRuntime* runtime = createInferRuntime(gLogger);
     assert(runtime != nullptr);
     ICudaEngine* engine = runtime->deserializeCudaEngine(trtModelStream, size);
-    assert(engine != nullptr); 
+    assert(engine != nullptr);
     IExecutionContext* context = engine->createExecutionContext();
     assert(context != nullptr);
     delete[] trtModelStream;

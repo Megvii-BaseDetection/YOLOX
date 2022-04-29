@@ -4,11 +4,11 @@
 
 import argparse
 
-import megengine as mge
 import numpy as np
-from megengine import jit
 
+import megengine as mge
 from build import build_and_load
+from megengine import jit
 
 
 def make_parser():

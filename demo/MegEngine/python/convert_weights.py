@@ -3,8 +3,9 @@
 import argparse
 from collections import OrderedDict
 
-import megengine as mge
 import torch
+
+import megengine as mge
 
 
 def make_parser():

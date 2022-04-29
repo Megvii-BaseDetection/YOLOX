@@ -6,12 +6,13 @@ import ast
 import pprint
 from abc import ABCMeta, abstractmethod
 from typing import Dict
-from tabulate import tabulate
 
 import torch
 from torch.nn import Module
 
 from yolox.utils import LRScheduler
+
+from tabulate import tabulate
 
 
 class BaseExp(metaclass=ABCMeta):
