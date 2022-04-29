@@ -61,7 +61,7 @@ def make_parser():
 @logger.catch
 def main():
     args = make_parser().parse_args()
-    logger.info("args value: {}".format(args))
+    logger.info(f"args value: {args}")
     exp = get_exp(args.exp_file, args.name)
     exp.merge(args.opts)
 
@@ -98,7 +98,7 @@ def main():
                       args.output: {0: 'batch'}} if args.dynamic else None,
         opset_version=args.opset,
     )
-    logger.info("generated onnx model named {}".format(args.output_name))
+    logger.info(f"generated onnx model named {args.output_name}")
 
     if not args.no_onnxsim:
         import onnx
@@ -114,7 +114,7 @@ def main():
                                      input_shapes=input_shapes)
         assert check, "Simplified ONNX model could not be validated"
         onnx.save(model_simp, args.output_name)
-        logger.info("generated simplified onnx model named {}".format(args.output_name))
+        logger.info(f"generated simplified onnx model named {args.output_name}")
 
 
 if __name__ == "__main__":

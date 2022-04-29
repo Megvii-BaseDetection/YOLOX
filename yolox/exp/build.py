@@ -13,15 +13,14 @@ def get_exp_by_file(exp_file):
         current_exp = importlib.import_module(os.path.basename(exp_file).split(".")[0])
         exp = current_exp.Exp()
     except Exception:
-        raise ImportError("{} doesn't contains class named 'Exp'".format(exp_file))
+        raise ImportError(f"{exp_file} doesn't contains class named 'Exp'")
     return exp
 
 
 def get_exp_by_name(exp_name):
     exp = exp_name.replace("-", "_")  # convert string like "yolox-s" to "yolox_s"
     module_name = ".".join(["yolox", "exp", "default", exp])
-    exp_object = importlib.import_module(module_name).Exp()
-    return exp_object
+    return importlib.import_module(module_name).Exp()
 
 
 def get_exp(exp_file=None, exp_name=None):

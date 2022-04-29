@@ -19,5 +19,5 @@ target_link_libraries(
      yolox_openvino
     ${InferenceEngine_LIBRARIES}
     ${NGRAPH_LIBRARIES}
-    ${OpenCV_LIBS} 
+    ${OpenCV_LIBS}
 )

@@ -1,6 +1,6 @@
 # Freeze module
 
-This page guide users to freeze module in YOLOX.  
+This page guide users to freeze module in YOLOX.
 Exp controls everything in YOLOX, so let's start from creating an Exp object.
 
 ## 1. Create your own expermiment object

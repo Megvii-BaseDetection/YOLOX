@@ -69,10 +69,7 @@ def launch(
             dist_url = f"tcp://127.0.0.1:{port}"
 
         start_method = "spawn"
-        cache = vars(args[1]).get("cache", False)
-
-        # To use numpy memmap for caching image into RAM, we have to use fork method
-        if cache:
+        if cache := vars(args[1]).get("cache", False):
             assert sys.platform != "win32", (
                 "As Windows platform doesn't support fork method, "
                 "do not add --cache in your training command."
@@ -113,7 +110,7 @@ def _distributed_worker(
         torch.cuda.is_available()
     ), "cuda is not available. Please check your installation."
     global_rank = machine_rank * num_gpus_per_machine + local_rank
-    logger.info("Rank {} initialization finished.".format(global_rank))
+    logger.info(f"Rank {global_rank} initialization finished.")
     try:
         dist.init_process_group(
             backend=backend,
@@ -123,7 +120,7 @@ def _distributed_worker(
             timeout=timeout,
         )
     except Exception:
-        logger.error("Process group URL: {}".format(dist_url))
+        logger.error(f"Process group URL: {dist_url}")
         raise
 
     # Setup the local process group (which contains ranks within the same machine)

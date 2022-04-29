@@ -3,10 +3,10 @@
 
 ## 【2021/08/19】
 
-* Support image caching for faster training, which requires large system RAM. 
-* Remove the dependence of apex and support torch amp training. 
-* Optimize the preprocessing for faster training 
-* Replace the older distort augmentation with new HSV aug for faster training and better performance. 
+* Support image caching for faster training, which requires large system RAM.
+* Remove the dependence of apex and support torch amp training.
+* Optimize the preprocessing for faster training
+* Replace the older distort augmentation with new HSV aug for faster training and better performance.
 
 ### 2X Faster training
 
@@ -41,7 +41,7 @@ If you still want to use old weights, you can add `--legacy' in demo and eval:
 python tools/demo.py image -n yolox-s -c /path/to/your/yolox_s.pth --path assets/dog.jpg --conf 0.25 --nms 0.45 --tsize 640 --save_result --device [cpu/gpu] [--legacy]
 ```
 
-and 
+and
 
 ```shell
 python tools/eval.py -n  yolox-s -c yolox_s.pth -b 64 -d 8 --conf 0.001 [--fp16] [--fuse] [--legacy]
@@ -51,5 +51,3 @@ python tools/eval.py -n  yolox-s -c yolox_s.pth -b 64 -d 8 --conf 0.001 [--fp16]
 ```
 
 But for deployment demo, we don't support the old weights anymore. Users could checkout to YOLOX version 0.1.0 to use legacy weights for deployment
-
-

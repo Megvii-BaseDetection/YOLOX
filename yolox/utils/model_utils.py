@@ -27,8 +27,7 @@ def get_model_info(model: nn.Module, tsize: Sequence[int]) -> str:
     params /= 1e6
     flops /= 1e9
     flops *= tsize[0] * tsize[1] / stride / stride * 2  # Gflops
-    info = "Params: {:.2f}M, Gflops: {:.2f}".format(params, flops)
-    return info
+    return "Params: {:.2f}M, Gflops: {:.2f}".format(params, flops)
 
 
 def fuse_conv_and_bn(conv: nn.Conv2d, bn: nn.BatchNorm2d) -> nn.Conv2d:

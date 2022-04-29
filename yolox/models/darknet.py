@@ -64,25 +64,29 @@ class Darknet(nn.Module):
         ]
 
     def make_spp_block(self, filters_list, in_filters):
-        m = nn.Sequential(
+        return nn.Sequential(
             *[
                 BaseConv(in_filters, filters_list[0], 1, stride=1, act="lrelu"),
-                BaseConv(filters_list[0], filters_list[1], 3, stride=1, act="lrelu"),
+                BaseConv(
+                    filters_list[0], filters_list[1], 3, stride=1, act="lrelu"
+                ),
                 SPPBottleneck(
                     in_channels=filters_list[1],
                     out_channels=filters_list[0],
                     activation="lrelu",
                 ),
-                BaseConv(filters_list[0], filters_list[1], 3, stride=1, act="lrelu"),
-                BaseConv(filters_list[1], filters_list[0], 1, stride=1, act="lrelu"),
+                BaseConv(
+                    filters_list[0], filters_list[1], 3, stride=1, act="lrelu"
+                ),
+                BaseConv(
+                    filters_list[1], filters_list[0], 1, stride=1, act="lrelu"
+                ),
             ]
         )
-        return m
 
     def forward(self, x):
-        outputs = {}
         x = self.stem(x)
-        outputs["stem"] = x
+        outputs = {"stem": x}
         x = self.dark2(x)
         outputs["dark2"] = x
         x = self.dark3(x)
@@ -165,9 +169,8 @@ class CSPDarknet(nn.Module):
         )
 
     def forward(self, x):
-        outputs = {}
         x = self.stem(x)
-        outputs["stem"] = x
+        outputs = {"stem": x}
         x = self.dark2(x)
         outputs["dark2"] = x
         x = self.dark3(x)

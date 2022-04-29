@@ -33,7 +33,7 @@ def get_activation(name="silu"):
     elif name == "lrelu":
         module = M.LeakyReLU(0.1)
     else:
-        raise AttributeError("Unsupported act type: {}".format(name))
+        raise AttributeError(f"Unsupported act type: {name}")
     return module
 
 

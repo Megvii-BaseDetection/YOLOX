@@ -47,7 +47,7 @@ class Trainer:
         self.is_distributed = get_world_size() > 1
         self.rank = get_rank()
         self.local_rank = get_local_rank()
-        self.device = "cuda:{}".format(self.local_rank)
+        self.device = f"cuda:{self.local_rank}"
         self.use_model_ema = exp.ema
         self.save_history_ckpt = exp.save_history_ckpt
 
@@ -127,15 +127,13 @@ class Trainer:
         )
 
     def before_train(self):
-        logger.info("args: {}".format(self.args))
+        logger.info(f"args: {self.args}")
         logger.info("exp value:\n{}".format(self.exp))
 
         # model related init
         torch.cuda.set_device(self.local_rank)
         model = self.exp.get_model()
-        logger.info(
-            "Model Summary: {}".format(get_model_info(model, self.exp.test_size))
-        )
+        logger.info(f"Model Summary: {get_model_info(model, self.exp.test_size)}")
         model.to(self.device)
 
         # solver related init
@@ -175,18 +173,20 @@ class Trainer:
         self.evaluator = self.exp.get_evaluator(
             batch_size=self.args.batch_size, is_distributed=self.is_distributed
         )
-        # Tensorboard and Wandb loggers
-        if self.rank == 0:
-            if self.args.logger == "tensorboard":
+        if self.args.logger == "tensorboard":
+            if self.rank == 0:
                 self.tblogger = SummaryWriter(os.path.join(self.file_name, "tensorboard"))
-            elif self.args.logger == "wandb":
-                wandb_params = dict()
-                for k, v in zip(self.args.opts[0::2], self.args.opts[1::2]):
-                    if k.startswith("wandb-"):
-                        wandb_params.update({k.lstrip("wandb-"): v})
+        elif self.args.logger == "wandb":
+            if self.rank == 0:
+                wandb_params = {
+                    k.lstrip("wandb-"): v
+                    for k, v in zip(self.args.opts[::2], self.args.opts[1::2])
+                    if k.startswith("wandb-")
+                }
+
                 self.wandb_logger = WandbLogger(config=vars(self.exp), **wandb_params)
-            else:
-                raise ValueError("logger must be either 'tensorboard' or 'wandb'")
+        elif self.rank == 0:
+            raise ValueError("logger must be either 'tensorboard' or 'wandb'")
 
         logger.info("Training start...")
         logger.info("\n{}".format(model))
@@ -195,12 +195,11 @@ class Trainer:
         logger.info(
             "Training of experiment is done and the best AP is {:.2f}".format(self.best_ap * 100)
         )
-        if self.rank == 0:
-            if self.args.logger == "wandb":
-                self.wandb_logger.finish()
+        if self.rank == 0 and self.args.logger == "wandb":
+            self.wandb_logger.finish()
 
     def before_epoch(self):
-        logger.info("---> start train epoch{}".format(self.epoch + 1))
+        logger.info(f"---> start train epoch{self.epoch + 1}")
 
         if self.epoch + 1 == self.max_epoch - self.exp.no_aug_epochs or self.no_aug:
             logger.info("--->No mosaic aug now!")
@@ -235,11 +234,10 @@ class Trainer:
             # TODO check ETA logic
             left_iters = self.max_iter * self.max_epoch - (self.progress_in_iter + 1)
             eta_seconds = self.meter["iter_time"].global_avg * left_iters
-            eta_str = "ETA: {}".format(datetime.timedelta(seconds=int(eta_seconds)))
+            eta_str = f"ETA: {datetime.timedelta(seconds=int(eta_seconds))}"
 
-            progress_str = "epoch: {}/{}, iter: {}/{}".format(
-                self.epoch + 1, self.max_epoch, self.iter + 1, self.max_iter
-            )
+            progress_str = f"epoch: {self.epoch + 1}/{self.max_epoch}, iter: {self.iter + 1}/{self.max_iter}"
+
             loss_meter = self.meter.get_filtered_meter("loss")
             loss_str = ", ".join(
                 ["{}: {:.1f}".format(k, v.latest) for k, v in loss_meter.items()]
@@ -261,10 +259,9 @@ class Trainer:
                 + (", size: {:d}, {}".format(self.input_size[0], eta_str))
             )
 
-            if self.rank == 0:
-                if self.args.logger == "wandb":
-                    self.wandb_logger.log_metrics({k: v.latest for k, v in loss_meter.items()})
-                    self.wandb_logger.log_metrics({"lr": self.meter["lr"].latest})
+            if self.rank == 0 and self.args.logger == "wandb":
+                self.wandb_logger.log_metrics({k: v.latest for k, v in loss_meter.items()})
+                self.wandb_logger.log_metrics({"lr": self.meter["lr"].latest})
 
             self.meter.clear_meters()
 
@@ -299,10 +296,9 @@ class Trainer:
             )
             self.start_epoch = start_epoch
             logger.info(
-                "loaded checkpoint '{}' (epoch {})".format(
-                    self.args.resume, self.start_epoch
-                )
-            )  # noqa
+                f"loaded checkpoint '{self.args.resume}' (epoch {self.start_epoch})"
+            )
+
         else:
             if self.args.ckpt is not None:
                 logger.info("loading checkpoint for fine tuning")
@@ -349,7 +345,7 @@ class Trainer:
     def save_ckpt(self, ckpt_name, update_best_ckpt=False):
         if self.rank == 0:
             save_model = self.ema_model.ema if self.use_model_ema else self.model
-            logger.info("Save weights to {}".format(self.file_name))
+            logger.info(f"Save weights to {self.file_name}")
             ckpt_state = {
                 "start_epoch": self.epoch + 1,
                 "model": save_model.state_dict(),

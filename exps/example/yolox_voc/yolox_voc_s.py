@@ -75,9 +75,7 @@ class Exp(MyExp):
         if is_distributed:
             batch_size = batch_size // dist.get_world_size()
 
-        sampler = InfiniteSampler(
-            len(self.dataset), seed=self.seed if self.seed else 0
-        )
+        sampler = InfiniteSampler(len(self.dataset), seed=self.seed or 0)
 
         batch_sampler = YoloBatchSampler(
             sampler=sampler,
@@ -86,15 +84,14 @@ class Exp(MyExp):
             mosaic=not no_aug,
         )
 
-        dataloader_kwargs = {"num_workers": self.data_num_workers, "pin_memory": True}
-        dataloader_kwargs["batch_sampler"] = batch_sampler
+        dataloader_kwargs = {
+            "num_workers": self.data_num_workers,
+            "pin_memory": True,
+            "batch_sampler": batch_sampler,
+            "worker_init_fn": worker_init_reset_seed,
+        }
 
-        # Make sure each process has different random seed, especially for 'fork' method
-        dataloader_kwargs["worker_init_fn"] = worker_init_reset_seed
-
-        train_loader = DataLoader(self.dataset, **dataloader_kwargs)
-
-        return train_loader
+        return DataLoader(self.dataset, **dataloader_kwargs)
 
     def get_eval_loader(self, batch_size, is_distributed, testdev=False, legacy=False):
         from yolox.data import VOCDetection, ValTransform
@@ -118,21 +115,19 @@ class Exp(MyExp):
             "num_workers": self.data_num_workers,
             "pin_memory": True,
             "sampler": sampler,
+            "batch_size": batch_size,
         }
-        dataloader_kwargs["batch_size"] = batch_size
-        val_loader = torch.utils.data.DataLoader(valdataset, **dataloader_kwargs)
 
-        return val_loader
+        return torch.utils.data.DataLoader(valdataset, **dataloader_kwargs)
 
     def get_evaluator(self, batch_size, is_distributed, testdev=False, legacy=False):
         from yolox.evaluators import VOCEvaluator
 
         val_loader = self.get_eval_loader(batch_size, is_distributed, testdev, legacy)
-        evaluator = VOCEvaluator(
+        return VOCEvaluator(
             dataloader=val_loader,
             img_size=self.test_size,
             confthre=self.test_conf,
             nmsthre=self.nmsthre,
             num_classes=self.num_classes,
         )
-        return evaluator

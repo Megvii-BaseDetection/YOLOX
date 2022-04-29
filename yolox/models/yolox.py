@@ -29,20 +29,18 @@ class YOLOX(nn.Module):
         # fpn output content features of [dark3, dark4, dark5]
         fpn_outs = self.backbone(x)
 
-        if self.training:
-            assert targets is not None
-            loss, iou_loss, conf_loss, cls_loss, l1_loss, num_fg = self.head(
-                fpn_outs, targets, x
-            )
-            outputs = {
-                "total_loss": loss,
-                "iou_loss": iou_loss,
-                "l1_loss": l1_loss,
-                "conf_loss": conf_loss,
-                "cls_loss": cls_loss,
-                "num_fg": num_fg,
-            }
-        else:
-            outputs = self.head(fpn_outs)
+        if not self.training:
+            return self.head(fpn_outs)
 
-        return outputs
+        assert targets is not None
+        loss, iou_loss, conf_loss, cls_loss, l1_loss, num_fg = self.head(
+            fpn_outs, targets, x
+        )
+        return {
+            "total_loss": loss,
+            "iou_loss": iou_loss,
+            "l1_loss": l1_loss,
+            "conf_loss": conf_loss,
+            "cls_loss": cls_loss,
+            "num_fg": num_fg,
+        }

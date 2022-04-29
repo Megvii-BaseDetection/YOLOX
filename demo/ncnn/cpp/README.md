@@ -1,6 +1,6 @@
 # YOLOX-CPP-ncnn
 
-Cpp file compile of YOLOX object detection base on [ncnn](https://github.com/Tencent/ncnn).  
+Cpp file compile of YOLOX object detection base on [ncnn](https://github.com/Tencent/ncnn).
 YOLOX is included in ncnn now, you could also try building from ncnn, it's better.
 
 ## Tutorial
@@ -27,7 +27,7 @@ cd build/tools/ncnn
 
 Since Focus module is not supported in ncnn. Warnings like:
 ```shell
-Unsupported slice step ! 
+Unsupported slice step !
 ```
 will be printed. However, don't  worry!  C++ version of Focus layer is already implemented in yolox.cpp.
 
@@ -49,7 +49,7 @@ Crop             Slice_39                 1 1 677 682 -23309=1,1 -23310=1,214748
 Concat           Concat_40                4 1 652 672 662 682 683 0=0
 ...
 ```
-* Change first number for 295 to 295 - 9 = 286(since we will remove 10 layers and add 1 layers, total layers number should minus 9). 
+* Change first number for 295 to 295 - 9 = 286(since we will remove 10 layers and add 1 layers, total layers number should minus 9).
 * Then remove 10 lines of code from Split to Concat, but remember the last but 2nd number: 683.
 * Add YoloV5Focus layer After Input (using previous number 683):
 ```

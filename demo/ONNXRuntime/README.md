@@ -57,7 +57,7 @@ Step1.
 cd <YOLOX_HOME>/demo/ONNXRuntime
 ```
 
-Step2. 
+Step2.
 ```shell
 python3 onnx_inference.py -m <ONNX_MODEL_PATH> -i <IMAGE_PATH> -o <OUTPUT_DIR> -s 0.3 --input_shape 640,640
 ```

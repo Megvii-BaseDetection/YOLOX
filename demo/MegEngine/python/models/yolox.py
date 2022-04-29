@@ -29,6 +29,4 @@ class YOLOX(M.Module):
         # fpn output content features of [dark3, dark4, dark5]
         fpn_outs = self.backbone(x)
         assert not self.training
-        outputs = self.head(fpn_outs)
-
-        return outputs
+        return self.head(fpn_outs)

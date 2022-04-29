@@ -174,7 +174,7 @@ class Exp(BaseExp):
         if is_distributed:
             batch_size = batch_size // dist.get_world_size()
 
-        sampler = InfiniteSampler(len(self.dataset), seed=self.seed if self.seed else 0)
+        sampler = InfiniteSampler(len(self.dataset), seed=self.seed or 0)
 
         batch_sampler = YoloBatchSampler(
             sampler=sampler,
@@ -183,16 +183,14 @@ class Exp(BaseExp):
             mosaic=not no_aug,
         )
 
-        dataloader_kwargs = {"num_workers": self.data_num_workers, "pin_memory": True}
-        dataloader_kwargs["batch_sampler"] = batch_sampler
+        dataloader_kwargs = {
+            "num_workers": self.data_num_workers,
+            "pin_memory": True,
+            "batch_sampler": batch_sampler,
+            "worker_init_fn": worker_init_reset_seed,
+        }
 
-        # Make sure each process has different random seed, especially for 'fork' method.
-        # Check https://github.com/pytorch/pytorch/issues/63311 for more details.
-        dataloader_kwargs["worker_init_fn"] = worker_init_reset_seed
-
-        train_loader = DataLoader(self.dataset, **dataloader_kwargs)
-
-        return train_loader
+        return DataLoader(self.dataset, **dataloader_kwargs)
 
     def random_resize(self, data_loader, epoch, rank, is_distributed):
         tensor = torch.LongTensor(2).cuda()
@@ -212,8 +210,7 @@ class Exp(BaseExp):
             dist.barrier()
             dist.broadcast(tensor, 0)
 
-        input_size = (tensor[0].item(), tensor[1].item())
-        return input_size
+        return tensor[0].item(), tensor[1].item()
 
     def preprocess(self, inputs, targets, tsize):
         scale_y = tsize[0] / self.input_size[0]
@@ -257,7 +254,7 @@ class Exp(BaseExp):
     def get_lr_scheduler(self, lr, iters_per_epoch):
         from yolox.utils import LRScheduler
 
-        scheduler = LRScheduler(
+        return LRScheduler(
             self.scheduler,
             lr,
             iters_per_epoch,
@@ -267,18 +264,18 @@ class Exp(BaseExp):
             no_aug_epochs=self.no_aug_epochs,
             min_lr_ratio=self.min_lr_ratio,
         )
-        return scheduler
 
     def get_eval_loader(self, batch_size, is_distributed, testdev=False, legacy=False):
         from yolox.data import COCODataset, ValTransform
 
         valdataset = COCODataset(
             data_dir=self.data_dir,
-            json_file=self.val_ann if not testdev else self.test_ann,
-            name="val2017" if not testdev else "test2017",
+            json_file=self.test_ann if testdev else self.val_ann,
+            name="test2017" if testdev else "val2017",
             img_size=self.test_size,
             preproc=ValTransform(legacy=legacy),
         )
+
 
         if is_distributed:
             batch_size = batch_size // dist.get_world_size()
@@ -292,17 +289,16 @@ class Exp(BaseExp):
             "num_workers": self.data_num_workers,
             "pin_memory": True,
             "sampler": sampler,
+            "batch_size": batch_size,
         }
-        dataloader_kwargs["batch_size"] = batch_size
-        val_loader = torch.utils.data.DataLoader(valdataset, **dataloader_kwargs)
 
-        return val_loader
+        return torch.utils.data.DataLoader(valdataset, **dataloader_kwargs)
 
     def get_evaluator(self, batch_size, is_distributed, testdev=False, legacy=False):
         from yolox.evaluators import COCOEvaluator
 
         val_loader = self.get_eval_loader(batch_size, is_distributed, testdev, legacy)
-        evaluator = COCOEvaluator(
+        return COCOEvaluator(
             dataloader=val_loader,
             img_size=self.test_size,
             confthre=self.test_conf,
@@ -310,13 +306,11 @@ class Exp(BaseExp):
             num_classes=self.num_classes,
             testdev=testdev,
         )
-        return evaluator
 
     def get_trainer(self, args):
         from yolox.core import Trainer
-        trainer = Trainer(self, args)
         # NOTE: trainer shouldn't be an attribute of exp object
-        return trainer
+        return Trainer(self, args)
 
     def eval(self, model, evaluator, is_distributed, half=False):
         return evaluator.evaluate(model, is_distributed, half)

@@ -74,18 +74,18 @@ def setup_logger(save_dir, distributed_rank=0, filename="log.txt", mode="a"):
     Return:
         logger instance.
     """
-    loguru_format = (
-        "<green>{time:YYYY-MM-DD HH:mm:ss}</green> | "
-        "<level>{level: <8}</level> | "
-        "<cyan>{name}</cyan>:<cyan>{line}</cyan> - <level>{message}</level>"
-    )
-
     logger.remove()
     save_file = os.path.join(save_dir, filename)
     if mode == "o" and os.path.exists(save_file):
         os.remove(save_file)
     # only keep logger in rank0 process
     if distributed_rank == 0:
+        loguru_format = (
+            "<green>{time:YYYY-MM-DD HH:mm:ss}</green> | "
+            "<level>{level: <8}</level> | "
+            "<cyan>{name}</cyan>:<cyan>{line}</cyan> - <level>{message}</level>"
+        )
+
         logger.add(
             sys.stderr,
             format=loguru_format,
@@ -199,7 +199,7 @@ class WandbLogger(object):
             model_name (str): model name.
             is_best (bool): whether the model is the best model.
         """
-        filename = os.path.join(save_dir, model_name + "_ckpt.pth")
+        filename = os.path.join(save_dir, f"{model_name}_ckpt.pth")
         artifact = self.wandb.Artifact(
             name=f"model-{self.run.id}",
             type="model"

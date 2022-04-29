@@ -148,10 +148,7 @@ class YOLOXHead(M.Module):
         # [batch, n_anchors_all, 85]
         outputs = F.concat([F.flatten(x, start_axis=2) for x in outputs], axis=2)
         outputs = F.transpose(outputs, (0, 2, 1))
-        if self.decode_in_inference:
-            return self.decode_outputs(outputs)
-        else:
-            return outputs
+        return self.decode_outputs(outputs) if self.decode_in_inference else outputs
 
     def get_output_and_grid(self, output, k, stride, dtype):
         grid = self.grids[k]

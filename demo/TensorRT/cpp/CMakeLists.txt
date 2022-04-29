@@ -33,4 +33,3 @@ target_link_libraries(yolox cudart)
 target_link_libraries(yolox ${OpenCV_LIBS})
 
 add_definitions(-O2 -pthread)
-
