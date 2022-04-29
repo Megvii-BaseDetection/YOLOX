@@ -25,7 +25,6 @@ class JitOp:
 
     def absolute_name(self) -> str:
         """Get absolute build path for cases where the op is pre-installed."""
-        pass
 
     def sources(self) -> List:
         """Get path list of source files of op.
@@ -34,7 +33,6 @@ class JitOp:
             Otherwise, exception will be raised when building package.
             However, for runtime building, path will be absolute.
         """
-        pass
 
     def include_dirs(self) -> List:
         """
@@ -51,19 +49,22 @@ class JitOp:
 
     def cxx_args(self) -> List:
         """Get optional list of compiler flags to forward"""
-        args = ["-O2"] if sys.platform == "win32" else ["-O3", "-std=c++14", "-g", "-Wno-reorder"]
-        return args
+        return (
+            ["-O2"]
+            if sys.platform == "win32"
+            else ["-O3", "-std=c++14", "-g", "-Wno-reorder"]
+        )
 
     def nvcc_args(self) -> List:
         """Get optional list of compiler flags to forward to nvcc when building CUDA sources"""
-        args = [
-            "-O3", "--use_fast_math",
+        return [
+            "-O3",
+            "--use_fast_math",
             "-std=c++17" if sys.platform == "win32" else "-std=c++14",
             "-U__CUDA_NO_HALF_OPERATORS__",
             "-U__CUDA_NO_HALF_CONVERSIONS__",
             "-U__CUDA_NO_HALF2_OPERATORS__",
         ]
-        return args
 
     def build_op(self):
         from torch.utils.cpp_extension import CppExtension

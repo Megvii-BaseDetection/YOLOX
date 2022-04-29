@@ -4,11 +4,11 @@
 
 import argparse
 
-import megengine as mge
 import numpy as np
-from megengine import jit
 
+import megengine as mge
 from build import build_and_load
+from megengine import jit
 
 
 def make_parser():
@@ -29,8 +29,7 @@ def dump_static_graph(model, graph_name="model.mge"):
 
     @jit.trace(capture_as_const=True)
     def pred_func(data):
-        outputs = model(data)
-        return outputs
+        return model(data)
 
     pred_func(data)
     pred_func.dump(

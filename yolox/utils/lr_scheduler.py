@@ -90,7 +90,7 @@ class LRScheduler:
             gamma = getattr(self, "gamma", 0.1)
             lr_func = partial(multistep_lr, self.lr, milestones, gamma)
         else:
-            raise ValueError("Scheduler version {} not supported.".format(name))
+            raise ValueError(f"Scheduler version {name} not supported.")
         return lr_func
 
 

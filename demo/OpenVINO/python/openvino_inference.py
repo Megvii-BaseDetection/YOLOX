@@ -16,7 +16,7 @@ from openvino.inference_engine import IECore
 
 from yolox.data.data_augment import preproc as preprocess
 from yolox.data.datasets import COCO_CLASSES
-from yolox.utils import mkdir, multiclass_nms, demo_postprocess, vis
+from yolox.utils import demo_postprocess, mkdir, multiclass_nms, vis
 
 
 def parse_args() -> argparse.Namespace:
@@ -106,7 +106,7 @@ def main():
     net.outputs[out_blob].precision = 'FP16'
 
     # Get a number of classes recognized by a model
-    num_of_classes = max(net.outputs[out_blob].shape)
+    max(net.outputs[out_blob].shape)
 
     # ---------------------------Step 4. Loading model to the device-------------------------------------------------------
     log.info('Loading the model to the plugin')

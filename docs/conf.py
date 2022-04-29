@@ -21,13 +21,15 @@
 import os
 import sys
 from unittest import mock
-from sphinx.domains import Domain
-from typing import Dict, List, Tuple
+
+import yolox  # isort: skip
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
 import sphinx_rtd_theme
+# to support markdown
+from sphinx.domains import Domain
 
 
 class GithubURLDomain(Domain):
@@ -54,15 +56,13 @@ class GithubURLDomain(Domain):
                 # bug of recommonmark.
                 # https://github.com/readthedocs/recommonmark/blob/ddd56e7717e9745f11300059e4268e204138a6b1/recommonmark/parser.py#L152-L155
                 github_url += ".md"
-            print("Ref {} resolved to github:{}".format(target, github_url))
+            print(f"Ref {target} resolved to github:{github_url}")
             contnode["refuri"] = self.ROOT + github_url
             return [("githuburl:any", contnode)]
         else:
             return []
 
 
-# to support markdown
-from recommonmark.parser import CommonMarkParser
 
 sys.path.insert(0, os.path.abspath("../"))
 os.environ["_DOC_BUILDING"] = "True"
@@ -100,7 +100,6 @@ for m in [
 # fmt: on
 sys.modules["cv2"].__version__ = "3.4"
 
-import yolox  # isort: skip
 
 # if HAS_TORCH:
 #     from detectron2.utils.env import fixup_module_metadata
@@ -150,11 +149,7 @@ napoleon_use_rtype = False
 autodoc_inherit_docstrings = False
 autodoc_member_order = "bysource"
 
-if DEPLOY:
-    intersphinx_timeout = 10
-else:
-    # skip this when building locally
-    intersphinx_timeout = 0.5
+intersphinx_timeout = 10 if DEPLOY else 0.5
 intersphinx_mapping = {
     "python": ("https://docs.python.org/3.6", None),
     "numpy": ("https://docs.scipy.org/doc/numpy/", None),
@@ -302,7 +297,7 @@ def autodoc_skip_member(app, what, name, obj, skip, options):
         if name in HIDDEN or (
             hasattr(obj, "__doc__") and obj.__doc__.lower().strip().startswith("deprecated")
         ):
-            print("Skipping deprecated object: {}".format(name))
+            print(f"Skipping deprecated object: {name}")
             return True
     except:
         pass
