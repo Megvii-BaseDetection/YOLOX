@@ -42,6 +42,12 @@ def make_parser():
         help="plz input your experiment description file",
     )
     parser.add_argument(
+        "--config_filepath",
+        default=None,
+        type=str,
+        help="Filepath to config file",
+    )
+    parser.add_argument(
         "--resume", default=False, action="store_true", help="resume training"
     )
     parser.add_argument("-c", "--ckpt", default=None, type=str, help="checkpoint file")
