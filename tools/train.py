@@ -7,6 +7,7 @@ import random
 import warnings
 from loguru import logger
 
+import yaml
 import torch
 import torch.backends.cudnn as cudnn
 
@@ -130,6 +131,11 @@ if __name__ == "__main__":
 
     if not args.experiment_name:
         args.experiment_name = exp.exp_name
+
+    if args.config_filepath is not None:
+        with open(args.config_filepath, "r") as f:
+            config = yaml.safe_load(f)
+        exp.add_params_from_config(config, use_neptune=True)
 
     num_gpu = get_num_devices() if args.devices is None else args.devices
     assert num_gpu <= get_num_devices()

@@ -8,6 +8,7 @@ from abc import ABCMeta, abstractmethod
 from typing import Dict
 from tabulate import tabulate
 
+import neptune.new as neptune
 import torch
 from torch.nn import Module
 
@@ -22,7 +23,10 @@ class BaseExp(metaclass=ABCMeta):
         self.output_dir = "./YOLOX_outputs"
         self.print_interval = 100
         self.eval_interval = 10
-
+        self.neptune = neptune.init(
+            project="jakub.pingielski/b-yond",
+            api_token="eyJhcGlfYWRkcmVzcyI6Imh0dHBzOi8vYXBwLm5lcHR1bmUuYWkiLCJhcGlfdXJsIjoiaHR0cHM6Ly9hcHAubmVwdHVuZS5haSIsImFwaV9rZXkiOiI2NTlkYzZmZC1kZTY5LTQ2NjMtODFkZC04YmY4NTNmYTkwMTIifQ==",
+        )
     @abstractmethod
     def get_model(self) -> Module:
         pass
@@ -73,3 +77,11 @@ class BaseExp(metaclass=ABCMeta):
                     except Exception:
                         v = ast.literal_eval(v)
                 setattr(self, k, v)
+
+    def add_params_from_config(self, config: dict, use_neptune: bool = True):
+        for key, value in config.items():
+            setattr(self, key, value)
+            if use_neptune and self.neptune:
+                self.neptune[f"config/{key}"].log(value)
+
+
