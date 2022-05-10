@@ -136,7 +136,7 @@ if __name__ == "__main__":
         with open(args.config_filepath, "r") as f:
             config = yaml.safe_load(f)
         exp.add_params_from_config(config, use_neptune=True)
-        exp.neptune.log_artifact(args.config_filepath)
+        print("saving config from", args.config_filepath)
         exp.neptune['config'].track_files(args.config_filepath)
     num_gpu = get_num_devices() if args.devices is None else args.devices
     assert num_gpu <= get_num_devices()
