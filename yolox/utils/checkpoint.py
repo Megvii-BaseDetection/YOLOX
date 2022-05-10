@@ -42,7 +42,6 @@ def save_checkpoint(state, is_best, save_dir, model_name, neptune):
     if is_best:
         best_filename = os.path.join(save_dir, "best_ckpt.pth")
         shutil.copyfile(filename, best_filename)
-        print("saving best checkpoint to ", best_filename)
         neptune['best_checkpoint'].track_files(best_filename)
 
 
