@@ -44,5 +44,7 @@ def save_checkpoint(state, is_best, save_dir, model_name, neptune):
         shutil.copyfile(filename, best_filename)
         if neptune:
             neptune.log_artifact(best_filename)
+            neptune['best_checkpoint'].track_files(best_filename)
+
 
 
