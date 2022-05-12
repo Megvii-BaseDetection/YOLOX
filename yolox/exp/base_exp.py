@@ -81,8 +81,7 @@ class BaseExp(metaclass=ABCMeta):
     def add_params_from_config(self, config: dict, use_neptune: bool = True):
         for key, value in config.items():
             if key == "dataset_version":
-                value = DATASETS_PATH / key
-                setattr("dataset_dir", value)
+                setattr(self, "dataset_dir", DATASETS_PATH / value)
             else:
                 setattr(self, key, value)
             if use_neptune and self.neptune:

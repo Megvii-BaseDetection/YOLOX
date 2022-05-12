@@ -114,7 +114,7 @@ class Trainer:
             self.ema_model.update(self.model)
 
         lr = self.lr_scheduler.update_lr(self.progress_in_iter + 1)
-        self.neptune['lr'].log(lr)
+        self.neptune['config/lr'].log(lr)
         for param_group in self.optimizer.param_groups:
             param_group["lr"] = lr
 
@@ -245,7 +245,7 @@ class Trainer:
                 ["{}: {:.1f}".format(k, v.latest) for k, v in loss_meter.items()]
             )
             for loss_name, loss_value in loss_meter.items():
-                self.neptune[loss_name].log(loss_value.latest())
+                self.neptune[f"loss/{loss_name}"].log(loss_value.latest)
             time_meter = self.meter.get_filtered_meter("time")
             time_str = ", ".join(
                 ["{}: {:.3f}s".format(k, v.avg) for k, v in time_meter.items()]
@@ -329,7 +329,7 @@ class Trainer:
 
         update_best_ckpt = ap50_95 > self.best_ap
         self.best_ap = max(self.best_ap, ap50_95)
-        self.neptune['best_ap'].log(self.best_ap)
+        self.neptune['metrics/best_ap'].log(self.best_ap)
         if self.rank == 0:
             if self.args.logger == "tensorboard":
                 self.tblogger.add_scalar("val/COCOAP50", ap50, self.epoch + 1)
