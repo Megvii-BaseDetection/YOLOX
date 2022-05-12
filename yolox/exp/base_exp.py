@@ -13,7 +13,7 @@ import torch
 from torch.nn import Module
 
 from yolox.utils import LRScheduler
-
+from paths import DATASETS_PATH
 
 class BaseExp(metaclass=ABCMeta):
     """Basic class for any experiment."""
@@ -80,7 +80,11 @@ class BaseExp(metaclass=ABCMeta):
 
     def add_params_from_config(self, config: dict, use_neptune: bool = True):
         for key, value in config.items():
-            setattr(self, key, value)
+            if key == "dataset_version":
+                value = DATASETS_PATH / key
+                setattr("dataset_dir", value)
+            else:
+                setattr(self, key, value)
             if use_neptune and self.neptune:
                 self.neptune[f"config/{key}"].log(value)
 
