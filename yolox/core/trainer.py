@@ -183,7 +183,7 @@ class Trainer:
                 wandb_params = dict()
                 for k, v in zip(self.args.opts[0::2], self.args.opts[1::2]):
                     if k.startswith("wandb-"):
-                        wandb_params.update({k.lstrip("wandb-"): v})
+                        wandb_params.update({k[len("wandb-"):]: v})
                 self.wandb_logger = WandbLogger(config=vars(self.exp), **wandb_params)
             else:
                 raise ValueError("logger must be either 'tensorboard' or 'wandb'")
