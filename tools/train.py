@@ -127,6 +127,11 @@ def main(exp, args):
 if __name__ == "__main__":
     args = make_parser().parse_args()
     exp = get_exp(args.exp_file, args.name)
+
+    #TODO: Add neptune logging with multidevice training. Logging now works only 
+    # on 1 gpu device training, not working with multiprocessing.
+    exp.set_neptune_logging(True)
+
     exp.merge(args.opts)
 
     if not args.experiment_name:
@@ -136,7 +141,7 @@ if __name__ == "__main__":
         with open(args.config_filepath, "r") as f:
             config = yaml.safe_load(f)
         exp.add_params_from_config(config, use_neptune=True)
-        exp.neptune['config_file'].track_files(args.config_filepath)
+        exp.neptune['config_file'].upload(args.config_filepath)
     num_gpu = get_num_devices() if args.devices is None else args.devices
     assert num_gpu <= get_num_devices()
 

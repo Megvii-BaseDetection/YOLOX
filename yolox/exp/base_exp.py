@@ -23,10 +23,8 @@ class BaseExp(metaclass=ABCMeta):
         self.output_dir = "./YOLOX_outputs"
         self.print_interval = 100
         self.eval_interval = 10
-        self.neptune = neptune.init(
-            project="jakub.pingielski/b-yond",
-            api_token="eyJhcGlfYWRkcmVzcyI6Imh0dHBzOi8vYXBwLm5lcHR1bmUuYWkiLCJhcGlfdXJsIjoiaHR0cHM6Ly9hcHAubmVwdHVuZS5haSIsImFwaV9rZXkiOiI2NTlkYzZmZC1kZTY5LTQ2NjMtODFkZC04YmY4NTNmYTkwMTIifQ==",
-        )
+        self.neptune = None
+
     @abstractmethod
     def get_model(self) -> Module:
         pass
@@ -63,6 +61,17 @@ class BaseExp(metaclass=ABCMeta):
             if not k.startswith("_")
         ]
         return tabulate(exp_table, headers=table_header, tablefmt="fancy_grid")
+
+    def set_neptune_logging(self, state):
+        if state:
+            self.neptune = neptune.init(
+            project="jakub.pingielski/b-yond",
+            api_token="eyJhcGlfYWRkcmVzcyI6Imh0dHBzOi8vYXBwLm5lcHR1bmUuYWkiLCJhcGlfdXJsIjoiaHR0cHM6Ly9hcHAubmVwdHVuZS5haSIsImFwaV9rZXkiOiI2NTlkYzZmZC1kZTY5LTQ2NjMtODFkZC04YmY4NTNmYTkwMTIifQ==",
+        )
+        else:
+            if self.neptune is not None:
+                self.neptune.stop()
+            self.neptune = None
 
     def merge(self, cfg_list):
         assert len(cfg_list) % 2 == 0
