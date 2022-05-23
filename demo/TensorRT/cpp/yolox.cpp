@@ -35,6 +35,11 @@ const char* INPUT_BLOB_NAME = "input_0";
 const char* OUTPUT_BLOB_NAME = "output_0";
 static Logger gLogger;
 
+
+static std::vector<GridAndStride> generate_grids_and_stride(std::vector<int>& strides, std::vector<GridAndStride>& grid_strides);
+std::vector<int> strides = {8, 16, 32};
+std::vector<GridAndStride> grid_strides = generate_grids_and_stride(strides);
+
 cv::Mat static_resize(cv::Mat& img) {
     float r = std::min(INPUT_W / (img.cols*1.0), INPUT_H / (img.rows*1.0));
     // r = std::min(r, 1.0f);
@@ -61,8 +66,9 @@ struct GridAndStride
     int stride;
 };
 
-static void generate_grids_and_stride(std::vector<int>& strides, std::vector<GridAndStride>& grid_strides)
+static std::vector<GridAndStride> generate_grids_and_stride(std::vector<int>& strides)
 {
+    std::vector<GridAndStride> grid_strides;
     for (auto stride : strides)
     {
         int num_grid_y = INPUT_H / stride;
@@ -75,6 +81,7 @@ static void generate_grids_and_stride(std::vector<int>& strides, std::vector<Gri
             }
         }
     }
+    return grid_strides;
 }
 
 static inline float intersection_area(const Object& a, const Object& b)
@@ -229,9 +236,6 @@ float* blobFromImage(cv::Mat& img){
 
 static void decode_outputs(float* prob, std::vector<Object>& objects, float scale, const int img_w, const int img_h) {
         std::vector<Object> proposals;
-        std::vector<int> strides = {8, 16, 32};
-        std::vector<GridAndStride> grid_strides;
-        generate_grids_and_stride(strides, grid_strides);
         generate_yolox_proposals(grid_strides, prob,  BBOX_CONF_THRESH, proposals);
         std::cout << "num of boxes before nms: " << proposals.size() << std::endl;
 
