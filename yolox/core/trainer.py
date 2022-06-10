@@ -12,6 +12,7 @@ from torch.nn.parallel import DistributedDataParallel as DDP
 from torch.utils.tensorboard import SummaryWriter
 
 from yolox.data import DataPrefetcher
+from yolox.exp import Exp
 from yolox.utils import (
     MeterBuffer,
     ModelEMA,
@@ -33,7 +34,7 @@ from yolox.utils import (
 
 
 class Trainer:
-    def __init__(self, exp, args):
+    def __init__(self, exp: Exp, args):
         # init function only defines some basic attr, other attrs like model, optimizer are built in
         # before_train methods.
         self.exp = exp

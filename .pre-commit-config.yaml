@@ -1,0 +1,43 @@
+repos:
+  - repo: https://github.com/pycqa/flake8
+    rev: 3.8.3
+    hooks:
+      - id: flake8
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v3.1.0
+    hooks:
+      - id: check-added-large-files
+      - id: check-docstring-first
+      - id: check-executables-have-shebangs
+      - id: check-json
+      - id: check-yaml
+        args: ["--unsafe"]
+      - id: debug-statements
+      - id: end-of-file-fixer
+      - id: requirements-txt-fixer
+      - id: trailing-whitespace
+  - repo: https://github.com/jorisroovers/gitlint
+    rev: v0.15.1
+    hooks:
+      - id: gitlint
+  - repo: https://github.com/pycqa/isort
+    rev: 4.3.21
+    hooks:
+      - id: isort
+
+  - repo: https://github.com/PyCQA/autoflake
+    rev: v1.4
+    hooks:
+      - id: autoflake
+        name: Remove unused variables and imports
+        entry: autoflake
+        language: python
+        args:
+          [
+            "--in-place",
+            "--remove-all-unused-imports",
+            "--remove-unused-variables",
+            "--expand-star-imports",
+            "--ignore-init-module-imports",
+          ]
+        files: \.py$

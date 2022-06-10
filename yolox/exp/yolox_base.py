@@ -127,9 +127,7 @@ class Exp(BaseExp):
         self.model.train()
         return self.model
 
-    def get_data_loader(
-        self, batch_size, is_distributed, no_aug=False, cache_img=False
-    ):
+    def get_data_loader(self, batch_size, is_distributed, no_aug=False, cache_img=False):
         from yolox.data import (
             COCODataset,
             TrainTransform,
@@ -139,14 +137,9 @@ class Exp(BaseExp):
             MosaicDetection,
             worker_init_reset_seed,
         )
-        from yolox.utils import (
-            wait_for_the_master,
-            get_local_rank,
-        )
+        from yolox.utils import wait_for_the_master
 
-        local_rank = get_local_rank()
-
-        with wait_for_the_master(local_rank):
+        with wait_for_the_master():
             dataset = COCODataset(
                 data_dir=self.data_dir,
                 json_file=self.train_ann,
@@ -319,5 +312,11 @@ class Exp(BaseExp):
         )
         return evaluator
 
-    def eval(self, model, evaluator, is_distributed, half=False, return_outputs=False):
-        return evaluator.evaluate(model, is_distributed, half, return_outputs=return_outputs)
+    def get_trainer(self, args):
+        from yolox.core import Trainer
+        trainer = Trainer(self, args)
+        # NOTE: trainer shouldn't be an attribute of exp object
+        return trainer
+
+    def eval(self, model, evaluator, is_distributed, half=False):
+        return evaluator.evaluate(model, is_distributed, half)

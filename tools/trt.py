@@ -24,7 +24,7 @@ def make_parser():
         "--exp_file",
         default=None,
         type=str,
-        help="pls input your expriment description file",
+        help="please input your experiment description file",
     )
     parser.add_argument("-c", "--ckpt", default=None, type=str, help="ckpt path")
     parser.add_argument(
