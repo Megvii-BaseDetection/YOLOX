@@ -28,7 +28,7 @@ Then, you can:
 python3 tools/export_onnx.py --output-name yolox_s.onnx -n yolox-s -c yolox_s.pth
 ```
 Notes:
-* -n: specify a model name. The model name must be one of the [yolox-s,m,l,x and yolox-nane, yolox-tiny, yolov3]
+* -n: specify a model name. The model name must be one of the [yolox-s,m,l,x and yolox-nano, yolox-tiny, yolov3]
 * -c: the model you have trained
 * -o: opset version, default 11. **However, if you will further convert your onnx model to [OpenVINO](https://github.com/Megvii-BaseDetection/YOLOX/demo/OpenVINO/), please specify the opset version to 10.**
 * --no-onnxsim: disable onnxsim
