@@ -104,6 +104,16 @@ def make_parser():
         help="speed test only.",
     )
     parser.add_argument(
+        "--coco_out_dir",
+        help="Output folder for MSCOCO prediction json.",
+        default=None,
+    )
+    parser.add_argument(
+        "--coco_out_name",
+        help="File name for MSCOCO prediction json.",
+        default=None,
+    )
+    parser.add_argument(
         "opts",
         help="Modify config options using the command-line",
         default=None,
@@ -188,10 +198,14 @@ def main(exp, args, num_gpu):
     else:
         trt_file = None
         decoder = None
-
+    
+    if args.coco_out_dir != None:
+        os.makedirs(args.coco_out_dir, exist_ok=True) 
+        coco_out_path = os.path.join(args.coco_out_dir, args.coco_out_name)
+        
     # start evaluate
     *_, summary = evaluator.evaluate(
-        model, is_distributed, args.fp16, trt_file, decoder, exp.test_size
+        model, is_distributed, args.fp16, trt_file, decoder, exp.test_size, coco_out_path
     )
     logger.info("\n" + summary)
 

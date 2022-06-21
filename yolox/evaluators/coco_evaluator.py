@@ -120,6 +120,7 @@ class COCOEvaluator:
         trt_file=None,
         decoder=None,
         test_size=None,
+        coco_out_path=None
     ):
         """
         COCO average precision (AP) Evaluation. Iterate inference on the test dataset
@@ -192,7 +193,7 @@ class COCOEvaluator:
             data_list = list(itertools.chain(*data_list))
             torch.distributed.reduce(statistics, dst=0)
 
-        eval_results = self.evaluate_prediction(data_list, statistics)
+        eval_results = self.evaluate_prediction(data_list, statistics, coco_out_path)
         synchronize()
         return eval_results
 
@@ -228,7 +229,7 @@ class COCOEvaluator:
                 data_list.append(pred_data)
         return data_list
 
-    def evaluate_prediction(self, data_dict, statistics):
+    def evaluate_prediction(self, data_dict, statistics, coco_out_path):
         if not is_main_process():
             return 0, 0, None
 
@@ -264,8 +265,14 @@ class COCOEvaluator:
                 cocoDt = cocoGt.loadRes("./yolox_testdev_2017.json")
             else:
                 _, tmp = tempfile.mkstemp()
-                json.dump(data_dict, open(tmp, "w"))
-                cocoDt = cocoGt.loadRes(tmp)
+                if coco_out_path == None:
+                    json.dump(data_dict, open(tmp, "w"))
+                    cocoDt = cocoGt.loadRes(tmp)
+                else:
+                    json.dump(data_dict, open(coco_out_path, "w"))
+                    logger.info(f"MSCOCO prediction json saved at {coco_out_path}.")
+                    cocoDt = cocoGt.loadRes(coco_out_path)
+                    
             try:
                 from yolox.layers import COCOeval_opt as COCOeval
             except ImportError:
