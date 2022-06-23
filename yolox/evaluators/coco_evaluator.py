@@ -249,7 +249,7 @@ class COCOEvaluator:
                     "score": scores[ind].numpy().item(),
                     "segmentation": [],
                 }  # COCO json format
-                data_list.append(pred_data)     
+                data_list.append(pred_data)
 
         if return_outputs:
             return data_list, image_wise_data
