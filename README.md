@@ -125,6 +125,7 @@ python -m yolox.tools.train -n yolox-s -d 8 -b 64 --fp16 -o [--cache]
 * --cache: caching imgs into RAM to accelarate training, which need large system RAM. 
 
   
+
 When using -f, the above commands are equivalent to:
 ```shell
 python -m yolox.tools.train -f exps/default/yolox_s.py -d 8 -b 64 --fp16 -o [--cache]
@@ -132,7 +133,7 @@ python -m yolox.tools.train -f exps/default/yolox_s.py -d 8 -b 64 --fp16 -o [--c
                                exps/default/yolox_l.py
                                exps/default/yolox_x.py
 ```
-  
+
 **Multi Machine Training**
 
 We also support multi-nodes training. Just add the following args:
@@ -167,7 +168,7 @@ See more information with the following command:
 ```shell
 python -m yolox.tools.train --help
 ```
-  
+
 </details>
 
 
@@ -237,3 +238,12 @@ If you use YOLOX in your research, please cite our work by using the following B
   year={2021}
 }
 ```
+## In memory of Dr. Jian Sun
+Without the guidance of [Dr. Sun Jian](http://www.jiansun.org/), YOLOX would not have been released and open sourced to the community.
+The passing away of Dr. Sun Jian is a great loss to the Computer Vision field. We have added this section here to express our remembrance and condolences to our captain Dr. Sun.
+It is hoped that every AI practitioner in the world will stick to the concept of "continuous innovation to expand cognitive boundaries, and extraordinary technology to achieve product value" and move forward all the way.
+
+<div align="center"><img src="assets/sunjian.png" width="200"></div>
+没有孙剑博士的指导，YOLOX也不会问世并开源给社区使用。
+孙剑博士的离去是CV领域的一大损失，我们在此特别添加了这个部分来表达对我们的“船长”孙老师的纪念和哀思。
+希望世界上的每个AI从业者秉持着“持续创新拓展认知边界，非凡科技成就产品价值”的观念，一路向前。
