@@ -224,20 +224,8 @@ class COCOEvaluator:
                 self.img_size[0] / float(img_h), self.img_size[1] / float(img_w)
             )
             bboxes /= scale
-            bboxes = xyxy2xywh(bboxes)
-
             cls = output[:, 6]
             scores = output[:, 4] * output[:, 5]
-            for ind in range(bboxes.shape[0]):
-                label = self.dataloader.dataset.class_ids[int(cls[ind])]
-                pred_data = {
-                    "image_id": int(img_id),
-                    "category_id": label,
-                    "bbox": bboxes[ind].numpy().tolist(),
-                    "score": scores[ind].numpy().item(),
-                    "segmentation": [],
-                }  # COCO json format
-                data_list.append(pred_data)
 
             image_wise_data.update({
                 int(img_id): {
@@ -249,6 +237,19 @@ class COCOEvaluator:
                     ],
                 }
             })
+
+            bboxes = xyxy2xywh(bboxes)
+
+            for ind in range(bboxes.shape[0]):
+                label = self.dataloader.dataset.class_ids[int(cls[ind])]
+                pred_data = {
+                    "image_id": int(img_id),
+                    "category_id": label,
+                    "bbox": bboxes[ind].numpy().tolist(),
+                    "score": scores[ind].numpy().item(),
+                    "segmentation": [],
+                }  # COCO json format
+                data_list.append(pred_data)     
 
         if return_outputs:
             return data_list, image_wise_data
