@@ -101,6 +101,7 @@ python tools/demo.py video -n yolox-s -c /path/to/your/yolox_s.pth --path /path/
 Demo for webcam:
 ```shell
 python tools/demo.py webcam -n yolox-s -c /path/to/your/yolox_s.pth --camid "rtsp://account:passward@your_rtsp_address" --conf 0.25 --nms 0.45 --tsize 640 --device [cpu/gpu]
+```
 
 
 
