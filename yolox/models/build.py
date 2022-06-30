@@ -29,19 +29,20 @@ _CKPT_FULL_PATH = {
 }
 
 
-def create_yolox_model(name: str, pretrained: bool = True, num_classes: int = 80,
-                       exp_path: str = None, ckpt_path: str = None, device=None) -> nn.Module:
+def create_yolox_model(name: str, pretrained: bool = True, num_classes: int = 80, device=None,
+                       exp_path: str = None, ckpt_path: str = None) -> nn.Module:
     """creates and loads a YOLOX model
 
     Args:
         name (str): name of model. for example, "yolox-s", "yolox-tiny" or "yolox_custom"
         if you want to load your own model.
         pretrained (bool): load pretrained weights into the model. Default to True.
+        device (str): default device to for model. Default to None.
         num_classes (int): number of model classes. Default to 80.
         exp_path (str): path to your own experiment file. Required if name="yolox_custom"
         ckpt_path (str): path to your own ckpt. Required if name="yolox_custom" and you want to
-        load a pretrained model
-        device (str): default device to for model. Default to None.
+            load a pretrained model
+
 
     Returns:
         YOLOX model (nn.Module)
@@ -103,7 +104,7 @@ def yolox_x(pretrained: bool = True, num_classes: int = 80, device: str = None) 
 
 
 def yolov3(pretrained: bool = True, num_classes: int = 80, device: str = None) -> nn.Module:
-    return create_yolox_model("yolox-tiny", pretrained, num_classes, device)
+    return create_yolox_model("yolov3", pretrained, num_classes, device)
 
 
 def yolox_custom(ckpt_path: str = None, exp_path: str = None, device: str = None) -> nn.Module:
