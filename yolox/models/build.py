@@ -88,4 +88,4 @@ def yolox_x(pretrained=True, num_classes=80, device=None):
 
 
 def yolov3(pretrained=True, num_classes=80, device=None):
-    return create_yolox_model("yolox-tiny", pretrained, num_classes, device)
+    return create_yolox_model("yolov3", pretrained, num_classes, device)
