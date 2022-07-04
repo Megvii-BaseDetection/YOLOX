@@ -114,14 +114,8 @@ class COCOEvaluator:
         self.per_class_AR = per_class_AR
 
     def evaluate(
-        self,
-        model,
-        distributed=False,
-        half=False,
-        trt_file=None,
-        decoder=None,
-        test_size=None,
-        return_outputs=False
+        self, model, distributed=False, half=False, trt_file=None,
+        decoder=None, test_size=None, return_outputs=False
     ):
         """
         COCO average precision (AP) Evaluation. Iterate inference on the test dataset
