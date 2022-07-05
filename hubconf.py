@@ -6,7 +6,10 @@ Usage example:
     import torch
     model = torch.hub.load("Megvii-BaseDetection/YOLOX", "yolox_s")
 """
-dependencies = ["torch"]
+from yolox.utils.hub import ensure_installed
+
+HUB_REQUIREMENTS = ["loguru", "torchvision", "thop", "opencv-python-headless==4.5.2.52", "tabulate"]
+ensure_installed(HUB_REQUIREMENTS)
 
 from yolox.models import (  # isort:skip  # noqa: F401, E402
     yolox_tiny,
