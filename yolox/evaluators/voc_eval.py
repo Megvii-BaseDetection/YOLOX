@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding:utf-8 -*-
 # Code are based on
 # https://github.com/rbgirshick/py-faster-rcnn/blob/master/lib/datasets/voc_eval.py
 # Copyright (c) Bharath Hariharan.
@@ -13,7 +12,7 @@ import numpy as np
 
 
 def parse_rec(filename):
-    """ Parse a PASCAL VOC xml file """
+    """Parse a PASCAL VOC xml file"""
     tree = ET.parse(filename)
     objects = []
     for obj in tree.findall("object"):
@@ -35,7 +34,7 @@ def parse_rec(filename):
 
 
 def voc_ap(rec, prec, use_07_metric=False):
-    """ap = voc_ap(rec, prec, [use_07_metric])
+    """
     Compute VOC AP given precision and recall.
     If use_07_metric is true, uses the
     VOC 07 11 point method (default:False).
@@ -92,9 +91,9 @@ def voc_eval(
         for i, imagename in enumerate(imagenames):
             recs[imagename] = parse_rec(annopath.format(imagename))
             if i % 100 == 0:
-                print("Reading annotation for {:d}/{:d}".format(i + 1, len(imagenames)))
+                print(f"Reading annotation for {i + 1}/{len(imagenames)}")
         # save
-        print("Saving cached annotations to {:s}".format(cachefile))
+        print(f"Saving cached annotations to {cachefile}")
         with open(cachefile, "wb") as f:
             pickle.dump(recs, f)
     else:
@@ -155,8 +154,7 @@ def voc_eval(
             # union
             uni = (
                 (bb[2] - bb[0] + 1.0) * (bb[3] - bb[1] + 1.0)
-                + (BBGT[:, 2] - BBGT[:, 0] + 1.0) * (BBGT[:, 3] - BBGT[:, 1] + 1.0)
-                - inters
+                + (BBGT[:, 2] - BBGT[:, 0] + 1.0) * (BBGT[:, 3] - BBGT[:, 1] + 1.0) - inters
             )
 
             overlaps = inters / uni
