@@ -29,7 +29,11 @@ _CKPT_FULL_PATH = {
 
 
 def create_yolox_model(
-    name: str, pretrained: bool = True, num_classes: int = 80, device=None
+    name: str,
+    pretrained: bool = True,
+    backbone_in_channels: int = 3,
+    num_classes: int = 80,
+    device=None,
 ) -> nn.Module:
     """creates and loads a YOLOX model
 
@@ -48,11 +52,20 @@ def create_yolox_model(
         device = "cuda:0" if torch.cuda.is_available() else "cpu"
     device = torch.device(device)
 
-    assert name in _CKPT_FULL_PATH, f"user should use one of value in {_CKPT_FULL_PATH.keys()}"
+    assert (
+        name in _CKPT_FULL_PATH
+    ), f"user should use one of value in {_CKPT_FULL_PATH.keys()}"
     exp: Exp = get_exp(exp_name=name)
+    exp.backbone_in_channels = backbone_in_channels
     exp.num_classes = num_classes
     yolox_model = exp.get_model()
-    if pretrained and num_classes == 80:
+    if pretrained:
+        assert (
+            backbone_in_channels == 3
+        ), f"There are no pretrained weights for the model whose number of input channels are {backbone_in_channels}"
+        assert (
+            num_classes == 80
+        ), f"There are no pretrained weights for the model whose number of output classes are {num_classes}"
         weights_url = _CKPT_FULL_PATH[name]
         ckpt = load_state_dict_from_url(weights_url, map_location="cpu")
         if "model" in ckpt:
@@ -63,29 +76,43 @@ def create_yolox_model(
     return yolox_model
 
 
-def yolox_nano(pretrained=True, num_classes=80, device=None):
-    return create_yolox_model("yolox-nano", pretrained, num_classes, device)
+def yolox_nano(pretrained=True, backbone_in_channels=3, num_classes=80, device=None):
+    return create_yolox_model(
+        "yolox-nano", pretrained, backbone_in_channels, num_classes, device
+    )
 
 
-def yolox_tiny(pretrained=True, num_classes=80, device=None):
-    return create_yolox_model("yolox-tiny", pretrained, num_classes, device)
+def yolox_tiny(pretrained=True, backbone_in_channels=3, num_classes=80, device=None):
+    return create_yolox_model(
+        "yolox-tiny", pretrained, backbone_in_channels, num_classes, device
+    )
 
 
-def yolox_s(pretrained=True, num_classes=80, device=None):
-    return create_yolox_model("yolox-s", pretrained, num_classes, device)
+def yolox_s(pretrained=True, backbone_in_channels=3, num_classes=80, device=None):
+    return create_yolox_model(
+        "yolox-s", pretrained, backbone_in_channels, num_classes, device
+    )
 
 
-def yolox_m(pretrained=True, num_classes=80, device=None):
-    return create_yolox_model("yolox-m", pretrained, num_classes, device)
+def yolox_m(pretrained=True, backbone_in_channels=3, num_classes=80, device=None):
+    return create_yolox_model(
+        "yolox-m", pretrained, backbone_in_channels, num_classes, device
+    )
 
 
-def yolox_l(pretrained=True, num_classes=80, device=None):
-    return create_yolox_model("yolox-l", pretrained, num_classes, device)
+def yolox_l(pretrained=True, backbone_in_channels=3, num_classes=80, device=None):
+    return create_yolox_model(
+        "yolox-l", pretrained, backbone_in_channels, num_classes, device
+    )
 
 
-def yolox_x(pretrained=True, num_classes=80, device=None):
-    return create_yolox_model("yolox-x", pretrained, num_classes, device)
+def yolox_x(pretrained=True, backbone_in_channels=3, num_classes=80, device=None):
+    return create_yolox_model(
+        "yolox-x", pretrained, backbone_in_channels, num_classes, device
+    )
 
 
-def yolov3(pretrained=True, num_classes=80, device=None):
-    return create_yolox_model("yolox-tiny", pretrained, num_classes, device)
+def yolov3(pretrained=True, backbone_in_channels=3, num_classes=80, device=None):
+    return create_yolox_model(
+        "yolox-tiny", pretrained, backbone_in_channels, num_classes, device
+    )
