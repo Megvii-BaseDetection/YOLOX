@@ -3,6 +3,10 @@
 # Copyright (c) Megvii, Inc. and its affiliates.
 
 COCO_CLASSES = (
+    "pedestrian",
+)
+"""
+COCO_CLASSES = (
     "person",
     "bicycle",
     "car",
@@ -84,3 +88,4 @@ COCO_CLASSES = (
     "hair drier",
     "toothbrush",
 )
+"""
