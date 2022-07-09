@@ -2,19 +2,20 @@
 # -*- coding:utf-8 -*-
 # Copyright (c) Megvii, Inc. and its affiliates.
 
-import argparse
-import os
-import time
 from loguru import logger
 
 import cv2
 
 import torch
 
-from yolox.data.data_augment import ValTransform
-from yolox.data.datasets import COCO_CLASSES
+from yolox.data.data_augment import preproc
+from yolox.data.datasets import COCO_CLASSES, VOC_CLASSES
 from yolox.exp import get_exp
 from yolox.utils import fuse_model, get_model_info, postprocess, vis
+
+import argparse
+import os
+import time
 
 IMAGE_EXT = [".jpg", ".jpeg", ".webp", ".bmp", ".png"]
 
@@ -43,7 +44,7 @@ def make_parser():
         "--exp_file",
         default=None,
         type=str,
-        help="please input your experiment description file",
+        help="pls input your expriment description file",
     )
     parser.add_argument("-c", "--ckpt", default=None, type=str, help="ckpt for eval")
     parser.add_argument(
@@ -52,8 +53,8 @@ def make_parser():
         type=str,
         help="device to run our model, can either be cpu or gpu",
     )
-    parser.add_argument("--conf", default=0.3, type=float, help="test conf")
-    parser.add_argument("--nms", default=0.3, type=float, help="test nms threshold")
+    parser.add_argument("--conf", default=None, type=float, help="test conf")
+    parser.add_argument("--nms", default=None, type=float, help="test nms threshold")
     parser.add_argument("--tsize", default=None, type=int, help="test img size")
     parser.add_argument(
         "--fp16",
@@ -61,13 +62,6 @@ def make_parser():
         default=False,
         action="store_true",
         help="Adopting mix precision evaluating.",
-    )
-    parser.add_argument(
-        "--legacy",
-        dest="legacy",
-        default=False,
-        action="store_true",
-        help="To be compatible with older versions",
     )
     parser.add_argument(
         "--fuse",
@@ -102,12 +96,10 @@ class Predictor(object):
         self,
         model,
         exp,
-        cls_names=COCO_CLASSES,
+        cls_names=VOC_CLASSES,
         trt_file=None,
         decoder=None,
         device="cpu",
-        fp16=False,
-        legacy=False,
     ):
         self.model = model
         self.cls_names = cls_names
@@ -117,8 +109,6 @@ class Predictor(object):
         self.nmsthre = exp.nmsthre
         self.test_size = exp.test_size
         self.device = device
-        self.fp16 = fp16
-        self.preproc = ValTransform(legacy=legacy)
         if trt_file is not None:
             from torch2trt import TRTModule
 
@@ -128,6 +118,8 @@ class Predictor(object):
             x = torch.ones(1, 3, exp.test_size[0], exp.test_size[1]).cuda()
             self.model(x)
             self.model = model_trt
+        self.rgb_means = (0.485, 0.456, 0.406)
+        self.std = (0.229, 0.224, 0.225)
 
     def inference(self, img):
         img_info = {"id": 0}
@@ -142,25 +134,23 @@ class Predictor(object):
         img_info["width"] = width
         img_info["raw_img"] = img
 
-        ratio = min(self.test_size[0] / img.shape[0], self.test_size[1] / img.shape[1])
+        img, ratio = preproc(img, self.test_size, self.rgb_means, self.std)
         img_info["ratio"] = ratio
-
-        img, _ = self.preproc(img, None, self.test_size)
         img = torch.from_numpy(img).unsqueeze(0)
-        img = img.float()
         if self.device == "gpu":
             img = img.cuda()
-            if self.fp16:
-                img = img.half()  # to FP16
 
         with torch.no_grad():
             t0 = time.time()
             outputs = self.model(img)
+            #print(type(outputs)) # torch.Tensor
+            print(len(outputs))  # 1
+            print(outputs.shape)  # (1,8400,6)
+            print(outputs.tolist())  # print complete list.
             if self.decoder is not None:
                 outputs = self.decoder(outputs, dtype=outputs.type())
             outputs = postprocess(
-                outputs, self.num_classes, self.confthre,
-                self.nmsthre, class_agnostic=True
+                outputs, self.num_classes, self.confthre, self.nmsthre
             )
             logger.info("Infer time: {:.4f}s".format(time.time() - t0))
         return outputs, img_info
@@ -169,6 +159,17 @@ class Predictor(object):
         ratio = img_info["ratio"]
         img = img_info["raw_img"]
         if output is None:
+            font = cv2.FONT_HERSHEY_SIMPLEX
+            class_count = {}
+            class_AP = {}
+            for i in self.cls_names:
+                class_count[i] = 0
+                class_AP[i] = 0.0
+            line = 0
+            for k in class_count:  
+                cv2.putText(img, str(k)+": "+str(class_count[k]), (15,25+line), font, 0.8, (0, 255, 255), thickness=2)
+                cv2.putText(img, "AP"+": "+'{:.1f}%'.format(class_AP[k]), (15,50+line), font, 0.8, (0, 255, 255), thickness=2)
+                line = line+50
             return img
         output = output.cpu()
 
@@ -179,7 +180,6 @@ class Predictor(object):
 
         cls = output[:, 6]
         scores = output[:, 4] * output[:, 5]
-
         vis_res = vis(img, bboxes, scores, cls, cls_conf, self.cls_names)
         return vis_res
 
@@ -211,19 +211,18 @@ def imageflow_demo(predictor, vis_folder, current_time, args):
     width = cap.get(cv2.CAP_PROP_FRAME_WIDTH)  # float
     height = cap.get(cv2.CAP_PROP_FRAME_HEIGHT)  # float
     fps = cap.get(cv2.CAP_PROP_FPS)
-    if args.save_result:
-        save_folder = os.path.join(
-            vis_folder, time.strftime("%Y_%m_%d_%H_%M_%S", current_time)
-        )
-        os.makedirs(save_folder, exist_ok=True)
-        if args.demo == "video":
-            save_path = os.path.join(save_folder, os.path.basename(args.path))
-        else:
-            save_path = os.path.join(save_folder, "camera.mp4")
-        logger.info(f"video save_path is {save_path}")
-        vid_writer = cv2.VideoWriter(
-            save_path, cv2.VideoWriter_fourcc(*"mp4v"), fps, (int(width), int(height))
-        )
+    save_folder = os.path.join(
+        vis_folder, time.strftime("%Y_%m_%d_%H_%M_%S", current_time)
+    )
+    os.makedirs(save_folder, exist_ok=True)
+    if args.demo == "video":
+        save_path = os.path.join(save_folder, args.path.split("/")[-1])
+    else:
+        save_path = os.path.join(save_folder, "camera.mp4")
+    logger.info(f"video save_path is {save_path}")
+    vid_writer = cv2.VideoWriter(
+        save_path, cv2.VideoWriter_fourcc(*"mp4v"), fps, (int(width), int(height))
+    )
     while True:
         ret_val, frame = cap.read()
         if ret_val:
@@ -231,9 +230,6 @@ def imageflow_demo(predictor, vis_folder, current_time, args):
             result_frame = predictor.visual(outputs[0], img_info, predictor.confthre)
             if args.save_result:
                 vid_writer.write(result_frame)
-            else:
-                cv2.namedWindow("yolox", cv2.WINDOW_NORMAL)
-                cv2.imshow("yolox", result_frame)
             ch = cv2.waitKey(1)
             if ch == 27 or ch == ord("q") or ch == ord("Q"):
                 break
@@ -248,7 +244,6 @@ def main(exp, args):
     file_name = os.path.join(exp.output_dir, args.experiment_name)
     os.makedirs(file_name, exist_ok=True)
 
-    vis_folder = None
     if args.save_result:
         vis_folder = os.path.join(file_name, "vis_res")
         os.makedirs(vis_folder, exist_ok=True)
@@ -270,13 +265,11 @@ def main(exp, args):
 
     if args.device == "gpu":
         model.cuda()
-        if args.fp16:
-            model.half()  # to FP16
     model.eval()
 
     if not args.trt:
         if args.ckpt is None:
-            ckpt_file = os.path.join(file_name, "best_ckpt.pth")
+            ckpt_file = os.path.join(file_name, "best_ckpt.pth.tar")
         else:
             ckpt_file = args.ckpt
         logger.info("loading checkpoint")
@@ -302,10 +295,7 @@ def main(exp, args):
         trt_file = None
         decoder = None
 
-    predictor = Predictor(
-        model, exp, COCO_CLASSES, trt_file, decoder,
-        args.device, args.fp16, args.legacy,
-    )
+    predictor = Predictor(model, exp, VOC_CLASSES, trt_file, decoder, args.device)
     current_time = time.localtime()
     if args.demo == "image":
         image_demo(predictor, vis_folder, args.path, current_time, args.save_result)
