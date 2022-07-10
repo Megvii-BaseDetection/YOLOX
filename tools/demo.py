@@ -118,7 +118,7 @@ class Predictor(object):
         self.test_size = exp.test_size
         self.device = device
         self.fp16 = fp16
-        self.preproc = ValTransform(legacy=legacy)
+        self.preproc = ValTransform(legacy)#=legacy)
         if trt_file is not None:
             from torch2trt import TRTModule
 
@@ -160,7 +160,7 @@ class Predictor(object):
                 outputs = self.decoder(outputs, dtype=outputs.type())
             outputs = postprocess(
                 outputs, self.num_classes, self.confthre,
-                self.nmsthre, class_agnostic=True
+                self.nmsthre#, class_agnostic=True
             )
             logger.info("Infer time: {:.4f}s".format(time.time() - t0))
         return outputs, img_info
