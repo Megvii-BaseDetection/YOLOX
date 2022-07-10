@@ -23,11 +23,11 @@ class Exp(MyExp):
         self.test_size = (416, 416)
         self.warmup_epochs = 1
         # ---------- transform config ------------ #
-        self.mosaic_prob = 1.0
+        #self.mosaic_prob = 1.0
         self.enable_mixup = False
         #self.mixup_prob = 1.0
-        self.hsv_prob = 1.0
-        self.flip_prob = 0.5
+        #self.hsv_prob = 1.0
+        #self.flip_prob = 0.5
         self.exp_name = os.path.split(os.path.realpath(__file__))[1].split(".")[0]
 
     def get_model(self, sublinear=False):
