@@ -24,8 +24,9 @@ class Exp(BaseExp):
         # factor of model width
         self.width = 1.00
         # activation name. For example, if using "relu", then "silu" will be replaced to "relu".
+        """
         self.act = "silu"
-
+        """
         # ---------------- dataloader config ---------------- #
         # set worker to 4 for shorter dataloader init time
         # If your training process cost many memory, reduce this value.
@@ -33,19 +34,25 @@ class Exp(BaseExp):
         self.input_size = (640, 640)  # (height, width)
         # Actual multiscale ranges: [640 - 5 * 32, 640 + 5 * 32].
         # To disable multiscale training, set the value to 0.
+        """
         self.multiscale_range = 5
+        """
         # You can uncomment this line to specify a multiscale range
         # self.random_size = (14, 26)
         # dir of dataset images, if data_dir is None, this project will use `datasets` dir
+        """
         self.data_dir = None
+        """
         # name of annotation file for training
         self.train_ann = "instances_train2017.json"
         # name of annotation file for evaluation
         self.val_ann = "instances_val2017.json"
         # name of annotation file for testing
+        """
         self.test_ann = "instances_test2017.json"
-
+        """
         # --------------- transform config ----------------- #
+        """
         # prob of applying mosaic aug
         self.mosaic_prob = 1.0
         # prob of applying mixup aug
@@ -55,6 +62,7 @@ class Exp(BaseExp):
         # prob of applying flip aug
         self.flip_prob = 0.5
         # rotation angle range, for example, if set to 2, the true range is (-2, 2)
+        """
         self.degrees = 10.0
         # translate range, for example, if set to 0.1, the true range is (-0.1, 0.1)
         self.translate = 0.1
@@ -78,7 +86,7 @@ class Exp(BaseExp):
         # name of LRScheduler
         self.scheduler = "yoloxwarmcos"
         # last #epoch to close augmention like mosaic
-        self.no_aug_epochs = 15
+        self.no_aug_epochs = 0
         # apply EMA during training
         self.ema = True
 
