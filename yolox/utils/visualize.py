@@ -45,15 +45,24 @@ def vis(img, boxes, scores, cls_ids, conf=0.5, class_names=None):
         class_count[class_names[cls_id]] = class_count[class_names[cls_id]]+1
         class_AP[class_names[cls_id]] = class_AP[class_names[cls_id]]+float('{:.1f}'.format(score * 100))
         cv2.putText(img, text, (x0, y0 + txt_size[1]), font, 0.4, txt_color, thickness=1)
-        line = 0
-        for k in class_count:  
-            cv2.putText(img, str(k)+": "+str(class_count[k]), (15,25+line), font, 0.8, (0, 255, 255), thickness=2)
-            if class_count[k] !=0:
-                class_AP[k]=class_AP[k]/class_count[k]
-            else:
-                class_AP[k]=0.0
-            cv2.putText(img, "AP"+": "+'{:.1f}%'.format(class_AP[k]), (15,50+line), font, 0.8, (0, 255, 255), thickness=2)
-            line = line+50
+        
+    x0 = 15
+    y0 = 0
+    row = 0
+    for k in class_count: 
+        if((y0+row+50)>=img.shape[0]):
+            x0 = x0+200
+            y0 = 25
+            row = 0
+        else:
+            row = row+25
+        cv2.putText(img, str(k)+": "+str(class_count[k]), (x0,y0+row), font, 0.8, (0, 255, 255), thickness=2)
+        if class_count[k] !=0:
+            class_AP[k]=class_AP[k]/class_count[k]
+        else:
+            class_AP[k]=0.0
+        row = row+25
+        cv2.putText(img, "AP"+": "+'{:.1f}%'.format(class_AP[k]), (x0,y0+row), font, 0.8, (0, 255, 255), thickness=2)
     return img
 
 
