@@ -12,7 +12,7 @@ import cv2
 import torch
 
 from yolox.data.data_augment import ValTransform
-from yolox.data.datasets import COCO_CLASSES
+from yolox.data.datasets import COCO_CLASSES, VOC_CLASSES
 from yolox.exp import get_exp
 from yolox.utils import fuse_model, get_model_info, postprocess, vis
 
@@ -175,11 +175,23 @@ class Predictor(object):
             for i in self.cls_names:
                 class_count[i] = 0
                 class_AP[i] = 0.0
-            line = 0
-            for k in class_count:  
-                cv2.putText(img, str(k)+": "+str(class_count[k]), (15,25+line), font, 0.8, (0, 255, 255), thickness=2)
-                cv2.putText(img, "AP"+": "+'{:.1f}%'.format(class_AP[k]), (15,50+line), font, 0.8, (0, 255, 255), thickness=2)
-                line = line+50
+            x0 = 15
+            y0 = 0
+            row = 0
+            for k in class_count: 
+                if((y0+row+50)>=img.shape[0]):
+                    x0 = x0+200
+                    y0 = 25
+                    row = 0
+                else:
+                    row = row+25
+                cv2.putText(img, str(k)+": "+str(class_count[k]), (x0,y0+row), font, 0.8, (0, 255, 255), thickness=2)
+                if class_count[k] !=0:
+                    class_AP[k]=class_AP[k]/class_count[k]
+                else:
+                    class_AP[k]=0.0
+                row = row+25
+                cv2.putText(img, "AP"+": "+'{:.1f}%'.format(class_AP[k]), (x0,y0+row), font, 0.8, (0, 255, 255), thickness=2)
             return img
         output = output.cpu()
 
