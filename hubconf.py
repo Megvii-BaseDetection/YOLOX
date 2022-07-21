@@ -8,7 +8,10 @@ Usage example:
     model = torch.hub.load("Megvii-BaseDetection/YOLOX", "yolox_custom",
                            exp_path="exp.py", ckpt_path="ckpt.pth")
 """
-dependencies = ["torch"]
+from yolox.utils.hub import ensure_installed
+
+HUB_REQUIREMENTS = ["loguru", "torchvision", "thop", "opencv-python-headless==4.5.2.52", "tabulate"]
+ensure_installed(HUB_REQUIREMENTS)
 
 from yolox.models import (  # isort:skip  # noqa: F401, E402
     yolox_tiny,
