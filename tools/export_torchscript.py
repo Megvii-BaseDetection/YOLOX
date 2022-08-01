@@ -28,15 +28,15 @@ def make_parser():
     parser.add_argument("-n", "--name", type=str, default=None, help="model name")
     parser.add_argument("-c", "--ckpt", default=None, type=str, help="ckpt path")
     parser.add_argument(
+        "--decode_in_inference",
+        action="store_true",
+        help="decode in inference or not"
+    )
+    parser.add_argument(
         "opts",
         help="Modify config options using the command-line",
         default=None,
         nargs=argparse.REMAINDER,
-    )
-    parser.add_argument(
-        "--decode_in_inference",
-        action="store_true",
-        help="decode in inference or not"
     )
 
     return parser
