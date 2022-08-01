@@ -28,6 +28,11 @@ def make_parser():
     parser.add_argument("-n", "--name", type=str, default=None, help="model name")
     parser.add_argument("-c", "--ckpt", default=None, type=str, help="ckpt path")
     parser.add_argument(
+        "--decode_in_inference",
+        action="store_true",
+        help="decode in inference or not"
+    )
+    parser.add_argument(
         "opts",
         help="Modify config options using the command-line",
         default=None,
@@ -61,7 +66,7 @@ def main():
     if "model" in ckpt:
         ckpt = ckpt["model"]
     model.load_state_dict(ckpt)
-    model.head.decode_in_inference = False
+    model.head.decode_in_inference = args.decode_in_inference
 
     logger.info("loading checkpoint done.")
     dummy_input = torch.randn(args.batch_size, 3, exp.test_size[0], exp.test_size[1])
