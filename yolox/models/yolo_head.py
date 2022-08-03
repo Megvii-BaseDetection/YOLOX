@@ -474,7 +474,7 @@ class YOLOXHead(nn.Module):
 
         pair_wise_ious = bboxes_iou(gt_bboxes_per_image, bboxes_preds_per_image, False)
         pair_wise_ious_loss = -torch.log(pair_wise_ious + 1e-8)
-        
+
         gt_cls_per_image = (
             F.one_hot(gt_classes.to(torch.int64), self.num_classes)
             .float()
