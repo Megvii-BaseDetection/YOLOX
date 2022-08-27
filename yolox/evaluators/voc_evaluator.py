@@ -147,8 +147,8 @@ class VOCEvaluator:
         nms_time = statistics[1].item()
         n_samples = statistics[2].item()
 
-        a_infer_time = 1000 * inference_time / (n_samples * self.dataloader.batch_size)
-        a_nms_time = 1000 * nms_time / (n_samples * self.dataloader.batch_size)
+        a_infer_time = 1000 * inference_time / max(1, n_samples * self.dataloader.batch_size)
+        a_nms_time = 1000 * nms_time / max(1, n_samples * self.dataloader.batch_size)
 
         time_info = ", ".join(
             [
