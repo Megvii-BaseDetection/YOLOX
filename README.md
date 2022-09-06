@@ -67,7 +67,149 @@ This repo is an implementation of PyTorch version YOLOX, there is also a [MegEng
 </details>
 
 ## Quick Start
+<details>
+<summary>Tutorial</summary>
+1. clone git project and install requirements
 
+```shell
+!git clone https://github.com/minkichunm/YOLOX.git
+!git clone https://github.com/NVIDIA/apex
+!pip3 install cython; pip3 install 'git+https://github.com/cocodataset/cocoapi.git#subdirectory=PythonAPI'
+!pip3 install oidv6-to-voc
+!pip install --upgrade oidv6
+!pip uninstall jax jaxlib -y
+!pip install "jax[cuda11_cudnn805]==0.3.10" -f https://storage.googleapis.com/jax-releases/jax_cuda_releases.html
+```
+
+2. download yolox weight
+
+```shell
+ex) !wget https://github.com/Megvii-BaseDetection/storage/releases/download/0.0.1/yolox_nano.pth
+```
+
+3. download dataset or get from drive
+
+ex of download datatset
+```shell
+!oidv6 downloader --dataset /content/YOLOX/datasets  --type_data all --classes /content/test.txt --limit 600 --yes --multi_classes
+```
+
+ex) test.txt
+Person
+Pen
+Computer monitor
+
+ex of get from drive
+
+4. change to voc format
+important!!
+change label folder name to Label under /content/YOLOX/datasets/multidata/train/
+
+```sheell
+!python3 /content/YOLOX/oidv6_to_voc.py --sourcepath /content/YOLOX/datasets/multidata/train --dest_path /content/YOLOX/datasets/multidata/train
+!mkdir /content/YOLOX/datasets/VOCdevkit/
+%cd /content/YOLOX/datasets/multidata/train/
+!find . -type f -name '*.jpg' -print0 | xargs -0 mv -t /content/YOLOX/datasets/VOCdevkit/
+!find . -type f -name '*.xml' -print0 | xargs -0 mv -t /content/YOLOX/datasets/VOCdevkit/
+%mkdir /content/YOLOX/datasets/VOCdevkit/VOC2007/
+%mkdir "/content/YOLOX/datasets/VOCdevkit/VOC2012"
+!cp -r "/content/YOLOX/datasets/VOCdevkit/VOC2007/." "/content/YOLOX/datasets/VOCdevkit/VOC2012"
+```
+
+5. check train and validation size (optional)
+```shell
+%cd /content/YOLOX/
+!python3 voc_txt.py "/content/YOLOX/datasets/VOCdevkit/"
+```
+
+6. change class form
+1.
+```shell
+from IPython.core.magic import register_line_cell_magic
+
+@register_line_cell_magic
+def writetemplate(line, cell):
+    with open(line, 'w') as f:
+        f.write(cell.format(**globals()))
+```
+2.
+```shell
+%%writetemplate /content/YOLOX/yolox/data/datasets/voc_classes.py
+
+VOC_CLASSES = (
+    "person",
+    "pen",
+    "computer_monitor",
+)
+```
+
+3.
+
+```shell
+%%writetemplate /content/YOLOX/yolox/data/datasets/coco_classes.py
+
+COCO_CLASSES = (
+    "person",
+    "pen",
+    "computer_monitor",
+)
+```
+
+4.
+```shell
+NUM_CLASSES = 3
+!sed -i -e 's/self.num_classes = 20/self.num_classes = {NUM_CLASSES}/g' "/content/YOLOX/exps/example/yolox_voc/yolox_voc_nano.py"
+```
+
+7. train
+
+```shell
+!python tools/train.py -f exps/example/yolox_voc/yolox_voc_nano.py -d 1 -b 16 --fp16 -o -c /content/yolox_nano.pth
+```
+
+8. evaluation
+
+```shell
+MODEL_PATH = "/content/YOLOX/YOLOX_outputs/yolox_voc_s/beste_ckpt.pth"
+!python3 tools/eval.py -n  yolox-nano -c {MODEL_PATH} -b 64 -d 1 --conf 0.001 -f exps/example/yolox_voc/yolox_voc_nano.py
+```
+
+9. test (optional)
+
+```shell
+TEST_IMAGE_PATH = "/content/testImages/watch.jpg"
+!python tools/demo.py image -f /content/YOLOX/exps/example/yolox_voc/yolox_voc_nano.py -c {MODEL_PATH} --path {TEST_IMAGE_PATH} --conf 0.25 --nms 0.45 --tsize 640 --save_result --device gpu
+```
+
+```shell
+# show result from tested image
+from PIL import Image
+OUTPUT_IMAGE_PATH = "/content/YOLOX/YOLOX_outputs/yolox_voc_s/vis_res/2022_08_24_14_43_51/watch.jpg" 
+Image.open(OUTPUT_IMAGE_PATH)
+```
+
+10. convert to onnx form and download
+
+```shell
+!python3 tools/export_onnx.py --output-name yolox_s_bodyclassmNano.onnx -f exps/example/yolox_voc/yolox_voc_s.py -c '/content/YOLOX/YOLOX_outputs/yolox_voc_s/best_ckpt.pth'
+```
+
+11. download log file (optional)
+```shell
+files.download('/content/YOLOX/YOLOX_outputs/yolox_voc_s/train_log.txt')
+files.download('/content/YOLOX/YOLOX_outputs/yolox_voc_s/best_ckpt.pth')
+files.download('/content/YOLOX/YOLOX_outputs/yolox_voc_s/val_log.txt')
+```
+
+12. see the result with graph (optional)
+
+```shell
+%reload_ext tensorboard
+%tensorboard --logdir="/content/YOLOX/YOLOX_outputs/yolox_voc_s/tensorboard"
+```
+
+
+</details>
 <details>
 <summary>Installation</summary>
 
