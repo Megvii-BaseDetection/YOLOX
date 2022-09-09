@@ -76,13 +76,14 @@ class COCODataset(Dataset):
             self._cache_images()
 
     def __len__(self):
-        return len(self.ids)
+        return len(self.annotations)
 
     def __del__(self):
         del self.imgs
 
     def _load_coco_annotations(self):
-        return [self.load_anno_from_ids(_ids) for _ids in self.ids]
+        x = [self.load_anno_from_ids(_ids) for _ids in self.ids]
+        return x
 
     def _cache_images(self):
         logger.warning(
