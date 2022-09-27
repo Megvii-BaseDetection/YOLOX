@@ -241,8 +241,12 @@ class WandbLogger(object):
                 id = data_point[3]
                 img = np.transpose(img, (1, 2, 0))
                 img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+
+                if isinstance(id, torch.Tensor):
+                    id = id.item()
+
                 self.val_table.add_data(
-                    id.item(),
+                    id,
                     self.wandb.Image(img)
                 )
 
@@ -282,7 +286,9 @@ class WandbLogger(object):
 
             avg_scores = defaultdict(int)
             num_occurrences = defaultdict(int)
-
+               
+            print(predictions)
+            
             if val[0] in predictions:
                 prediction = predictions[val[0]]
                 boxes = []
