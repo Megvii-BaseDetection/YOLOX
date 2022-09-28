@@ -2,6 +2,10 @@
 # -*- coding:utf-8 -*-
 # Copyright (c) Megvii Inc. All rights reserved.
 
+import inspect
+import os
+import sys
+from collections import defaultdict
 from loguru import logger
 
 import cv2
@@ -9,12 +13,7 @@ import numpy as np
 
 import torch
 
-from yolox.data.datasets.voc import VOCDetection
-
-import inspect
-import os
-import sys
-from collections import defaultdict
+from yolox.data.datasets import VOCDetection
 
 
 def get_caller_name(depth=0):
