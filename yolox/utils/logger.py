@@ -255,7 +255,7 @@ class WandbLogger(object):
             self.val_artifact.add(self.val_table, "validation_images_table")
             self.run.use_artifact(self.val_artifact)
             self.val_artifact.wait()
-    
+
     def _convert_prediction_format(self, predictions):
         image_wise_data = defaultdict(int)
 
@@ -267,7 +267,7 @@ class WandbLogger(object):
                 bboxes = val[0]
                 cls = val[1]
                 scores = val[2]
-            except:
+            except KeyError:
                 bboxes = val["bboxes"]
                 cls = val["categories"]
                 scores = val["scores"]
@@ -297,7 +297,7 @@ class WandbLogger(object):
                     ],
                 }
             })
-        
+
         return image_wise_data
 
     def log_metrics(self, metrics, step=None):
@@ -330,7 +330,7 @@ class WandbLogger(object):
             predictions = self._convert_prediction_format(predictions)
 
         result_table = self.wandb.Table(columns=columns)
-        
+
         for idx, val in table_ref.iterrows():
 
             avg_scores = defaultdict(int)
@@ -339,7 +339,7 @@ class WandbLogger(object):
                 id = val[0][0]
             else:
                 id = val[0]
-    
+
             if id in predictions:
                 prediction = predictions[id]
                 boxes = []
