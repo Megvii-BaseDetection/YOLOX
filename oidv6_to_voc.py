@@ -119,7 +119,7 @@ for fname in ids:
             elif(x[0] == 'computer_mouse'):
                 x[0] = 'mouse'
             elif(x[0] == 'power_plugs_and_sockets'):
-                x[0] = 'power socket'
+                x[0] = 'power_socket'
 
             # outdoor
             elif(x[0] == 'waste_container'):
@@ -132,6 +132,24 @@ for fname in ids:
                 x[0] = 'Bat'
             elif(x[0] == 'jaguar_(animal)'):
                 x[0] = 'Jaguar'
+
+            # first words
+            elif(x[0] == 'computer_monitor'):
+                x[0] = 'monitor'
+            elif(x[0] == 'gas_stove'):
+                x[0] = 'stove'
+            elif(x[0] == 'coffee_cup'):
+                x[0] = 'cup'
+            elif(x[0] == 'houseplant'):
+                x[0] = 'plant'
+            elif(x[0] == 'microwave_oven'):
+                x[0] = 'oven'
+            elif(x[0] == 'band-aid'):
+                x[0] = 'band aid'
+            elif(x[0] == 'tennis_racket'):
+                x[0] = 'racket'
+            elif(x[0] == 'table_tennis_racket'):
+                x[0] = 'racket'
 
 
             child_name.text = x[0] #name
@@ -163,5 +181,4 @@ for fname in ids:
         save = fname+'.xml'
         tree.write(save)
         move(fname+'.xml', myfile)
-
 
