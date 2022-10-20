@@ -207,7 +207,7 @@ class TrainTransform:
             : self.max_labels
         ]
         padded_labels = np.ascontiguousarray(padded_labels, dtype=np.float32)
-        return image_t, padded_labels
+        return image_t / 255.0, padded_labels
 
 
 class ValTransform:
@@ -240,4 +240,12 @@ class ValTransform:
             img /= 255.0
             img -= np.array([0.485, 0.456, 0.406]).reshape(3, 1, 1)
             img /= np.array([0.229, 0.224, 0.225]).reshape(3, 1, 1)
+
+        else:
+            # NOTE: It might be reasonable to use the legacy processing, but
+            #       I'm not sure what the hardcoded float values on lines 241:242 are.
+            #       The important part here is to make sure the model expects feature values
+            #       between [0,1] after training. 
+            img /= 255.0
+
         return img, np.zeros((1, 5))
