@@ -24,8 +24,6 @@ exp = get_exp(None, 'yolox-s') # select model name
 model = exp.get_model()
 model.cuda()
 model.eval()
-ckpt = torch.load('../../models/yolox_s.pth', map_location="cpu") # type model path
-model.load_state_dict(ckpt["model"])
 
 # Run nebullvm optimization
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
