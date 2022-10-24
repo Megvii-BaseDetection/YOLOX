@@ -67,7 +67,8 @@ def postprocess(prediction, num_classes, conf_thre=0.7, nms_thre=0.45, class_agn
                 nms_thre,
             )
 
-        detections = detections[nms_out_index]
+        detections = torch.index_select(input=detections, dim=0, index=nms_out_index)
+
         if output[i] is None:
             output[i] = detections
         else:
