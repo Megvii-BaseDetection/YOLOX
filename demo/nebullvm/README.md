@@ -5,9 +5,10 @@ This document shows how to accelerate YOLOX inference time with nebullvm.
 [nebullvm](https://github.com/nebuly-ai/nebullvm) is an open-source library designed to accelerate AI inference of deep learning models in a few lines of code. nebullvm leverages state-of-the-art model optimization techniques such as deep learning compilers (TensorRT, Openvino, ONNX Runtime, TVM, TF Lite, DeepSparse, etc.), various quantization and compression strategies to achieve the maximum physically possible acceleration on the user's hardware.
 
 ## Steps to accelerate YOLOX with nebullvm
-1. Download a YOLOX model from the original [README](https://github.com/emilecourthoud/YOLOX/blob/main/README.md)
+1. Download a YOLOX model from the original [readme](https://github.com/Megvii-BaseDetection/YOLOX)
 2. Optimize YOLOX with nebullvm
 3. Perform inference and compare the latency of the optimized model with that of the original model
+Find [here](nebullvm_optimization.py) the complete script in python with more details.
 
 First, let's install nebullvm. The simplest way is by using pip.
 ```
@@ -69,4 +70,4 @@ with torch.no_grad():
 stop = time.time()
 print(f"Average inference time of YOLOX otpimized with nebullvm: {(stop - start)}")
 ```
-Find [here](nebullvm_run_inference.py) the complete script in python with more details.
+Find [here](nebullvm_optimization.py) the complete script in python with more details.
