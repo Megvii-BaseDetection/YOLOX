@@ -8,7 +8,9 @@ This document shows how to accelerate YOLOX inference time with nebullvm.
 1. Download a YOLOX model from the original [readme](https://github.com/Megvii-BaseDetection/YOLOX)
 2. Optimize YOLOX with nebullvm
 3. Perform inference and compare the latency of the optimized model with that of the original model
-Find [here](nebullvm_optimization.py) the complete script in python with more details.
+
+[Here](nebullvm_optimization.py) you can find the complete script in python with more details.
+
 
 First, let's install nebullvm. The simplest way is by using pip.
 ```
