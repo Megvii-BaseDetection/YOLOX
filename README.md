@@ -210,7 +210,7 @@ python -m yolox.tools.eval -n  yolox-s -c yolox_s.pth -b 1 -d 1 --conf 0.001 --f
 ## Deployment
 
 
-1.  [Accelerate YOLOX inference and export in Python with nebullvm](./demo/nebullvm)
+1.  [Accelerate YOLOX inference with nebullvm in Python](./demo/nebullvm)
 2.  [ONNX export and an ONNXRuntime](./demo/ONNXRuntime)
 3.  [TensorRT in C++ and Python](./demo/TensorRT)
 4.  [ncnn in C++ and Java](./demo/ncnn)
