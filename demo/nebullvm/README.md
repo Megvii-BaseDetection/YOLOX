@@ -9,7 +9,7 @@ This document shows how to accelerate YOLOX inference time with nebullvm.
 2. Optimize YOLOX with nebullvm
 3. Perform inference and compare the latency of the optimized model with that of the original model
 
-[Here](nebullvm_optimization.py) you can find the complete script in python with more details.
+[Here](nebullvm_optimization.py) you can find a demo in python.
 
 
 First, let's install nebullvm. The simplest way is by using pip.
