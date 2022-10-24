@@ -1,35 +1,55 @@
-# **Accelerate and deploy YOLOX with with nebullvm in Python**
+# **Accelerate YOLOX inference with nebullvm in Python**
 
-## Steps to integrate YOLOX with nebullvm
-1. Download the YOLOX model
-Download model from orginal [README](../../README.md)
-2. Optimize model
+This document shows how to accelerate YOLOX inference time with nebullvm.
+
+[nebullvm](https://github.com/nebuly-ai/nebullvm) is an open-source library designed to accelerate AI inference of deep learning models in a few lines of code. nebullvm leverages state-of-the-art model optimization techniques such as deep learning compilers (TensorRT, Openvino, ONNX Runtime, TVM, TF Lite, DeepSparse, etc.), various quantization and compression strategies to achieve the maximum physically possible acceleration on the user's hardware.
+
+## Steps to accelerate YOLOX with nebullvm
+1. Download a YOLOX model from the original [README](https://github.com/emilecourthoud/YOLOX/blob/main/README.md)
+2. Optimize YOLOX with nebullvm
+3. Perform inference and compare the latency of the optimized model with that of the original model
+
+First, let's install nebullvm. The simplest way is by using pip.
+```
+pip install nebullvm
+```
+Now, let's download one of YOLOX models and optimize it with nebullvm.
+
 ```python
-# get YOLO model
+# Import YOLOX model
 from yolox.exp import get_exp
 from yolox.data.data_augment import ValTransform
 
-exp = get_exp(None, 'yolox-s') # type here your model name
+exp = get_exp(None, 'yolox-s') # select model name
 model = exp.get_model()
 model.cuda()
 model.eval()
-ckpt = torch.load('../../models/yolox_s.pth', map_location="cpu") # type path to the your model
+ckpt = torch.load('../../models/yolox_s.pth', map_location="cpu") # type model path
 model.load_state_dict(ckpt["model"])
 
-# run optimization
+# Run nebullvm optimization
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 input_data =  [((torch.randn(1, 3, 640, 640).to(device), ), 0) for i in range(100)]
-optimized_model = optimize_model(model, input_data=input_data, optimization_time="unconstrained") 
+optimized_model = optimize_model(model, input_data=input_data, optimization_time="constrained") # Optimization without performance loss
 ```
-More details [here](nebullvm_optimize.py)
+Find [here](nebullvm_optimize.py) the complete script in python with more details.
+
+In this example, we optimized YOLOX without any loss in accuracy. To further speed up the model by means of more aggressive optimization techniques, proceed as follows:
+- Set *optimization_time="unconstrained"*. With the unconstrained option, nebullvm will test time-consuming techniques such as pruning and quantization-aware training (QAT).
+- Set the *metric_drop_ths* parameter to be greater than zero (by default, *metric_drop_ths=0*). In this way, we will allow nebullvm to test optimization techniques that involve a tradeoff of some trade-off of a certain metric. For example, to test maximum acceleration with a minimum loss of accuracy of 3%, set *metric_drop_ths=0.03* and *metric="accuracy"*.
+For more information about nebullvm API, see [nebullvm documentation](https://github.com/nebuly-ai/nebullvm).
+
 
 3. Run inference and compare latency of the optimized model with that of the original model
+
+Note that before testing latency of the optimized model, it is necessary to perform some warmup runs, as some optimizers fine-tune certain internal parameters during the first few inferences after optimization.
+
 ```python
-# check perfomance
+# Check perfomance
 warmup_iters = 30
 num_iters = 100
 
-# Non optimized model perfomance
+# Unoptimized model perfomance
 with torch.no_grad():
   for i in range(warmup_iters):
     o = model(img)
@@ -38,7 +58,7 @@ with torch.no_grad():
     for i in range(num_iters):
       o = model(img)
 stop = time.time()
-print(f"Took unoptimized YOLO: {(stop - start)}")
+print(f"Average inference time of unoptimized YOLOX: {(stop - start)}")
 
 # Optimized model perfomance
 with torch.no_grad():
@@ -49,6 +69,6 @@ with torch.no_grad():
     for i in range(num_iters):
       res = model_opt(img)
 stop = time.time()
-print(f"Took optimized YOLO: {(stop - start)}")
+print(f"Average inference time of YOLOX otpimized with nebullvm: {(stop - start)}")
 ```
-More details [here](nebullvm_run_inference.py)
+Find [here](nebullvm_run_inference.py) the complete script in python with more details.
