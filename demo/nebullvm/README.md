@@ -59,7 +59,7 @@ with torch.no_grad():
     for i in range(num_iters):
       o = model(img)
 stop = time.time()
-print(f"Average inference time of unoptimized YOLOX: {(stop - start)}")
+print(f"Average inference time of unoptimized YOLOX: {(stop - start)/num_iters*1000} ms")
 
 # Optimized model perfomance
 with torch.no_grad():
@@ -70,6 +70,6 @@ with torch.no_grad():
     for i in range(num_iters):
       res = model_opt(img)
 stop = time.time()
-print(f"Average inference time of YOLOX otpimized with nebullvm: {(stop - start)}")
+print(f"Average inference time of YOLOX otpimized with nebullvm: {(stop - start)/num_iters*1000} ms")
 ```
 Find [here](nebullvm_optimization.py) the complete script in python with more details.
