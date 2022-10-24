@@ -11,7 +11,7 @@ from yolox.data.data_augment import ValTransform
 
 
 
-# get and process image
+# Get and process image
 exp = get_exp(None, 'yolox-s')
 preproc = ValTransform(legacy=False)
 img = cv2.imread('../../assets/dog.jpg')
@@ -20,7 +20,7 @@ img = torch.from_numpy(img).unsqueeze(0)
 img = img.float()
 img = img.cuda()
 
-# get YOLO model
+# Get YOLO model
 exp = get_exp(None, 'yolox-s')
 model = exp.get_model()
 model.cuda()
@@ -28,19 +28,19 @@ model.eval()
 ckpt = torch.load('../../models/yolox_s.pth', map_location="cpu")
 model.load_state_dict(ckpt["model"])
 
-print('OPTIMIZING')
-# run optimization
+print('Optimizing')
+# Run optimization
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 input_data =  [((torch.randn(1, 3, 640, 640).to(device), ), 0) for i in range(100)]
 model_opt = optimize_model(model, input_data=input_data, optimization_time="unconstrained")
-print('OPTIMIZING DONE')
+print('Optimization complete')
 
-# check perfomance
+# Check perfomance
 warmup_iters = 30
 num_iters = 100
 
-print('BENCHMARKING')
-# Non optimized model perfomance
+print('Benchmarking')
+# Unptimized model perfomance
 with torch.no_grad():
   for i in range(warmup_iters):
     o = model(img)
@@ -49,7 +49,7 @@ with torch.no_grad():
     for i in range(num_iters):
       o = model(img)
 stop = time.time()
-print(f"Took unoptimized YOLO: {(stop - start)}")
+print(f"Average inference time of unoptimized YOLOX: {(stop - start)}")
 
 # Optimized model perfomance
 with torch.no_grad():
@@ -60,4 +60,5 @@ with torch.no_grad():
     for i in range(num_iters):
       res = model_opt(img)
 stop = time.time()
-print(f"Took optimized YOLO: {(stop - start)}")
+print(f"Average inference time of YOLOX otpimized with nebullvm: {(stop - start)}")
+
