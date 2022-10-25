@@ -4,6 +4,25 @@ This document shows how to accelerate YOLOX inference time with nebullvm.
 
 [nebullvm](https://github.com/nebuly-ai/nebullvm) is an open-source library designed to accelerate AI inference of deep learning models in a few lines of code. nebullvm leverages state-of-the-art model optimization techniques such as deep learning compilers (TensorRT, Openvino, ONNX Runtime, TVM, TF Lite, DeepSparse, etc.), various quantization and compression strategies to achieve the maximum physically possible acceleration on the user's hardware.
 
+## Benchmarks
+Following are the results of the nebullvm optimization on YOLOX without loss of accuracy.
+For each model-hardware pairing, response time was evaluated as the average over 100 predictions. The test was run on Nvidia Tesla T4 (g4dn.xlarge) and Intel XEON Scalable (m6i.24xlarge and c6i.12xlarge) on AWS.
+
+| Model   | Hardware     | Unoptimized (ms)| Nebullvm optimized (ms) | Speedup |
+|---------|--------------|-----------------|-------------------------|---------|
+| YOLOX-s | g4dn.xlarge  |       13.6      |           9.0           |   1.5x  |
+| YOLOX-s | m6i.24xlarge |       32.7      |           8.8           |   3.7x  |
+| YOLOX-s | c6i.12xlarge |       34.4      |           12.4          |   2.8x  |
+| YOLOX-m | g4dn.xlarge  |       24.2      |           22.4          |   1.1x  |
+| YOLOX-m | m6i.24xlarge |       55.1      |           36.0          |   2.3x  |
+| YOLOX-m | c6i.12xlarge |       62.5      |           26.9          |   2.6x  |
+| YOLOX-l | g4dn.xlarge  |       84.4      |           80.5          |   1.5x  |
+| YOLOX-l | m6i.24xlarge |       88.0      |           33.7          |   2.6x  |
+| YOLOX-l | c6i.12xlarge |      102.8      |           54.2          |   1.9x  |
+| YOLOX-x | g4dn.xlarge  |       87.3      |           34.0          |   2.6x  |
+| YOLOX-x | m6i.24xlarge |      134.5      |           56.6          |   2.4x  |
+| YOLOX-x | c6i.12xlarge |      162.0      |           95.4          |   1.7x  |
+
 ## Steps to accelerate YOLOX with nebullvm
 1. Download a YOLOX model from the original [readme](https://github.com/Megvii-BaseDetection/YOLOX)
 2. Optimize YOLOX with nebullvm
