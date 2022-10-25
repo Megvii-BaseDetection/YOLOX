@@ -47,10 +47,12 @@ model = exp.get_model()
 model.cuda()
 model.eval()
 
-# Run nebullvm optimization
+
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 input_data =  [((torch.randn(1, 3, 640, 640).to(device), ), 0) for i in range(100)]
-optimized_model = optimize_model(model, input_data=input_data, optimization_time="constrained") # Optimization without performance loss
+
+# Run nebullvm optimization without performance loss
+optimized_model = optimize_model(model, input_data=input_data, optimization_time="constrained")
 ```
 Find [here](nebullvm_optimize.py) the complete script in python with more details.
 
@@ -60,8 +62,7 @@ In this example, we optimized YOLOX without any loss in accuracy. To further spe
 For more information about nebullvm API, see [nebullvm documentation](https://github.com/nebuly-ai/nebullvm).
 
 
-3. Run inference and compare latency of the optimized model with that of the original model
-
+Let's now compare the latency of the optimized model with that of the original model. 
 Note that before testing latency of the optimized model, it is necessary to perform some warmup runs, as some optimizers fine-tune certain internal parameters during the first few inferences after optimization.
 
 ```python
