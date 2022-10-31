@@ -13,6 +13,7 @@ import numpy as np
 
 import torch
 
+
 def get_caller_name(depth=0):
     """
     Args:
@@ -167,7 +168,7 @@ class WandbLogger(object):
                 "wandb is not installed."
                 "Please install wandb using pip install wandb"
                 )
-        
+
         from yolox.data.datasets import VOCDetection
 
         self.project = project
@@ -321,7 +322,7 @@ class WandbLogger(object):
         columns = ["id", "predicted"]
         for cls in self.cats:
             columns.append(cls["name"])
-        
+
         if isinstance(self.val_dataset, self.voc_dataset):
             predictions = self._convert_prediction_format(predictions)
 
