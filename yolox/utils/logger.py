@@ -13,9 +13,6 @@ import numpy as np
 
 import torch
 
-from yolox.data.datasets import VOCDetection
-
-
 def get_caller_name(depth=0):
     """
     Args:
@@ -170,6 +167,8 @@ class WandbLogger(object):
                 "wandb is not installed."
                 "Please install wandb using pip install wandb"
                 )
+        
+        from yolox.data.datasets import VOCDetection
 
         self.project = project
         self.name = name
@@ -203,6 +202,8 @@ class WandbLogger(object):
         self.run.define_metric("val/*", step_metric="train/epoch")
         self.run.define_metric("train/step")
         self.run.define_metric("train/*", step_metric="train/step")
+
+        self.voc_dataset = VOCDetection
 
         if val_dataset and self.num_log_images != 0:
             self.val_dataset = val_dataset
@@ -262,31 +263,24 @@ class WandbLogger(object):
 
         for key, val in predictions.items():
             img_id = key
-            # print(key, val)
-            # quit()
-            try:
-                bboxes = val[0]
-                cls = val[1]
-                scores = val[2]
-            except KeyError:
-                bboxes = val["bboxes"]
-                cls = val["categories"]
-                scores = val["scores"]
 
+            try:
+                bboxes, cls, scores = val
+            except KeyError:
+                bboxes, cls, scores = val["bboxes"], val["categories"], val["scores"]
+
+            # These store information of actual bounding boxes i.e. the ones which are not None
             act_box = []
             act_scores = []
             act_cls = []
 
             if bboxes is not None:
-                for idx, box in enumerate(bboxes):
-                    box = bboxes[idx]
-                    cl = cls[idx]
-                    score = scores[idx]
-                    if box is None or score is None or cl is None:
+                for box, classes, score in zip(bboxes, cls, scores):
+                    if box is None or score is None or classes is None:
                         continue
                     act_box.append(box)
                     act_scores.append(score)
-                    act_cls.append(cl)
+                    act_cls.append(classes)
 
             image_wise_data.update({
                 int(img_id): {
@@ -327,7 +321,8 @@ class WandbLogger(object):
         columns = ["id", "predicted"]
         for cls in self.cats:
             columns.append(cls["name"])
-        if isinstance(self.val_dataset, VOCDetection):
+        
+        if isinstance(self.val_dataset, self.voc_dataset):
             predictions = self._convert_prediction_format(predictions)
 
         result_table = self.wandb.Table(columns=columns)
@@ -336,10 +331,10 @@ class WandbLogger(object):
 
             avg_scores = defaultdict(int)
             num_occurrences = defaultdict(int)
-            if isinstance(val[0], list):
-                id = val[0][0]
-            else:
-                id = val[0]
+
+            id = val[0]
+            if isinstance(id, list):
+                id = id[0]
 
             if id in predictions:
                 prediction = predictions[id]

@@ -122,7 +122,7 @@ class VOCDetection(Dataset):
         self.cats = [
             {"id": idx, "name": val} for idx, val in enumerate(VOC_CLASSES)
         ]
-        self.class_ids = [i for i in range(len(VOC_CLASSES))]
+        self.class_ids = list(range(len(VOC_CLASSES)))
         self.ids = list()
         for (year, name) in image_sets:
             self._year = year
