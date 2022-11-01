@@ -34,7 +34,7 @@ jobs:
         pip install -r requirements.txt
         pip install isort==4.3.21
         pip install flake8==3.8.3
-        pip install importlib-metadata<5.0
+        pip install "importlib-metadata<5.0"
     # Runs a set of commands using the runners shell
     - name: Format check
       run: ./.github/workflows/format_check.sh
