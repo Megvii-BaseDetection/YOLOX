@@ -210,13 +210,12 @@ python -m yolox.tools.eval -n  yolox-s -c yolox_s.pth -b 1 -d 1 --conf 0.001 --f
 ## Deployment
 
 
-1.  [Accelerate YOLOX inference with nebullvm in Python](./demo/nebullvm)
-2.  [ONNX export and an ONNXRuntime](./demo/ONNXRuntime)
-3.  [TensorRT in C++ and Python](./demo/TensorRT)
-4.  [ncnn in C++ and Java](./demo/ncnn)
-5.  [OpenVINO in C++ and Python](./demo/OpenVINO)
-6.  [MegEngine in C++ and Python](./demo/MegEngine)
-
+1. [MegEngine in C++ and Python](./demo/MegEngine)
+2. [ONNX export and an ONNXRuntime](./demo/ONNXRuntime)
+3. [TensorRT in C++ and Python](./demo/TensorRT)
+4. [ncnn in C++ and Java](./demo/ncnn)
+5. [OpenVINO in C++ and Python](./demo/OpenVINO)
+6. [Accelerate YOLOX inference with nebullvm in Python](./demo/nebullvm)
 
 ## Third-party resources
 * YOLOX for streaming perception: [StreamYOLO (CVPR 2022 Oral)](https://github.com/yancie-yjr/StreamYOLO)
