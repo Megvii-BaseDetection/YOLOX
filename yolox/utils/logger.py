@@ -169,6 +169,8 @@ class WandbLogger(object):
                 "Please install wandb using pip install wandb"
                 )
 
+        from yolox.data.datasets import VOCDetection
+
         self.project = project
         self.name = name
         self.id = id
@@ -202,7 +204,10 @@ class WandbLogger(object):
         self.run.define_metric("train/step")
         self.run.define_metric("train/*", step_metric="train/step")
 
+        self.voc_dataset = VOCDetection
+
         if val_dataset and self.num_log_images != 0:
+            self.val_dataset = val_dataset
             self.cats = val_dataset.cats
             self.id_to_class = {
                 cls['id']: cls['name'] for cls in self.cats
@@ -241,14 +246,55 @@ class WandbLogger(object):
                 id = data_point[3]
                 img = np.transpose(img, (1, 2, 0))
                 img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+
+                if isinstance(id, torch.Tensor):
+                    id = id.item()
+
                 self.val_table.add_data(
-                    id.item(),
+                    id,
                     self.wandb.Image(img)
                 )
 
             self.val_artifact.add(self.val_table, "validation_images_table")
             self.run.use_artifact(self.val_artifact)
             self.val_artifact.wait()
+
+    def _convert_prediction_format(self, predictions):
+        image_wise_data = defaultdict(int)
+
+        for key, val in predictions.items():
+            img_id = key
+
+            try:
+                bboxes, cls, scores = val
+            except KeyError:
+                bboxes, cls, scores = val["bboxes"], val["categories"], val["scores"]
+
+            # These store information of actual bounding boxes i.e. the ones which are not None
+            act_box = []
+            act_scores = []
+            act_cls = []
+
+            if bboxes is not None:
+                for box, classes, score in zip(bboxes, cls, scores):
+                    if box is None or score is None or classes is None:
+                        continue
+                    act_box.append(box)
+                    act_scores.append(score)
+                    act_cls.append(classes)
+
+            image_wise_data.update({
+                int(img_id): {
+                    "bboxes": [box.numpy().tolist() for box in act_box],
+                    "scores": [score.numpy().item() for score in act_scores],
+                    "categories": [
+                        self.val_dataset.class_ids[int(act_cls[ind])]
+                        for ind in range(len(act_box))
+                    ],
+                }
+            })
+
+        return image_wise_data
 
     def log_metrics(self, metrics, step=None):
         """
@@ -277,16 +323,23 @@ class WandbLogger(object):
         for cls in self.cats:
             columns.append(cls["name"])
 
+        if isinstance(self.val_dataset, self.voc_dataset):
+            predictions = self._convert_prediction_format(predictions)
+
         result_table = self.wandb.Table(columns=columns)
+
         for idx, val in table_ref.iterrows():
 
             avg_scores = defaultdict(int)
             num_occurrences = defaultdict(int)
 
-            if val[0] in predictions:
-                prediction = predictions[val[0]]
-                boxes = []
+            id = val[0]
+            if isinstance(id, list):
+                id = id[0]
 
+            if id in predictions:
+                prediction = predictions[id]
+                boxes = []
                 for i in range(len(prediction["bboxes"])):
                     bbox = prediction["bboxes"][i]
                     x0 = bbox[0]
@@ -310,7 +363,6 @@ class WandbLogger(object):
                     boxes.append(box)
             else:
                 boxes = []
-
             average_class_score = []
             for cls in self.cats:
                 if cls["name"] not in num_occurrences:

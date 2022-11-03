@@ -119,6 +119,10 @@ class VOCDetection(Dataset):
         self._annopath = os.path.join("%s", "Annotations", "%s.xml")
         self._imgpath = os.path.join("%s", "JPEGImages", "%s.jpg")
         self._classes = VOC_CLASSES
+        self.cats = [
+            {"id": idx, "name": val} for idx, val in enumerate(VOC_CLASSES)
+        ]
+        self.class_ids = list(range(len(VOC_CLASSES)))
         self.ids = list()
         for (year, name) in image_sets:
             self._year = year
