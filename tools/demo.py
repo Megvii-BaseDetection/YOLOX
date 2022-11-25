@@ -178,7 +178,7 @@ class Predictor(object):
         bboxes /= ratio
 
         cls = output[:, 6]
-        scores = output[:, 4] * output[:, 5]
+        scores = torch.sqrt(output[:, 4] * output[:, 5])
 
         vis_res = vis(img, bboxes, scores, cls, cls_conf, self.cls_names)
         return vis_res

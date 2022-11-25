@@ -66,11 +66,11 @@ def make_parser():
         help="Adopting mix precision training.",
     )
     parser.add_argument(
-        "--cache",
-        dest="cache",
-        default=False,
-        action="store_true",
-        help="Caching imgs to RAM for fast training.",
+        '--cache',
+        type=str,
+        nargs='?',
+        const='ram',
+        help="Caching imgs to ram/disk for fast training.",
     )
     parser.add_argument(
         "-o",
@@ -129,6 +129,18 @@ if __name__ == "__main__":
 
     num_gpu = get_num_devices() if args.devices is None else args.devices
     assert num_gpu <= get_num_devices()
+
+    from yolox.data import COCODataset, TrainTransform
+    exp.dataset = COCODataset(
+        data_dir=exp.data_dir,
+        json_file=exp.train_ann,
+        img_size=exp.input_size,
+        preproc=TrainTransform(
+            max_labels=50,
+            flip_prob=exp.flip_prob,
+            hsv_prob=exp.hsv_prob),
+        cache=args.cache,
+    )
 
     dist_url = "auto" if args.dist_url is None else args.dist_url
     launch(
