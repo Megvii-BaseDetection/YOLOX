@@ -91,21 +91,25 @@ class COCODataset(Dataset):
                 self.imgs = [None] * self.num_imgs
                 logger.info("You are using cached images in RAM to accelerate training!")
             else:   # 'disk'
-                self.cache_dir = os.path.join(self.data_dir, f"{self.name}_cache{self.img_size[0]}x{self.img_size[1]}")
+                self.cache_dir = os.path.join(
+                    self.data_dir,
+                    f"{self.name}_cache{self.img_size[0]}x{self.img_size[1]}"
+                )
                 if not os.path.exists(self.cache_dir):
                     os.mkdir(self.cache_dir)
                     logger.warning(
-                        "\n********************************************************************************\n"
+                        "\n*******************************************************************\n"
                         "You are using cached images in DISK to accelerate training.\n"
                         "This requires large DISK space.\n"
                         "Make sure you have 136G available DISK space for training COCO.\n"
-                        "********************************************************************************\n"
+                        "*******************************************************************\n"
                     )
                 else:
                     logger.info("Found disk cache!")
                     return
 
-            logger.info("Caching images for the first time. This might take about 15 minutes for COCO")
+            logger.info("Caching images for the first time. \
+                        This might take about 15 minutes for COCO")
 
             from tqdm import tqdm
             from multiprocessing.pool import ThreadPool
@@ -137,11 +141,11 @@ class COCODataset(Dataset):
         b, gb = 0, 1 << 30  # bytes of cached images, bytes per gigabytes
         n = min(self.num_imgs, 30)  # extrapolate from 30 random images
         for _ in range(n):
-            im = self.load_resized_img(random.randint(0, self.num_imgs - 1)) # sample image
+            im = self.load_resized_img(random.randint(0, self.num_imgs - 1))  # sample image
             b += im.nbytes
         mem_required = b * self.num_imgs / n  # GB required to cache dataset into RAM
         mem = psutil.virtual_memory()
-        cache = mem_required * (1 + safety_margin) < mem.available  # to cache or not to cache, that is the question
+        cache = mem_required * (1 + safety_margin) < mem.available
         logger.info(
             f"{mem_required / gb:.1f}GB RAM required, "
             f"{mem.available / gb:.1f}/{mem.total / gb:.1f}GB available, "
@@ -150,13 +154,12 @@ class COCODataset(Dataset):
         return cache
 
     def load_anno_from_ids(self, id_):
-        # {'file_name': '000000391895.jpg', 'height': 360, 'width': 640, 'id': 391895}
         im_ann = self.coco.loadImgs(id_)[0]
         width = im_ann["width"]
         height = im_ann["height"]
         anno_ids = self.coco.getAnnIds(imgIds=[int(id_)], iscrowd=False)
         annotations = self.coco.loadAnns(anno_ids)
-        # update annotations' clean_box
+
         objs = []
         for obj in annotations:
             x1 = np.max((0, obj["bbox"][0]))
@@ -167,24 +170,20 @@ class COCODataset(Dataset):
                 obj["clean_bbox"] = [x1, y1, x2, y2]
                 objs.append(obj)
 
-        # number of bbox
         num_objs = len(objs)
 
-        # bbox_num x (4 bbox coordinates + 1 class label)
         res = np.zeros((num_objs, 5))
         for ix, obj in enumerate(objs):
             cls = self.class_ids.index(obj["category_id"])
             res[ix, 0:4] = obj["clean_bbox"]
             res[ix, 4] = cls
 
-        # resize bbox coordinates
         r = min(self.img_size[0] / height, self.img_size[1] / width)
         res[:, :4] *= r
 
         img_info = (height, width)
         resized_info = (int(height * r), int(width * r))
 
-        # '000000391895.jpg'
         file_name = (
             im_ann["file_name"]
             if "file_name" in im_ann
