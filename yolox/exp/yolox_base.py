@@ -106,7 +106,22 @@ class Exp(BaseExp):
         self.test_conf = 0.01
         # nms threshold
         self.nmsthre = 0.65
+        self.cache_dataset = None
         self.dataset = None
+
+        from yolox.data import COCODataset, TrainTransform
+        self.class_cache_dataset = COCODataset
+        self.kwargs_cache_dataset=dict(
+            data_dir=self.data_dir,
+            json_file=self.train_ann,
+            img_size=self.input_size,
+            preproc=TrainTransform(
+                max_labels=50,
+                flip_prob=self.flip_prob,
+                hsv_prob=self.hsv_prob
+            )
+        )
+
 
     def get_model(self):
         from yolox.models import YOLOX, YOLOPAFPN, YOLOXHead
@@ -138,22 +153,9 @@ class Exp(BaseExp):
             MosaicDetection,
             worker_init_reset_seed,
         )
-        # from yolox.utils import wait_for_the_master
 
-        # with wait_for_the_master():
-        #     dataset = COCODataset(
-        #         data_dir=self.data_dir,
-        #         json_file=self.train_ann,
-        #         img_size=self.input_size,
-        #         preproc=TrainTransform(
-        #             max_labels=50,
-        #             flip_prob=self.flip_prob,
-        #             hsv_prob=self.hsv_prob),
-        #         cache=cache_img,
-        #     )
-
-        dataset = MosaicDetection(
-            self.dataset,
+        self.dataset = MosaicDetection(
+            self.cache_dataset,
             mosaic=not no_aug,
             img_size=self.input_size,
             preproc=TrainTransform(
@@ -169,8 +171,6 @@ class Exp(BaseExp):
             mosaic_prob=self.mosaic_prob,
             mixup_prob=self.mixup_prob,
         )
-
-        self.dataset = dataset
 
         if is_distributed:
             batch_size = batch_size // dist.get_world_size()

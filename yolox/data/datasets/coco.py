@@ -7,6 +7,7 @@ import cv2
 import numpy as np
 from pycocotools.coco import COCO
 
+import copy
 import os
 import psutil
 import random
@@ -232,7 +233,7 @@ class COCODataset(Dataset):
         else:
             img = self.load_resized_img(index)
 
-        return img, label.copy(), origin_image_size, np.array([id_])
+        return copy.deepcopy(img), copy.deepcopy(label), origin_image_size, np.array([id_])
 
     @Dataset.mosaic_getitem
     def __getitem__(self, index):

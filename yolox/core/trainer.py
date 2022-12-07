@@ -24,6 +24,7 @@ from yolox.utils import (
     get_rank,
     get_world_size,
     gpu_mem_usage,
+    mem_usage,
     is_parallel,
     load_ckpt,
     occupy_mem,
@@ -251,9 +252,10 @@ class Trainer:
             )
 
             logger.info(
-                "{}, mem: {:.0f}Mb, {}, {}, lr: {:.3e}".format(
+                "{}, gpu mem: {:.0f}Mb, mem: {:.1f}Gb, {}, {}, lr: {:.3e}".format(
                     progress_str,
                     gpu_mem_usage(),
+                    mem_usage(),
                     time_str,
                     loss_str,
                     self.meter["lr"].latest,
