@@ -37,7 +37,6 @@ def get_extensions():
         )
     ]
 
-    print(ext_modules)
     return ext_modules
 
 
