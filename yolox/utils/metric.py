@@ -52,10 +52,12 @@ def gpu_mem_usage():
     mem_usage_bytes = torch.cuda.max_memory_allocated()
     return mem_usage_bytes / (1024 * 1024)
 
+
 def mem_usage():
     gb = 1 << 30
     mem = psutil.virtual_memory()
     return mem.used / gb
+
 
 class AverageMeter:
     """Track a series of values and provide access to smoothed values over a

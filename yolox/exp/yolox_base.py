@@ -111,7 +111,7 @@ class Exp(BaseExp):
 
         from yolox.data import COCODataset, TrainTransform
         self.class_cache_dataset = COCODataset
-        self.kwargs_cache_dataset=dict(
+        self.kwargs_cache_dataset = dict(
             data_dir=self.data_dir,
             json_file=self.train_ann,
             img_size=self.input_size,
@@ -121,7 +121,6 @@ class Exp(BaseExp):
                 hsv_prob=self.hsv_prob
             )
         )
-
 
     def get_model(self):
         from yolox.models import YOLOX, YOLOPAFPN, YOLOXHead
@@ -145,7 +144,6 @@ class Exp(BaseExp):
 
     def get_data_loader(self, batch_size, is_distributed, no_aug=False, cache_img=False):
         from yolox.data import (
-            COCODataset,
             TrainTransform,
             YoloBatchSampler,
             DataLoader,
