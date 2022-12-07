@@ -2,9 +2,6 @@
 # -*- coding:utf-8 -*-
 # Copyright (c) Megvii, Inc. and its affiliates.
 
-import datetime
-import os
-import time
 from loguru import logger
 
 import torch
@@ -24,14 +21,18 @@ from yolox.utils import (
     get_rank,
     get_world_size,
     gpu_mem_usage,
-    mem_usage,
     is_parallel,
     load_ckpt,
+    mem_usage,
     occupy_mem,
     save_checkpoint,
     setup_logger,
     synchronize
 )
+
+import datetime
+import os
+import time
 
 
 class Trainer:

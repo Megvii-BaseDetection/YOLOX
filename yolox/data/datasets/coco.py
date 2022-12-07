@@ -112,7 +112,9 @@ class COCODataset(Dataset):
                         This might take about 15 minutes for COCO")
 
             from tqdm import tqdm
+
             from multiprocessing.pool import ThreadPool
+
             # number of YOLOX multiprocessing threads
             NUM_THREADS = min(8, max(1, os.cpu_count() - 1))
             TQDM_BAR_FORMAT = '{l_bar}{bar:10}| {n_fmt}/{total_fmt} {elapsed}'  # tqdm bar format
