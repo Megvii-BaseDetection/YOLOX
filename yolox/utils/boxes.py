@@ -28,6 +28,52 @@ def filter_box(output, scale_range):
     keep = (w * h > min_scale * min_scale) & (w * h < max_scale * max_scale)
     return output[keep]
 
+## pulled from later versions of pytorch for support on 1.4
+def nms(boxes, scores, iou_threshold):
+    """
+    Performs non-maximum suppression (NMS) on the boxes according
+    to their intersection-over-union (IoU).
+
+    NMS iteratively removes lower scoring boxes which have an
+    IoU greater than iou_threshold with another (higher scoring)
+    box.
+
+    If multiple boxes have the exact same score and satisfy the IoU
+    criterion with respect to a reference box, the selected box is
+    not guaranteed to be the same between CPU and GPU. This is similar
+    to the behavior of argsort in PyTorch when repeated values are present.
+
+    Args:
+        boxes (Tensor[N, 4])): boxes to perform NMS on. They
+            are expected to be in ``(x1, y1, x2, y2)`` format with ``0 <= x1 < x2`` and
+            ``0 <= y1 < y2``.
+        scores (Tensor[N]): scores for each one of the boxes
+        iou_threshold (float): discards all overlapping boxes with IoU > iou_threshold
+
+    Returns:
+        Tensor: int64 tensor with the indices of the elements that have been kept
+        by NMS, sorted in decreasing order of scores
+    """
+    return torchvision.ops.nms(boxes.cpu(), scores.cpu(), iou_threshold)
+
+## pulled from later versions of pytorch for support on 1.4
+def _batched_nms_coordinate_trick(
+    boxes,
+    scores,
+    idxs,
+    iou_threshold,
+) :
+    # strategy: in order to perform NMS independently per class,
+    # we add an offset to all the boxes. The offset is dependent
+    # only on the class idx, and is large enough so that boxes
+    # from different classes do not overlap
+    if boxes.numel() == 0:
+        return torch.empty((0,), dtype=torch.int64, device=boxes.device)
+    max_coordinate = boxes.max()
+    offsets = idxs.to(boxes) * (max_coordinate + torch.tensor(1).to(boxes))
+    boxes_for_nms = boxes + offsets[:, None]
+    keep = nms(boxes_for_nms, scores, iou_threshold)
+    return keep
 
 def postprocess(prediction, num_classes, conf_thre=0.7, nms_thre=0.45, class_agnostic=False):
     box_corner = prediction.new(prediction.shape)
@@ -60,14 +106,14 @@ def postprocess(prediction, num_classes, conf_thre=0.7, nms_thre=0.45, class_agn
                 nms_thre,
             )
         else:
-            nms_out_index = torchvision.ops.batched_nms(
+            nms_out_index = _batched_nms_coordinate_trick(
                 detections[:, :4],
                 detections[:, 4] * detections[:, 5],
                 detections[:, 6],
                 nms_thre,
             )
 
-        detections = detections[nms_out_index]
+        detections = detections[nms_out_index,:]
         if output[i] is None:
             output[i] = detections
         else:

@@ -9,7 +9,7 @@ import torch
 from torch.utils.cpp_extension import CppExtension
 
 torch_ver = [int(x) for x in torch.__version__.split(".")[:2]]
-assert torch_ver >= [1, 7], "Requires PyTorch >= 1.7"
+assert torch_ver >= [1, 4], "Requires PyTorch >= 1.4"
 
 
 def get_extensions():
@@ -37,6 +37,7 @@ def get_extensions():
         )
     ]
 
+    print(ext_modules)
     return ext_modules
 
 
@@ -51,11 +52,21 @@ with open("README.md", "r", encoding="utf-8") as f:
     long_description = f.read()
 
 
+thelibFolder =  path.dirname(path.realpath(__file__))
+requirementPath = thelibFolder + '/requirements.txt'
+install_requires = [] 
+if path.isfile(requirementPath):
+    with open(requirementPath) as f:
+        install_requires = f.read().splitlines()
+
+
+
 setuptools.setup(
-    name="yolox",
+    name="aq-yolox",
     version=version,
     author="basedet team",
     python_requires=">=3.6",
+    install_requires=install_requires,
     long_description=long_description,
     ext_modules=get_extensions(),
     classifiers=["Programming Language :: Python :: 3", "Operating System :: OS Independent"],
