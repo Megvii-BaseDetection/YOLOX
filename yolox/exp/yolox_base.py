@@ -109,9 +109,10 @@ class Exp(BaseExp):
         self.cache_dataset = None
         self.dataset = None
 
+
+    def create_cache_dataset(self, cache):
         from yolox.data import COCODataset, TrainTransform
-        self.class_cache_dataset = COCODataset
-        self.kwargs_cache_dataset = dict(
+        self.cache_dataset = COCODataset(
             data_dir=self.data_dir,
             json_file=self.train_ann,
             img_size=self.input_size,
@@ -119,8 +120,10 @@ class Exp(BaseExp):
                 max_labels=50,
                 flip_prob=self.flip_prob,
                 hsv_prob=self.hsv_prob
-            )
+            ),
+            cache=cache
         )
+
 
     def get_model(self):
         from yolox.models import YOLOX, YOLOPAFPN, YOLOXHead
@@ -144,6 +147,7 @@ class Exp(BaseExp):
 
     def get_data_loader(self, batch_size, is_distributed, no_aug=False, cache_img=False):
         from yolox.data import (
+            COCODataset,
             TrainTransform,
             YoloBatchSampler,
             DataLoader,
@@ -151,9 +155,26 @@ class Exp(BaseExp):
             MosaicDetection,
             worker_init_reset_seed,
         )
+        from yolox.utils import wait_for_the_master
+
+        with wait_for_the_master():
+            if self.cache_dataset is None:
+                assert cache_img is False or cache_img is None, "cache is True, but cache_dataset is None"
+                dataset = COCODataset(
+                    data_dir=self.data_dir,
+                    json_file=self.train_ann,
+                    img_size=self.input_size,
+                    preproc=TrainTransform(
+                        max_labels=50,
+                        flip_prob=self.flip_prob,
+                        hsv_prob=self.hsv_prob),
+                    cache=cache_img,
+                )
+            else:
+                dataset = self.cache_dataset
 
         self.dataset = MosaicDetection(
-            self.cache_dataset,
+            dataset,
             mosaic=not no_aug,
             img_size=self.input_size,
             preproc=TrainTransform(

@@ -2,6 +2,7 @@
 # -*- coding:utf-8 -*-
 # Copyright (c) Megvii, Inc. and its affiliates.
 from loguru import logger
+from tqdm import tqdm
 
 import cv2
 import numpy as np
@@ -11,6 +12,7 @@ import copy
 import os
 import psutil
 import random
+from multiprocessing.pool import ThreadPool
 
 from ..dataloading import get_yolox_datadir
 from .datasets_wrapper import Dataset
@@ -78,48 +80,48 @@ class COCODataset(Dataset):
         self.imgs = None
         self.cache = cache
 
-        self._cache_images()
+        if self.cache:
+            self._cache_images()
 
     def _cache_images(self):
-        # cache == 'ram' & check failed -> cache False
-        # else keep cache unchanged
-        if self.cache == "ram" and not self.check_cache_ram():
+        mem = psutil.virtual_memory()
+        mem_required = self.cal_cache_ram()
+        gb = 1 << 30
+
+        if self.cache == "ram" and mem_required > mem.available:
             self.cache = False
+        else:
+            logger.info(
+                f"{mem_required / gb:.1f}GB RAM required, "
+                f"{mem.available / gb:.1f}/{mem.total / gb:.1f}GB RAM available, "
+                f"Since the first thing we do is cache, there is no guarantee that the remaining memory space is sufficient"
+            )
+
         if self.cache and self.imgs is None:
-            b, gb = 0, 1 << 30  # bytes of cached images, bytes per gigabytes
             if self.cache == 'ram':
                 self.imgs = [None] * self.num_imgs
                 logger.info("You are using cached images in RAM to accelerate training!")
             else:   # 'disk'
-                self.cache_dir = os.path.join(
-                    self.data_dir,
-                    f"{self.name}_cache{self.img_size[0]}x{self.img_size[1]}"
-                )
+                self.cache_dir = os.path.join(self.data_dir, f"{self.name}_cache{self.img_size[0]}x{self.img_size[1]}")
                 if not os.path.exists(self.cache_dir):
                     os.mkdir(self.cache_dir)
                     logger.warning(
-                        "\n*******************************************************************\n"
-                        "You are using cached images in DISK to accelerate training.\n"
-                        "This requires large DISK space.\n"
-                        "Make sure you have 136G available DISK space for training COCO.\n"
-                        "*******************************************************************\n"
+                        f"\n********************************************************************************\n"
+                        f"You are using cached images in DISK to accelerate training.\n"
+                        f"This requires large DISK space.\n"
+                        f"Make sure you have {mem_required / gb:.1f} available DISK space for training COCO.\n"
+                        f"********************************************************************************\n"
                     )
                 else:
                     logger.info("Found disk cache!")
                     return
 
-            logger.info("Caching images for the first time. \
-                        This might take about 15 minutes for COCO")
+            logger.info("Caching images for the first time. This might take about 15 minutes for COCO")
 
-            from tqdm import tqdm
-
-            from multiprocessing.pool import ThreadPool
-
-            # number of YOLOX multiprocessing threads
-            NUM_THREADS = min(8, max(1, os.cpu_count() - 1))
-            TQDM_BAR_FORMAT = '{l_bar}{bar:10}| {n_fmt}/{total_fmt} {elapsed}'  # tqdm bar format
-            results = ThreadPool(NUM_THREADS).imap(self.load_resized_img, range(self.num_imgs))
-            pbar = tqdm(enumerate(results), total=self.num_imgs, bar_format=TQDM_BAR_FORMAT)
+            num_threads = min(8, max(1, os.cpu_count() - 1))
+            b = 0
+            load_imgs = ThreadPool(num_threads).imap(self.load_resized_img, range(self.num_imgs))
+            pbar = tqdm(enumerate(load_imgs), total=self.num_imgs)
             for i, x in pbar:   # x = self.load_resized_img(self, i)
                 if self.cache == 'ram':
                     self.imgs[i] = x
@@ -127,8 +129,17 @@ class COCODataset(Dataset):
                     cache_filename = f'{self.annotations[i]["filename"].split(".")[0]}.npy'
                     np.save(os.path.join(self.cache_dir, cache_filename), x)
                 b += x.nbytes
-                pbar.desc = f'Caching images ({b / gb:.1f}GB {self.cache})'
+                pbar.desc = f'Caching images ({b / gb:.1f}/{mem_required / gb:.1f}GB {self.cache})'
             pbar.close()
+
+    def cal_cache_ram(self):
+        cache_bytes = 0
+        num_samples = min(self.num_imgs, 32)
+        for _ in range(num_samples):
+            img = self.load_resized_img(random.randint(0, self.num_imgs - 1))
+            cache_bytes += img.nbytes
+        mem_required = cache_bytes * self.num_imgs / num_samples
+        return mem_required
 
     def __len__(self):
         return self.num_imgs
@@ -139,30 +150,12 @@ class COCODataset(Dataset):
     def _load_coco_annotations(self):
         return [self.load_anno_from_ids(_ids) for _ids in self.ids]
 
-    def check_cache_ram(self, safety_margin=0.1):
-        # Check image caching requirements vs available memory
-        b, gb = 0, 1 << 30  # bytes of cached images, bytes per gigabytes
-        n = min(self.num_imgs, 30)  # extrapolate from 30 random images
-        for _ in range(n):
-            im = self.load_resized_img(random.randint(0, self.num_imgs - 1))  # sample image
-            b += im.nbytes
-        mem_required = b * self.num_imgs / n  # GB required to cache dataset into RAM
-        mem = psutil.virtual_memory()
-        cache = mem_required * (1 + safety_margin) < mem.available
-        logger.info(
-            f"{mem_required / gb:.1f}GB RAM required, "
-            f"{mem.available / gb:.1f}/{mem.total / gb:.1f}GB available, "
-            f"{'caching images ✅' if cache else 'not caching images ⚠️'}"
-        )
-        return cache
-
     def load_anno_from_ids(self, id_):
         im_ann = self.coco.loadImgs(id_)[0]
         width = im_ann["width"]
         height = im_ann["height"]
         anno_ids = self.coco.getAnnIds(imgIds=[int(id_)], iscrowd=False)
         annotations = self.coco.loadAnns(anno_ids)
-
         objs = []
         for obj in annotations:
             x1 = np.max((0, obj["bbox"][0]))

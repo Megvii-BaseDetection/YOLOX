@@ -130,8 +130,8 @@ if __name__ == "__main__":
     num_gpu = get_num_devices() if args.devices is None else args.devices
     assert num_gpu <= get_num_devices()
 
-    exp.kwargs_cache_dataset.update({"cache": args.cache})
-    exp.cache_dataset = exp.class_cache_dataset(**exp.kwargs_cache_dataset)
+    if args.cache is not None:
+        exp.create_cache_dataset(args.cache)
 
     dist_url = "auto" if args.dist_url is None else args.dist_url
     launch(
