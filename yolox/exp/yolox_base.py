@@ -109,7 +109,6 @@ class Exp(BaseExp):
         self.cache_dataset = None
         self.dataset = None
 
-
     def create_cache_dataset(self, cache):
         from yolox.data import COCODataset, TrainTransform
         self.cache_dataset = COCODataset(
@@ -123,7 +122,6 @@ class Exp(BaseExp):
             ),
             cache=cache
         )
-
 
     def get_model(self):
         from yolox.models import YOLOX, YOLOPAFPN, YOLOXHead
@@ -159,7 +157,8 @@ class Exp(BaseExp):
 
         with wait_for_the_master():
             if self.cache_dataset is None:
-                assert cache_img is False or cache_img is None, "cache is True, but cache_dataset is None"
+                assert cache_img is False or cache_img is None, \
+                    "cache is True, but cache_dataset is None"
                 dataset = COCODataset(
                     data_dir=self.data_dir,
                     json_file=self.train_ann,
