@@ -1,18 +1,17 @@
 #!/usr/bin/env python3
 # -*- coding:utf-8 -*-
 # Copyright (c) Megvii, Inc. and its affiliates.
+import copy
+import os
+import random
+from multiprocessing.pool import ThreadPool
+import psutil
 from loguru import logger
 from tqdm import tqdm
 
 import cv2
 import numpy as np
 from pycocotools.coco import COCO
-
-import copy
-import os
-import psutil
-import random
-from multiprocessing.pool import ThreadPool
 
 from ..dataloading import get_yolox_datadir
 from .datasets_wrapper import Dataset

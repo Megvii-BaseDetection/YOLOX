@@ -2,6 +2,9 @@
 # -*- coding:utf-8 -*-
 # Copyright (c) Megvii, Inc. and its affiliates.
 
+import datetime
+import os
+import time
 from loguru import logger
 
 import torch
@@ -29,10 +32,6 @@ from yolox.utils import (
     setup_logger,
     synchronize
 )
-
-import datetime
-import os
-import time
 
 
 class Trainer:
