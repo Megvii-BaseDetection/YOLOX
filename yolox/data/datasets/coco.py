@@ -94,7 +94,8 @@ class COCODataset(Dataset):
             logger.info(
                 f"{mem_required / gb:.1f}GB RAM required, "
                 f"{mem.available / gb:.1f}/{mem.total / gb:.1f}GB RAM available, "
-                f"Since the first thing we do is cache, there is no guarantee that the remaining memory space is sufficient"
+                f"Since the first thing we do is cache, "
+                f"there is no guarantee that the remaining memory space is sufficient"
             )
 
         if self.cache and self.imgs is None:
@@ -102,21 +103,28 @@ class COCODataset(Dataset):
                 self.imgs = [None] * self.num_imgs
                 logger.info("You are using cached images in RAM to accelerate training!")
             else:   # 'disk'
-                self.cache_dir = os.path.join(self.data_dir, f"{self.name}_cache{self.img_size[0]}x{self.img_size[1]}")
+                self.cache_dir = os.path.join(
+                    self.data_dir,
+                    f"{self.name}_cache{self.img_size[0]}x{self.img_size[1]}"
+                )
                 if not os.path.exists(self.cache_dir):
                     os.mkdir(self.cache_dir)
                     logger.warning(
-                        f"\n********************************************************************************\n"
+                        f"\n*******************************************************************\n"
                         f"You are using cached images in DISK to accelerate training.\n"
                         f"This requires large DISK space.\n"
-                        f"Make sure you have {mem_required / gb:.1f} available DISK space for training COCO.\n"
-                        f"********************************************************************************\n"
+                        f"Make sure you have {mem_required / gb:.1f} "
+                        f"available DISK space for training COCO.\n"
+                        f"*******************************************************************\\n"
                     )
                 else:
                     logger.info("Found disk cache!")
                     return
 
-            logger.info("Caching images for the first time. This might take about 15 minutes for COCO")
+            logger.info(
+                "Caching images for the first time. "
+                "This might take about 15 minutes for COCO"
+            )
 
             num_threads = min(8, max(1, os.cpu_count() - 1))
             b = 0
