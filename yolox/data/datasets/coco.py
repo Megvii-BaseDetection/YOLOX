@@ -49,6 +49,7 @@ class COCODataset(Dataset):
         img_size=(416, 416),
         preproc=None,
         cache=False,
+        cache_type="ram",
     ):
         """
         COCO dataset initialization. Annotation data are read into memory by COCO API.
@@ -78,6 +79,7 @@ class COCODataset(Dataset):
         self.annotations = self._load_coco_annotations()
         self.imgs = None
         self.cache = cache
+        self.cache_type = cache_type
 
         if self.cache:
             self._cache_images()
@@ -87,7 +89,7 @@ class COCODataset(Dataset):
         mem_required = self.cal_cache_ram()
         gb = 1 << 30
 
-        if self.cache == "ram" and mem_required > mem.available:
+        if self.cache_type == "ram" and mem_required > mem.available:
             self.cache = False
         else:
             logger.info(
@@ -98,7 +100,7 @@ class COCODataset(Dataset):
             )
 
         if self.cache and self.imgs is None:
-            if self.cache == 'ram':
+            if self.cache_type == 'ram':
                 self.imgs = [None] * self.num_imgs
                 logger.info("You are using cached images in RAM to accelerate training!")
             else:   # 'disk'
@@ -130,7 +132,7 @@ class COCODataset(Dataset):
             load_imgs = ThreadPool(num_threads).imap(self.load_resized_img, range(self.num_imgs))
             pbar = tqdm(enumerate(load_imgs), total=self.num_imgs)
             for i, x in pbar:   # x = self.load_resized_img(self, i)
-                if self.cache == 'ram':
+                if self.cache_type == 'ram':
                     self.imgs[i] = x
                 else:   # 'disk'
                     cache_filename = f'{self.annotations[i]["filename"].split(".")[0]}.npy'
@@ -193,15 +195,10 @@ class COCODataset(Dataset):
             else "{:012}".format(id_) + ".jpg"
         )
 
-        return {
-            'label': res,
-            'resized_image_info': resized_info,
-            'original_image_size': img_info,
-            'filename': file_name
-        }
+        return (res, img_info, resized_info, file_name)
 
     def load_anno(self, index):
-        return self.annotations[index]['label']
+        return self.annotations[index][0]
 
     def load_resized_img(self, index):
         img = self.load_image(index)
@@ -214,7 +211,8 @@ class COCODataset(Dataset):
         return resized_img
 
     def load_image(self, index):
-        file_name = self.annotations[index]['filename']
+        file_name = self.annotations[index][3]
+
         img_file = os.path.join(self.data_dir, self.name, file_name)
 
         img = cv2.imread(img_file)
@@ -224,13 +222,11 @@ class COCODataset(Dataset):
 
     def pull_item(self, index):
         id_ = self.ids[index]
-        label = self.annotations[index]['label']
-        origin_image_size = self.annotations[index]['original_image_size']
-        filename = self.annotations[index]['filename']
+        label, origin_image_size, _, filename = self.annotations[index]
 
-        if self.cache == 'ram':
+        if self.cache_type == 'ram':
             img = self.imgs[index]
-        elif self.cache == 'disk':
+        elif self.cache_type == 'disk':
             img = np.load(os.path.join(self.cache_dir, f"{filename.split('.')[0]}.npy"))
         else:
             img = self.load_resized_img(index)

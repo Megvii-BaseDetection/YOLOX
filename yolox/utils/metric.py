@@ -54,6 +54,9 @@ def gpu_mem_usage():
 
 
 def mem_usage():
+    """
+    Compute the memory usage for the current device (GB).
+    """
     gb = 1 << 30
     mem = psutil.virtual_memory()
     return mem.used / gb

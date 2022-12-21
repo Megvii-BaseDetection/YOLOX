@@ -120,7 +120,8 @@ class Exp(BaseExp):
                 flip_prob=self.flip_prob,
                 hsv_prob=self.hsv_prob
             ),
-            cache=cache
+            cache=True,
+            cache_type=cache,
         )
 
     def get_model(self):
@@ -143,7 +144,7 @@ class Exp(BaseExp):
         self.model.train()
         return self.model
 
-    def get_data_loader(self, batch_size, is_distributed, no_aug=False, cache_img=False):
+    def get_data_loader(self, batch_size, is_distributed, no_aug=False, cache_img=None):
         from yolox.data import (
             COCODataset,
             TrainTransform,
@@ -157,8 +158,7 @@ class Exp(BaseExp):
 
         with wait_for_the_master():
             if self.cache_dataset is None:
-                assert cache_img is False or cache_img is None, \
-                    "cache is True, but cache_dataset is None"
+                assert cache_img is None, "cache is True, but cache_dataset is None"
                 dataset = COCODataset(
                     data_dir=self.data_dir,
                     json_file=self.train_ann,
@@ -167,7 +167,8 @@ class Exp(BaseExp):
                         max_labels=50,
                         flip_prob=self.flip_prob,
                         hsv_prob=self.hsv_prob),
-                    cache=cache_img,
+                    cache=False,
+                    cache_type=cache_img,
                 )
             else:
                 dataset = self.cache_dataset
