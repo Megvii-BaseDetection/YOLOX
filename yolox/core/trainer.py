@@ -251,12 +251,11 @@ class Trainer:
                 ["{}: {:.3f}s".format(k, v.avg) for k, v in time_meter.items()]
             )
 
-            mem_str = mem_usage()
+            mem_str = "gpu mem: {:.0f}Mb, mem: {:.1f}Gb".format(gpu_mem_usage(), mem_usage())
 
             logger.info(
-                "{}, gpu mem: {:.0f}Mb, mem: {:.1f}Gb, {}, {}, lr: {:.3e}".format(
+                "{}, {}, {}, {}, lr: {:.3e}".format(
                     progress_str,
-                    gpu_mem_usage(),
                     mem_str,
                     time_str,
                     loss_str,
