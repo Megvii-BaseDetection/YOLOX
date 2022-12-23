@@ -109,7 +109,7 @@ class Exp(BaseExp):
         self.cache_dataset = None
         self.dataset = None
 
-    def create_cache_dataset(self, cache):
+    def create_cache_dataset(self, cache_type: str = "ram"):
         from yolox.data import COCODataset, TrainTransform
         self.cache_dataset = COCODataset(
             data_dir=self.data_dir,
@@ -121,7 +121,7 @@ class Exp(BaseExp):
                 hsv_prob=self.hsv_prob
             ),
             cache=True,
-            cache_type=cache,
+            cache_type=cache_type,
         )
 
     def get_model(self):
@@ -144,7 +144,16 @@ class Exp(BaseExp):
         self.model.train()
         return self.model
 
-    def get_data_loader(self, batch_size, is_distributed, no_aug=False, cache_img=None):
+    def get_data_loader(self, batch_size, is_distributed, no_aug=False, cache_img: str = None):
+        """
+        Get dataloader according to cache_img parameter.
+        Args:
+            no_aug (bool, optional): Whether to turn off mosaic data enhancement. Defaults to False.
+            cache_img (str, optional): cache_img is equivalent to cache_type. Defaults to None.
+                "ram" : Caching imgs to ram for fast training.
+                "disk": Caching imgs to disk for fast training.
+                None: Do not use cache, in this case cache_data is also None.
+        """
         from yolox.data import (
             COCODataset,
             TrainTransform,

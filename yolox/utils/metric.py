@@ -17,7 +17,7 @@ __all__ = [
     "get_total_and_free_memory_in_Mb",
     "occupy_mem",
     "gpu_mem_usage",
-    "mem_usage"
+    "mem_str"
 ]
 
 
@@ -53,9 +53,9 @@ def gpu_mem_usage():
     return mem_usage_bytes / (1024 * 1024)
 
 
-def mem_usage():
+def mem_str():
     """
-    Compute the memory usage for the current device (GB).
+    Compute the memory usage for the current machine (GB).
     """
     gb = 1 << 30
     mem = psutil.virtual_memory()
