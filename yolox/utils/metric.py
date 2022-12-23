@@ -17,7 +17,7 @@ __all__ = [
     "get_total_and_free_memory_in_Mb",
     "occupy_mem",
     "gpu_mem_usage",
-    "mem_str"
+    "mem_usage"
 ]
 
 
@@ -53,7 +53,7 @@ def gpu_mem_usage():
     return mem_usage_bytes / (1024 * 1024)
 
 
-def mem_str():
+def mem_usage():
     """
     Compute the memory usage for the current machine (GB).
     """

@@ -26,7 +26,7 @@ from yolox.utils import (
     gpu_mem_usage,
     is_parallel,
     load_ckpt,
-    mem_str,
+    mem_usage,
     occupy_mem,
     save_checkpoint,
     setup_logger,
@@ -251,11 +251,13 @@ class Trainer:
                 ["{}: {:.3f}s".format(k, v.avg) for k, v in time_meter.items()]
             )
 
+            mem_str = mem_usage()
+
             logger.info(
                 "{}, gpu mem: {:.0f}Mb, mem: {:.1f}Gb, {}, {}, lr: {:.3e}".format(
                     progress_str,
                     gpu_mem_usage(),
-                    mem_str(),
+                    mem_str,
                     time_str,
                     loss_str,
                     self.meter["lr"].latest,
