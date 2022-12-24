@@ -1,9 +1,13 @@
 #!/usr/bin/env python3
 # -*- coding:utf-8 -*-
 # Copyright (c) Megvii, Inc. and its affiliates.
-
+import copy
 import os
+import random
+from multiprocessing.pool import ThreadPool
+import psutil
 from loguru import logger
+from tqdm import tqdm
 
 import cv2
 import numpy as np
@@ -45,6 +49,7 @@ class COCODataset(Dataset):
         img_size=(416, 416),
         preproc=None,
         cache=False,
+        cache_type="ram",
     ):
         """
         COCO dataset initialization. Annotation data are read into memory by COCO API.
@@ -64,74 +69,95 @@ class COCODataset(Dataset):
         self.coco = COCO(os.path.join(self.data_dir, "annotations", self.json_file))
         remove_useless_info(self.coco)
         self.ids = self.coco.getImgIds()
+        self.num_imgs = len(self.ids)
         self.class_ids = sorted(self.coco.getCatIds())
         self.cats = self.coco.loadCats(self.coco.getCatIds())
         self._classes = tuple([c["name"] for c in self.cats])
-        self.imgs = None
         self.name = name
         self.img_size = img_size
         self.preproc = preproc
         self.annotations = self._load_coco_annotations()
-        if cache:
+        self.imgs = None
+        self.cache = cache
+        self.cache_type = cache_type
+
+        if self.cache:
             self._cache_images()
 
+    def _cache_images(self):
+        mem = psutil.virtual_memory()
+        mem_required = self.cal_cache_ram()
+        gb = 1 << 30
+
+        if self.cache_type == "ram" and mem_required > mem.available:
+            self.cache = False
+        else:
+            logger.info(
+                f"{mem_required / gb:.1f}GB RAM required, "
+                f"{mem.available / gb:.1f}/{mem.total / gb:.1f}GB RAM available, "
+                f"Since the first thing we do is cache, "
+                f"there is no guarantee that the remaining memory space is sufficient"
+            )
+
+        if self.cache and self.imgs is None:
+            if self.cache_type == 'ram':
+                self.imgs = [None] * self.num_imgs
+                logger.info("You are using cached images in RAM to accelerate training!")
+            else:   # 'disk'
+                self.cache_dir = os.path.join(
+                    self.data_dir,
+                    f"{self.name}_cache{self.img_size[0]}x{self.img_size[1]}"
+                )
+                if not os.path.exists(self.cache_dir):
+                    os.mkdir(self.cache_dir)
+                    logger.warning(
+                        f"\n*******************************************************************\n"
+                        f"You are using cached images in DISK to accelerate training.\n"
+                        f"This requires large DISK space.\n"
+                        f"Make sure you have {mem_required / gb:.1f} "
+                        f"available DISK space for training COCO.\n"
+                        f"*******************************************************************\\n"
+                    )
+                else:
+                    logger.info("Found disk cache!")
+                    return
+
+            logger.info(
+                "Caching images for the first time. "
+                "This might take about 15 minutes for COCO"
+            )
+
+            num_threads = min(8, max(1, os.cpu_count() - 1))
+            b = 0
+            load_imgs = ThreadPool(num_threads).imap(self.load_resized_img, range(self.num_imgs))
+            pbar = tqdm(enumerate(load_imgs), total=self.num_imgs)
+            for i, x in pbar:   # x = self.load_resized_img(self, i)
+                if self.cache_type == 'ram':
+                    self.imgs[i] = x
+                else:   # 'disk'
+                    cache_filename = f'{self.annotations[i]["filename"].split(".")[0]}.npy'
+                    np.save(os.path.join(self.cache_dir, cache_filename), x)
+                b += x.nbytes
+                pbar.desc = f'Caching images ({b / gb:.1f}/{mem_required / gb:.1f}GB {self.cache})'
+            pbar.close()
+
+    def cal_cache_ram(self):
+        cache_bytes = 0
+        num_samples = min(self.num_imgs, 32)
+        for _ in range(num_samples):
+            img = self.load_resized_img(random.randint(0, self.num_imgs - 1))
+            cache_bytes += img.nbytes
+        mem_required = cache_bytes * self.num_imgs / num_samples
+        return mem_required
+
     def __len__(self):
-        return len(self.ids)
+        return self.num_imgs
 
     def __del__(self):
         del self.imgs
 
     def _load_coco_annotations(self):
         return [self.load_anno_from_ids(_ids) for _ids in self.ids]
-
-    def _cache_images(self):
-        logger.warning(
-            "\n********************************************************************************\n"
-            "You are using cached images in RAM to accelerate training.\n"
-            "This requires large system RAM.\n"
-            "Make sure you have 200G+ RAM and 136G available disk space for training COCO.\n"
-            "********************************************************************************\n"
-        )
-        max_h = self.img_size[0]
-        max_w = self.img_size[1]
-        cache_file = os.path.join(self.data_dir, f"img_resized_cache_{self.name}.array")
-        if not os.path.exists(cache_file):
-            logger.info(
-                "Caching images for the first time. This might take about 20 minutes for COCO"
-            )
-            self.imgs = np.memmap(
-                cache_file,
-                shape=(len(self.ids), max_h, max_w, 3),
-                dtype=np.uint8,
-                mode="w+",
-            )
-            from tqdm import tqdm
-            from multiprocessing.pool import ThreadPool
-
-            NUM_THREADs = min(8, os.cpu_count())
-            loaded_images = ThreadPool(NUM_THREADs).imap(
-                lambda x: self.load_resized_img(x),
-                range(len(self.annotations)),
-            )
-            pbar = tqdm(enumerate(loaded_images), total=len(self.annotations))
-            for k, out in pbar:
-                self.imgs[k][: out.shape[0], : out.shape[1], :] = out.copy()
-            self.imgs.flush()
-            pbar.close()
-        else:
-            logger.warning(
-                "You are using cached imgs! Make sure your dataset is not changed!!\n"
-                "Everytime the self.input_size is changed in your exp file, you need to delete\n"
-                "the cached data and re-generate them.\n"
-            )
-
-        logger.info("Loading cached imgs...")
-        self.imgs = np.memmap(
-            cache_file,
-            shape=(len(self.ids), max_h, max_w, 3),
-            dtype=np.uint8,
-            mode="r+",
-        )
 
     def load_anno_from_ids(self, id_):
         im_ann = self.coco.loadImgs(id_)[0]
@@ -152,7 +178,6 @@ class COCODataset(Dataset):
         num_objs = len(objs)
 
         res = np.zeros((num_objs, 5))
-
         for ix, obj in enumerate(objs):
             cls = self.class_ids.index(obj["category_id"])
             res[ix, 0:4] = obj["clean_bbox"]
@@ -197,15 +222,16 @@ class COCODataset(Dataset):
 
     def pull_item(self, index):
         id_ = self.ids[index]
+        label, origin_image_size, _, filename = self.annotations[index]
 
-        res, img_info, resized_info, _ = self.annotations[index]
-        if self.imgs is not None:
-            pad_img = self.imgs[index]
-            img = pad_img[: resized_info[0], : resized_info[1], :].copy()
+        if self.cache_type == 'ram':
+            img = self.imgs[index]
+        elif self.cache_type == 'disk':
+            img = np.load(os.path.join(self.cache_dir, f"{filename.split('.')[0]}.npy"))
         else:
             img = self.load_resized_img(index)
 
-        return img, res.copy(), img_info, np.array([id_])
+        return copy.deepcopy(img), copy.deepcopy(label), origin_image_size, np.array([id_])
 
     @Dataset.mosaic_getitem
     def __getitem__(self, index):

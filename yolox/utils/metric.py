@@ -5,6 +5,7 @@ import functools
 import os
 import time
 from collections import defaultdict, deque
+import psutil
 
 import numpy as np
 
@@ -16,6 +17,7 @@ __all__ = [
     "get_total_and_free_memory_in_Mb",
     "occupy_mem",
     "gpu_mem_usage",
+    "mem_usage"
 ]
 
 
@@ -49,6 +51,15 @@ def gpu_mem_usage():
     """
     mem_usage_bytes = torch.cuda.max_memory_allocated()
     return mem_usage_bytes / (1024 * 1024)
+
+
+def mem_usage():
+    """
+    Compute the memory usage for the current machine (GB).
+    """
+    gb = 1 << 30
+    mem = psutil.virtual_memory()
+    return mem.used / gb
 
 
 class AverageMeter:

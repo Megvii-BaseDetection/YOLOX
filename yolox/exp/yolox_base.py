@@ -106,6 +106,23 @@ class Exp(BaseExp):
         self.test_conf = 0.01
         # nms threshold
         self.nmsthre = 0.65
+        self.cache_dataset = None
+        self.dataset = None
+
+    def create_cache_dataset(self, cache_type: str = "ram"):
+        from yolox.data import COCODataset, TrainTransform
+        self.cache_dataset = COCODataset(
+            data_dir=self.data_dir,
+            json_file=self.train_ann,
+            img_size=self.input_size,
+            preproc=TrainTransform(
+                max_labels=50,
+                flip_prob=self.flip_prob,
+                hsv_prob=self.hsv_prob
+            ),
+            cache=True,
+            cache_type=cache_type,
+        )
 
     def get_model(self):
         from yolox.models import YOLOX, YOLOPAFPN, YOLOXHead
@@ -127,7 +144,16 @@ class Exp(BaseExp):
         self.model.train()
         return self.model
 
-    def get_data_loader(self, batch_size, is_distributed, no_aug=False, cache_img=False):
+    def get_data_loader(self, batch_size, is_distributed, no_aug=False, cache_img: str = None):
+        """
+        Get dataloader according to cache_img parameter.
+        Args:
+            no_aug (bool, optional): Whether to turn off mosaic data enhancement. Defaults to False.
+            cache_img (str, optional): cache_img is equivalent to cache_type. Defaults to None.
+                "ram" : Caching imgs to ram for fast training.
+                "disk": Caching imgs to disk for fast training.
+                None: Do not use cache, in this case cache_data is also None.
+        """
         from yolox.data import (
             COCODataset,
             TrainTransform,
@@ -140,18 +166,23 @@ class Exp(BaseExp):
         from yolox.utils import wait_for_the_master
 
         with wait_for_the_master():
-            dataset = COCODataset(
-                data_dir=self.data_dir,
-                json_file=self.train_ann,
-                img_size=self.input_size,
-                preproc=TrainTransform(
-                    max_labels=50,
-                    flip_prob=self.flip_prob,
-                    hsv_prob=self.hsv_prob),
-                cache=cache_img,
-            )
+            if self.cache_dataset is None:
+                assert cache_img is None, "cache is True, but cache_dataset is None"
+                dataset = COCODataset(
+                    data_dir=self.data_dir,
+                    json_file=self.train_ann,
+                    img_size=self.input_size,
+                    preproc=TrainTransform(
+                        max_labels=50,
+                        flip_prob=self.flip_prob,
+                        hsv_prob=self.hsv_prob),
+                    cache=False,
+                    cache_type=cache_img,
+                )
+            else:
+                dataset = self.cache_dataset
 
-        dataset = MosaicDetection(
+        self.dataset = MosaicDetection(
             dataset,
             mosaic=not no_aug,
             img_size=self.input_size,
@@ -168,8 +199,6 @@ class Exp(BaseExp):
             mosaic_prob=self.mosaic_prob,
             mixup_prob=self.mixup_prob,
         )
-
-        self.dataset = dataset
 
         if is_distributed:
             batch_size = batch_size // dist.get_world_size()
