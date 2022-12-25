@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding:utf-8 -*-
-# Copyright (c) 2014-2021 Megvii Inc. All rights reserved.
+# Copyright (c) Megvii Inc. All rights reserved.
 
 import os
 import random
@@ -73,7 +73,7 @@ class Exp(BaseExp):
         # minimum learning rate during warmup
         self.warmup_lr = 0
         self.min_lr_ratio = 0.05
-        # learning rate for one image. During traing, lr will multiply batchsize.
+        # learning rate for one image. During training, lr will multiply batchsize.
         self.basic_lr_per_img = 0.01 / 64.0
         # name of LRScheduler
         self.scheduler = "yoloxwarmcos"
@@ -101,11 +101,28 @@ class Exp(BaseExp):
         # -----------------  testing config ------------------ #
         # output image size during evaluation/test
         self.test_size = (640, 640)
-        # confidence threshold during evalulation/test,
+        # confidence threshold during evaluation/test,
         # boxes whose scores are less than test_conf will be filtered
         self.test_conf = 0.01
         # nms threshold
         self.nmsthre = 0.65
+        self.cache_dataset = None
+        self.dataset = None
+
+    def create_cache_dataset(self, cache_type: str = "ram"):
+        from yolox.data import COCODataset, TrainTransform
+        self.cache_dataset = COCODataset(
+            data_dir=self.data_dir,
+            json_file=self.train_ann,
+            img_size=self.input_size,
+            preproc=TrainTransform(
+                max_labels=50,
+                flip_prob=self.flip_prob,
+                hsv_prob=self.hsv_prob
+            ),
+            cache=True,
+            cache_type=cache_type,
+        )
 
     def get_model(self):
         from yolox.models import YOLOX, YOLOPAFPN, YOLOXHead
@@ -124,11 +141,19 @@ class Exp(BaseExp):
 
         self.model.apply(init_yolo)
         self.model.head.initialize_biases(1e-2)
+        self.model.train()
         return self.model
 
-    def get_data_loader(
-        self, batch_size, is_distributed, no_aug=False, cache_img=False
-    ):
+    def get_data_loader(self, batch_size, is_distributed, no_aug=False, cache_img: str = None):
+        """
+        Get dataloader according to cache_img parameter.
+        Args:
+            no_aug (bool, optional): Whether to turn off mosaic data enhancement. Defaults to False.
+            cache_img (str, optional): cache_img is equivalent to cache_type. Defaults to None.
+                "ram" : Caching imgs to ram for fast training.
+                "disk": Caching imgs to disk for fast training.
+                None: Do not use cache, in this case cache_data is also None.
+        """
         from yolox.data import (
             COCODataset,
             TrainTransform,
@@ -138,26 +163,26 @@ class Exp(BaseExp):
             MosaicDetection,
             worker_init_reset_seed,
         )
-        from yolox.utils import (
-            wait_for_the_master,
-            get_local_rank,
-        )
+        from yolox.utils import wait_for_the_master
 
-        local_rank = get_local_rank()
+        with wait_for_the_master():
+            if self.cache_dataset is None:
+                assert cache_img is None, "cache is True, but cache_dataset is None"
+                dataset = COCODataset(
+                    data_dir=self.data_dir,
+                    json_file=self.train_ann,
+                    img_size=self.input_size,
+                    preproc=TrainTransform(
+                        max_labels=50,
+                        flip_prob=self.flip_prob,
+                        hsv_prob=self.hsv_prob),
+                    cache=False,
+                    cache_type=cache_img,
+                )
+            else:
+                dataset = self.cache_dataset
 
-        with wait_for_the_master(local_rank):
-            dataset = COCODataset(
-                data_dir=self.data_dir,
-                json_file=self.train_ann,
-                img_size=self.input_size,
-                preproc=TrainTransform(
-                    max_labels=50,
-                    flip_prob=self.flip_prob,
-                    hsv_prob=self.hsv_prob),
-                cache=cache_img,
-            )
-
-        dataset = MosaicDetection(
+        self.dataset = MosaicDetection(
             dataset,
             mosaic=not no_aug,
             img_size=self.input_size,
@@ -174,8 +199,6 @@ class Exp(BaseExp):
             mosaic_prob=self.mosaic_prob,
             mixup_prob=self.mixup_prob,
         )
-
-        self.dataset = dataset
 
         if is_distributed:
             batch_size = batch_size // dist.get_world_size()
@@ -318,5 +341,11 @@ class Exp(BaseExp):
         )
         return evaluator
 
-    def eval(self, model, evaluator, is_distributed, half=False):
-        return evaluator.evaluate(model, is_distributed, half)
+    def get_trainer(self, args):
+        from yolox.core import Trainer
+        trainer = Trainer(self, args)
+        # NOTE: trainer shouldn't be an attribute of exp object
+        return trainer
+
+    def eval(self, model, evaluator, is_distributed, half=False, return_outputs=False):
+        return evaluator.evaluate(model, is_distributed, half, return_outputs=return_outputs)

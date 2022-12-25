@@ -3,7 +3,7 @@
 # This file mainly comes from
 # https://github.com/facebookresearch/detectron2/blob/master/detectron2/utils/comm.py
 # Copyright (c) Facebook, Inc. and its affiliates.
-# Copyright (c) 2014-2021 Megvii Inc. All rights reserved.
+# Copyright (c) Megvii Inc. All rights reserved.
 """
 This file contains primitives for multi-gpu communication.
 This is useful when doing distributed training.
@@ -49,10 +49,17 @@ def get_num_devices():
 
 
 @contextmanager
-def wait_for_the_master(local_rank: int):
+def wait_for_the_master(local_rank: int = None):
     """
     Make all processes waiting for the master to do some task.
+
+    Args:
+        local_rank (int): the rank of the current process. Default to None.
+            If None, it will use the rank of the current process.
     """
+    if local_rank is None:
+        local_rank = get_local_rank()
+
     if local_rank > 0:
         dist.barrier()
     yield

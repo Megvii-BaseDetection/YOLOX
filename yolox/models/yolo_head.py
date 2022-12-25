@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # -*- coding:utf-8 -*-
-# Copyright (c) 2014-2021 Megvii Inc. All rights reserved.
+# Copyright (c) Megvii Inc. All rights reserved.
 
 import math
 from loguru import logger
@@ -9,7 +9,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from yolox.utils import bboxes_iou
+from yolox.utils import bboxes_iou, meshgrid
 
 from .losses import IOUloss
 from .network_blocks import BaseConv, DWConv
@@ -220,7 +220,7 @@ class YOLOXHead(nn.Module):
         n_ch = 5 + self.num_classes
         hsize, wsize = output.shape[-2:]
         if grid.shape[2:4] != output.shape[2:4]:
-            yv, xv = torch.meshgrid([torch.arange(hsize), torch.arange(wsize)])
+            yv, xv = meshgrid([torch.arange(hsize), torch.arange(wsize)])
             grid = torch.stack((xv, yv), 2).view(1, 1, hsize, wsize, 2).type(dtype)
             self.grids[k] = grid
 
@@ -237,7 +237,7 @@ class YOLOXHead(nn.Module):
         grids = []
         strides = []
         for (hsize, wsize), stride in zip(self.hw, self.strides):
-            yv, xv = torch.meshgrid([torch.arange(hsize), torch.arange(wsize)])
+            yv, xv = meshgrid([torch.arange(hsize), torch.arange(wsize)])
             grid = torch.stack((xv, yv), 2).view(1, -1, 2)
             grids.append(grid)
             shape = grid.shape[:2]
@@ -246,8 +246,11 @@ class YOLOXHead(nn.Module):
         grids = torch.cat(grids, dim=1).type(dtype)
         strides = torch.cat(strides, dim=1).type(dtype)
 
-        outputs[..., :2] = (outputs[..., :2] + grids) * strides
-        outputs[..., 2:4] = torch.exp(outputs[..., 2:4]) * strides
+        outputs = torch.cat([
+            (outputs[..., 0:2] + grids) * strides,
+            torch.exp(outputs[..., 2:4]) * strides,
+            outputs[..., 4:]
+        ], dim=-1)
         return outputs
 
     def get_losses(
@@ -321,7 +324,11 @@ class YOLOXHead(nn.Module):
                         labels,
                         imgs,
                     )
-                except RuntimeError:
+                except RuntimeError as e:
+                    # TODO: the string might change, consider a better way
+                    if "CUDA out of memory. " not in str(e):
+                        raise  # RuntimeError might not caused by CUDA OOM
+
                     logger.error(
                         "OOM RuntimeError is raised due to the huge memory cost during label assignment. \
                            CPU mode is applied in this batch. If you want to avoid this issue, \

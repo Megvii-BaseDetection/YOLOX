@@ -3,14 +3,12 @@ numpy
 torch>=1.7
 opencv_python
 loguru
-scikit-image
 tqdm
 torchvision
-Pillow
 thop
 ninja
 tabulate
-tensorboard
+psutil
 
 # verified versions
 # pycocotools corresponds to https://github.com/ppwwyyxx/cocoapi
