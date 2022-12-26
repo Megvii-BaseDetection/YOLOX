@@ -99,7 +99,7 @@ class COCODataset(Dataset):
                 f"there is no guarantee that the remaining memory space is sufficient"
             )
 
-        if self.cache and self.imgs is None:
+        if self.imgs is None:
             if self.cache_type == 'ram':
                 self.imgs = [None] * self.num_imgs
                 logger.info("You are using cached images in RAM to accelerate training!")
@@ -224,9 +224,9 @@ class COCODataset(Dataset):
         id_ = self.ids[index]
         label, origin_image_size, _, filename = self.annotations[index]
 
-        if self.cache_type == 'ram':
+        if self.cache and self.cache_type == 'ram':
             img = self.imgs[index]
-        elif self.cache_type == 'disk':
+        elif self.cache and self.cache_type == 'disk':
             img = np.load(os.path.join(self.cache_dir, f"{filename.split('.')[0]}.npy"))
         else:
             img = self.load_resized_img(index)
