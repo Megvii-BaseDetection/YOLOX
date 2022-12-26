@@ -15,4 +15,4 @@ psutil
 pycocotools>=2.0.2
 onnx==1.8.1
 onnxruntime==1.8.0
-onnx-simplifier==0.3.5
+onnx-simplifier==0.4.1
