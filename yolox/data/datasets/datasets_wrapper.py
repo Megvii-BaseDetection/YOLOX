@@ -2,11 +2,24 @@
 # -*- coding:utf-8 -*-
 # Copyright (c) Megvii, Inc. and its affiliates.
 
-import bisect
-from functools import wraps
+from loguru import logger
+from tqdm import tqdm
+
+import numpy as np
 
 from torch.utils.data.dataset import ConcatDataset as torchConcatDataset
 from torch.utils.data.dataset import Dataset as torchDataset
+
+import bisect
+import copy
+import os
+import psutil
+import random
+from abc import ABCMeta, abstractmethod
+from functools import partial, wraps
+from multiprocessing.pool import ThreadPool
+
+from ..dataloading import get_yolox_datadir
 
 
 class ConcatDataset(torchConcatDataset):
@@ -112,3 +125,125 @@ class Dataset(torchDataset):
             return ret_val
 
         return wrapper
+
+
+class CacheDataset(Dataset, metaclass=ABCMeta):
+    def __init__(self, input_dimension, cache=False, cache_type="ram"):
+        super().__init__(input_dimension=input_dimension)
+        self.cache = cache
+        self.cache_type = cache_type
+
+        # disk
+        self.cache_dir = None
+        self.path_filename = None
+
+        # ram
+        self.imgs = None
+
+    def __del__(self):
+        del self.imgs
+
+    @abstractmethod
+    def read_img(self, index, use_cache=True):
+        raise NotImplementedError
+
+    @staticmethod
+    def cache_read_img(read_img_fn):
+        @wraps(read_img_fn)
+        def wrapper(self, index, use_cache=True):
+            cache = self.cache and use_cache
+            if cache and self.cache_type == "ram":
+                img = self.imgs[index]
+                img = copy.deepcopy(img)
+            elif cache and self.cache_type == "disk":
+                img = np.load(os.path.join(self.cache_dir, f"{self.path_filename.split('.')[0]}.npy"))
+            else:
+                img = read_img_fn(self, index, use_cache)
+            return img
+        return wrapper
+
+    def cache_images(
+        self,
+        num_imgs = None,
+        data_dir = None,
+        cache_dir_name = None,
+        path_filename = None,
+    ):
+        if not self.cache:
+            return
+
+        assert num_imgs is not None, "num_imgs must be specified as the size of the dataset"
+        if self.cache_type == "disk":
+            assert data_dir is not None, "data_dir must be specified if cache_type is disk"
+            assert cache_dir_name is not None, "cache_name must be specified if cache_type is disk"
+            assert path_filename is not None, "path_filename must be specified if cache_type is disk"
+            self.path_filename = path_filename
+
+        mem = psutil.virtual_memory()
+        mem_required = self.cal_cache_occupy(num_imgs)
+        gb = 1 << 30
+
+        if self.cache_type == "ram":
+            if mem_required > mem.available:
+                self.cache = False
+            else:
+                logger.info(
+                    f"{mem_required / gb:.1f}GB RAM required, "
+                    f"{mem.available / gb:.1f}/{mem.total / gb:.1f}GB RAM available, "
+                    f"Since the first thing we do is cache, "
+                    f"there is no guarantee that the remaining memory space is sufficient"
+                )
+
+        if self.cache and self.imgs is None:
+            if self.cache_type == 'ram':
+                self.imgs = [None] * num_imgs
+                logger.info("You are using cached images in RAM to accelerate training!")
+            else:   # 'disk'
+                self.cache_dir = os.path.join(
+                    data_dir,
+                    cache_dir_name
+                )
+                if not os.path.exists(self.cache_dir):
+                    os.mkdir(self.cache_dir)
+                    logger.warning(
+                        f"\n*******************************************************************\n"
+                        f"You are using cached images in DISK to accelerate training.\n"
+                        f"This requires large DISK space.\n"
+                        f"Make sure you have {mem_required / gb:.1f} "
+                        f"available DISK space for training your dataset.\n"
+                        f"*******************************************************************\\n"
+                    )
+                else:
+                    logger.info("Found disk cache!")
+                    return
+
+            logger.info(
+                "Caching images for the first time. "
+                "This might takes some time for your dataset"
+            )
+
+            num_threads = min(8, max(1, os.cpu_count() - 1))
+            b = 0
+            load_imgs = ThreadPool(num_threads).imap(
+                partial(self.read_img, use_cache=False),
+                range(num_imgs)
+            )
+            pbar = tqdm(enumerate(load_imgs), total=num_imgs)
+            for i, x in pbar:   # x = self.read_img(self, i, use_cache=False)
+                if self.cache_type == 'ram':
+                    self.imgs[i] = x
+                else:   # 'disk'
+                    cache_filename = f'{self.path_filename[i].split(".")[0]}.npy'
+                    np.save(os.path.join(self.cache_dir, cache_filename), x)
+                b += x.nbytes
+                pbar.desc = f'Caching images ({b / gb:.1f}/{mem_required / gb:.1f}GB {self.cache_type})'
+            pbar.close()
+
+    def cal_cache_occupy(self, num_imgs):
+        cache_bytes = 0
+        num_samples = min(num_imgs, 32)
+        for _ in range(num_samples):
+            img = self.read_img(index=random.randint(0, num_imgs - 1), use_cache=False)
+            cache_bytes += img.nbytes
+        mem_required = cache_bytes * num_imgs / num_samples
+        return mem_required
