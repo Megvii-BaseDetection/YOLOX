@@ -17,7 +17,7 @@ import numpy as np
 
 from yolox.evaluators.voc_eval import voc_eval
 
-from .datasets_wrapper import Dataset
+from .datasets_wrapper import CacheDataset
 from .voc_classes import VOC_CLASSES
 
 
@@ -80,7 +80,7 @@ class AnnotationTransform(object):
         return res, img_info
 
 
-class VOCDetection(Dataset):
+class VOCDetection(CacheDataset):
 
     """
     VOC Detection Dataset Object
@@ -108,8 +108,10 @@ class VOCDetection(Dataset):
         target_transform=AnnotationTransform(),
         dataset_name="VOC0712",
         cache=False,
+        cache_type="ram",
     ):
-        super().__init__(img_size)
+        import pdb; pdb.set_trace()
+        super().__init__(input_dimension=img_size, cache=cache, cache_type=cache_type)
         self.root = data_dir
         self.image_set = image_sets
         self.img_size = img_size
@@ -131,66 +133,23 @@ class VOCDetection(Dataset):
                 os.path.join(rootpath, "ImageSets", "Main", name + ".txt")
             ):
                 self.ids.append((rootpath, line.strip()))
+        self.num_imgs = len(self.ids)
 
         self.annotations = self._load_coco_annotations()
-        self.imgs = None
-        if cache:
-            self._cache_images()
+
+        path_filename = [(self._imgpath % self.ids[i]).split(self.root)[1] for i in range(self.num_imgs)]
+        self.cache_images(
+            num_imgs=self.num_imgs,
+            data_dir=self.root,
+            cache_dir_name=f"cache_{self.name}",
+            path_filename=path_filename,
+        )
 
     def __len__(self):
-        return len(self.ids)
+        return self.num_imgs
 
     def _load_coco_annotations(self):
-        return [self.load_anno_from_ids(_ids) for _ids in range(len(self.ids))]
-
-    def _cache_images(self):
-        logger.warning(
-            "\n********************************************************************************\n"
-            "You are using cached images in RAM to accelerate training.\n"
-            "This requires large system RAM.\n"
-            "Make sure you have 60G+ RAM and 19G available disk space for training VOC.\n"
-            "********************************************************************************\n"
-        )
-        max_h = self.img_size[0]
-        max_w = self.img_size[1]
-        cache_file = os.path.join(self.root, f"img_resized_cache_{self.name}.array")
-        if not os.path.exists(cache_file):
-            logger.info(
-                "Caching images for the first time. This might take about 3 minutes for VOC"
-            )
-            self.imgs = np.memmap(
-                cache_file,
-                shape=(len(self.ids), max_h, max_w, 3),
-                dtype=np.uint8,
-                mode="w+",
-            )
-            from tqdm import tqdm
-            from multiprocessing.pool import ThreadPool
-
-            NUM_THREADs = min(8, os.cpu_count())
-            loaded_images = ThreadPool(NUM_THREADs).imap(
-                lambda x: self.load_resized_img(x),
-                range(len(self.annotations)),
-            )
-            pbar = tqdm(enumerate(loaded_images), total=len(self.annotations))
-            for k, out in pbar:
-                self.imgs[k][: out.shape[0], : out.shape[1], :] = out.copy()
-            self.imgs.flush()
-            pbar.close()
-        else:
-            logger.warning(
-                "You are using cached imgs! Make sure your dataset is not changed!!\n"
-                "Everytime the self.input_size is changed in your exp file, you need to delete\n"
-                "the cached data and re-generate them.\n"
-            )
-
-        logger.info("Loading cached imgs...")
-        self.imgs = np.memmap(
-            cache_file,
-            shape=(len(self.ids), max_h, max_w, 3),
-            dtype=np.uint8,
-            mode="r+",
-        )
+        return [self.load_anno_from_ids(_ids) for _ids in range(self.num_imgs)]
 
     def load_anno_from_ids(self, index):
         img_id = self.ids[index]
@@ -227,6 +186,10 @@ class VOCDetection(Dataset):
 
         return img
 
+    @CacheDataset.cache_read_img
+    def read_img(self, index, use_cache=True):
+        return self.load_resized_img(index)
+
     def pull_item(self, index):
         """Returns the original image and target at an index for mixup
 
@@ -238,17 +201,12 @@ class VOCDetection(Dataset):
         Return:
             img, target
         """
-        if self.imgs is not None:
-            target, img_info, resized_info = self.annotations[index]
-            pad_img = self.imgs[index]
-            img = pad_img[: resized_info[0], : resized_info[1], :].copy()
-        else:
-            img = self.load_resized_img(index)
-            target, img_info, _ = self.annotations[index]
+        target, img_info, _ = self.annotations[index]
+        img = self.read_img(index)
 
         return img, target, img_info, index
 
-    @Dataset.mosaic_getitem
+    @CacheDataset.mosaic_getitem
     def __getitem__(self, index):
         img, target, img_info, img_id = self.pull_item(index)
 

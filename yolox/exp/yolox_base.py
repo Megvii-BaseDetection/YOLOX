@@ -106,6 +106,8 @@ class Exp(BaseExp):
         self.test_conf = 0.01
         # nms threshold
         self.nmsthre = 0.65
+
+        # -----------------  (Cache) Dataset config ------------------ #
         self.cache_dataset = None
         self.dataset = None
 
