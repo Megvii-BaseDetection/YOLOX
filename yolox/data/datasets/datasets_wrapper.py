@@ -154,7 +154,7 @@ class CacheDataset(Dataset, metaclass=ABCMeta):
                 img = copy.deepcopy(img)
             elif cache and self.cache_type == "disk":
                 img = np.load(
-                    os.path.join(self.cache_dir, f"{self.path_filename.split('.')[0]}.npy"))
+                    os.path.join(self.cache_dir, f"{self.path_filename[index].split('.')[0]}.npy"))
             else:
                 img = read_img_fn(self, index, use_cache)
             return img
@@ -235,7 +235,9 @@ class CacheDataset(Dataset, metaclass=ABCMeta):
                     self.imgs[i] = x
                 else:   # 'disk'
                     cache_filename = f'{self.path_filename[i].split(".")[0]}.npy'
-                    np.save(os.path.join(self.cache_dir, cache_filename), x)
+                    cache_path_filename = os.path.join(self.cache_dir, cache_filename)
+                    os.makedirs(os.path.dirname(cache_path_filename), exist_ok=True)
+                    np.save(cache_path_filename, x)
                 b += x.nbytes
                 pbar.desc = f'Caching images ({b / gb:.1f}/{mem_required / gb:.1f}GB \
                     {self.cache_type})'
