@@ -19,8 +19,6 @@ from abc import ABCMeta, abstractmethod
 from functools import partial, wraps
 from multiprocessing.pool import ThreadPool
 
-from ..dataloading import get_yolox_datadir
-
 
 class ConcatDataset(torchConcatDataset):
     def __init__(self, datasets):
@@ -156,7 +154,8 @@ class CacheDataset(Dataset, metaclass=ABCMeta):
                 img = self.imgs[index]
                 img = copy.deepcopy(img)
             elif cache and self.cache_type == "disk":
-                img = np.load(os.path.join(self.cache_dir, f"{self.path_filename.split('.')[0]}.npy"))
+                img = np.load(
+                    os.path.join(self.cache_dir, f"{self.path_filename.split('.')[0]}.npy"))
             else:
                 img = read_img_fn(self, index, use_cache)
             return img
@@ -164,19 +163,22 @@ class CacheDataset(Dataset, metaclass=ABCMeta):
 
     def cache_images(
         self,
-        num_imgs = None,
-        data_dir = None,
-        cache_dir_name = None,
-        path_filename = None,
+        num_imgs=None,
+        data_dir=None,
+        cache_dir_name=None,
+        path_filename=None,
     ):
         if not self.cache:
             return
 
         assert num_imgs is not None, "num_imgs must be specified as the size of the dataset"
         if self.cache_type == "disk":
-            assert data_dir is not None, "data_dir must be specified if cache_type is disk"
-            assert cache_dir_name is not None, "cache_name must be specified if cache_type is disk"
-            assert path_filename is not None, "path_filename must be specified if cache_type is disk"
+            assert data_dir is not None, \
+                "data_dir must be specified if cache_type is disk"
+            assert cache_dir_name is not None, \
+                "cache_name must be specified if cache_type is disk"
+            assert path_filename is not None, \
+                "path_filename must be specified if cache_type is disk"
             self.path_filename = path_filename
 
         mem = psutil.virtual_memory()
@@ -236,7 +238,8 @@ class CacheDataset(Dataset, metaclass=ABCMeta):
                     cache_filename = f'{self.path_filename[i].split(".")[0]}.npy'
                     np.save(os.path.join(self.cache_dir, cache_filename), x)
                 b += x.nbytes
-                pbar.desc = f'Caching images ({b / gb:.1f}/{mem_required / gb:.1f}GB {self.cache_type})'
+                pbar.desc = f'Caching images ({b / gb:.1f}/{mem_required / gb:.1f}GB \
+                    {self.cache_type})'
             pbar.close()
 
     def cal_cache_occupy(self, num_imgs):

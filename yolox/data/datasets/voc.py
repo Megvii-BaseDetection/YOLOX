@@ -10,7 +10,6 @@ import os
 import os.path
 import pickle
 import xml.etree.ElementTree as ET
-from loguru import logger
 
 import cv2
 import numpy as np
@@ -110,7 +109,6 @@ class VOCDetection(CacheDataset):
         cache=False,
         cache_type="ram",
     ):
-        import pdb; pdb.set_trace()
         super().__init__(input_dimension=img_size, cache=cache, cache_type=cache_type)
         self.root = data_dir
         self.image_set = image_sets
@@ -137,7 +135,10 @@ class VOCDetection(CacheDataset):
 
         self.annotations = self._load_coco_annotations()
 
-        path_filename = [(self._imgpath % self.ids[i]).split(self.root)[1] for i in range(self.num_imgs)]
+        path_filename = [
+            (self._imgpath % self.ids[i]).split(self.root)[1]
+            for i in range(self.num_imgs)
+        ]
         self.cache_images(
             num_imgs=self.num_imgs,
             data_dir=self.root,
