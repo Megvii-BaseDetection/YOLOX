@@ -264,7 +264,7 @@ class YOLOXHead(nn.Module):
         dtype,
     ):
         bbox_preds = outputs[:, :, :4]  # [batch, n_anchors_all, 4]
-        obj_preds = outputs[:, :, 4:5] # [batch, n_anchors_all, 1]
+        obj_preds = outputs[:, :, 4:5]  # [batch, n_anchors_all, 1]
         cls_preds = outputs[:, :, 5:]  # [batch, n_anchors_all, n_cls]
 
         # calculate targets
@@ -465,8 +465,6 @@ class YOLOXHead(nn.Module):
         gt_cls_per_image = (
             F.one_hot(gt_classes.to(torch.int64), self.num_classes)
             .float()
-            .unsqueeze(1)
-            .repeat(1, num_in_boxes_anchor, 1)
         )
         pair_wise_ious_loss = -torch.log(pair_wise_ious + 1e-8)
 
@@ -475,11 +473,12 @@ class YOLOXHead(nn.Module):
 
         with torch.cuda.amp.autocast(enabled=False):
             cls_preds_ = (
-                cls_preds_.float().unsqueeze(0).repeat(num_gt, 1, 1).sigmoid_()
-                * obj_preds_.float().unsqueeze(0).repeat(num_gt, 1, 1).sigmoid_()
-            )
+                cls_preds_.float().sigmoid_() * obj_preds_.float().sigmoid_()
+            ).sqrt()
             pair_wise_cls_loss = F.binary_cross_entropy(
-                cls_preds_.sqrt_(), gt_cls_per_image, reduction="none"
+                cls_preds_.unsqueeze(0).repeat(num_gt, 1, 1), 
+                gt_cls_per_image.unsqueeze(1).repeat(1, num_in_boxes_anchor, 1),
+                reduction="none"
             ).sum(-1)
         del cls_preds_
 
@@ -524,16 +523,8 @@ class YOLOXHead(nn.Module):
         the number of candidate anchors so that the GPU memory is saved.
         """
         expanded_strides_per_image = expanded_strides[0]
-        x_shifts_per_image = x_shifts[0] * expanded_strides_per_image
-        y_shifts_per_image = y_shifts[0] * expanded_strides_per_image
-        x_centers_per_image = (
-            (x_shifts_per_image + 0.5 * expanded_strides_per_image)
-            .unsqueeze(0)
-        )  # [n_anchor] -> [1, n_anchor]
-        y_centers_per_image = (
-            (y_shifts_per_image + 0.5 * expanded_strides_per_image)
-            .unsqueeze(0)
-        )
+        x_centers_per_image = ((x_shifts[0] + 0.5) * expanded_strides_per_image).unsqueeze(0)
+        y_centers_per_image = ((y_shifts[0] + 0.5) * expanded_strides_per_image).unsqueeze(0)
 
         # in fixed center
         center_radius = 1.5
@@ -559,9 +550,8 @@ class YOLOXHead(nn.Module):
         # ---------------------------------------------------------------
         matching_matrix = torch.zeros_like(cost, dtype=torch.uint8)
 
-        ious_in_boxes_matrix = pair_wise_ious
-        n_candidate_k = min(10, ious_in_boxes_matrix.size(1))
-        topk_ious, _ = torch.topk(ious_in_boxes_matrix, n_candidate_k, dim=1)
+        n_candidate_k = min(10, pair_wise_ious.size(1))
+        topk_ious, _ = torch.topk(pair_wise_ious, n_candidate_k, dim=1)
         dynamic_ks = torch.clamp(topk_ious.sum(1).int(), min=1)
         for gt_idx in range(num_gt):
             _, pos_idx = torch.topk(
@@ -572,11 +562,13 @@ class YOLOXHead(nn.Module):
         del topk_ious, dynamic_ks, pos_idx
 
         anchor_matching_gt = matching_matrix.sum(0)
+        # deal with the case that one anchor matches multiple ground-truths
         if anchor_matching_gt.max() > 1:
-            _, cost_argmin = torch.min(cost[:, anchor_matching_gt > 1], dim=0)
-            matching_matrix[:, anchor_matching_gt > 1] *= 0
-            matching_matrix[cost_argmin, anchor_matching_gt > 1] = 1
-        fg_mask_inboxes = matching_matrix.sum(0) > 0
+            multiple_match_mask = anchor_matching_gt > 1
+            _, cost_argmin = torch.min(cost[:, multiple_match_mask], dim=0)
+            matching_matrix[:, multiple_match_mask] *= 0
+            matching_matrix[cost_argmin, multiple_match_mask] = 1
+        fg_mask_inboxes = anchor_matching_gt > 0
         num_fg = fg_mask_inboxes.sum().item()
 
         fg_mask[fg_mask.clone()] = fg_mask_inboxes
