@@ -134,7 +134,10 @@ class VOCDetection(CacheDataset):
 
         self.annotations = self._load_coco_annotations()
 
-        path_filename = [(self._imgpath % self.ids[i]).split(self.root + "/")[1] for i in range(self.num_imgs)]
+        path_filename = [
+            (self._imgpath % self.ids[i]).split(self.root + "/")[1]
+            for i in range(self.num_imgs)
+        ]
         super().__init__(
             input_dimension=img_size,
             num_imgs=self.num_imgs,
