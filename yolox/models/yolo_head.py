@@ -555,7 +555,7 @@ class YOLOXHead(nn.Module):
         is_in_centers = center_deltas.min(dim=-1).values > 0.0
         anchor_filter = is_in_centers.sum(dim=0) > 0
         geometry_relation = is_in_centers[:, anchor_filter]
-        
+
         return anchor_filter, geometry_relation
 
     def simota_matching(self, cost, pair_wise_ious, gt_classes, num_gt, fg_mask):
