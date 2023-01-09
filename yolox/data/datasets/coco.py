@@ -55,7 +55,6 @@ class COCODataset(CacheDataset):
             img_size (int): target image size after pre-processing
             preproc: data augmentation strategy
         """
-        super().__init__(input_dimension=img_size, cache=cache, cache_type=cache_type)
         if data_dir is None:
             data_dir = os.path.join(get_yolox_datadir(), "COCO")
         self.data_dir = data_dir
@@ -74,11 +73,14 @@ class COCODataset(CacheDataset):
         self.annotations = self._load_coco_annotations()
 
         path_filename = [os.path.join(name, self.annotations[i][3]) for i in range(self.num_imgs)]
-        self.cache_images(
+        super().__init__(
+            input_dimension=img_size,
             num_imgs=self.num_imgs,
-            data_dir=self.data_dir,
-            cache_dir_name=f"cache_{self.name}",
+            data_dir=data_dir,
+            cache_dir_name=f"cache_{name}",
             path_filename=path_filename,
+            cache=cache,
+            cache_type=cache_type
         )
 
     def __len__(self):

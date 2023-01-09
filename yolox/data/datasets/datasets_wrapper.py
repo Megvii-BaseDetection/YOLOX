@@ -125,17 +125,34 @@ class Dataset(torchDataset):
 
 
 class CacheDataset(Dataset, metaclass=ABCMeta):
-    def __init__(self, input_dimension, cache=False, cache_type="ram"):
-        super().__init__(input_dimension=input_dimension)
+    def __init__(
+        self,
+        input_dimension,
+        num_imgs,
+        data_dir,
+        cache_dir_name,
+        path_filename,
+        cache=False,
+        cache_type="ram",
+    ):
+        super().__init__(input_dimension)
         self.cache = cache
         self.cache_type = cache_type
 
-        # disk
-        self.cache_dir = None
-        self.path_filename = None
+        if self.cache and self.cache_type == "disk":
+            self.cache_dir = os.path.join(data_dir, cache_dir_name)
+            self.path_filename = path_filename
 
-        # ram
-        self.imgs = None
+        if self.cache and self.cache_type == "ram":
+            self.imgs = None
+
+        if self.cache:
+            self.cache_images(
+                num_imgs=num_imgs,
+                data_dir=data_dir,
+                cache_dir_name=cache_dir_name,
+                path_filename=path_filename,
+            )
 
     def __del__(self):
         del self.imgs
@@ -167,9 +184,6 @@ class CacheDataset(Dataset, metaclass=ABCMeta):
         cache_dir_name=None,
         path_filename=None,
     ):
-        if not self.cache:
-            return
-
         assert num_imgs is not None, "num_imgs must be specified as the size of the dataset"
         if self.cache_type == "disk":
             assert data_dir is not None, \
@@ -200,10 +214,6 @@ class CacheDataset(Dataset, metaclass=ABCMeta):
                 self.imgs = [None] * num_imgs
                 logger.info("You are using cached images in RAM to accelerate training!")
             else:   # 'disk'
-                self.cache_dir = os.path.join(
-                    data_dir,
-                    cache_dir_name
-                )
                 if not os.path.exists(self.cache_dir):
                     os.mkdir(self.cache_dir)
                     logger.warning(

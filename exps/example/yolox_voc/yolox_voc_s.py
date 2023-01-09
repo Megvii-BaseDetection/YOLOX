@@ -24,93 +24,19 @@ class Exp(MyExp):
 
         self.exp_name = os.path.split(os.path.realpath(__file__))[1].split(".")[0]
 
-    def create_cache_dataset(self, cache_type: str = "ram"):
+    def get_dataset(self, cache, cache_type: str = "ram"):
         from yolox.data import VOCDetection, TrainTransform
-        self.cache_dataset = VOCDetection(
-                data_dir=os.path.join(get_yolox_datadir(), "VOCdevkit"),
-                image_sets=[('2007', 'trainval'), ('2012', 'trainval')],
-                img_size=self.input_size,
-                preproc=TrainTransform(
-                    max_labels=50,
-                    flip_prob=self.flip_prob,
-                    hsv_prob=self.hsv_prob),
-                cache=True,
-                cache_type=cache_type,
-            )
-
-    def get_data_loader(self, batch_size, is_distributed, no_aug=False, cache_img: str = None):
-        from yolox.data import (
-            VOCDetection,
-            TrainTransform,
-            YoloBatchSampler,
-            DataLoader,
-            InfiniteSampler,
-            MosaicDetection,
-            worker_init_reset_seed,
-        )
-        from yolox.utils import (
-            wait_for_the_master,
-            get_local_rank,
-        )
-        local_rank = get_local_rank()
-
-        with wait_for_the_master(local_rank):
-            if self.cache_dataset is None:
-                dataset = VOCDetection(
-                    data_dir=os.path.join(get_yolox_datadir(), "VOCdevkit"),
-                    image_sets=[('2007', 'trainval'), ('2012', 'trainval')],
-                    img_size=self.input_size,
-                    preproc=TrainTransform(
-                        max_labels=50,
-                        flip_prob=self.flip_prob,
-                        hsv_prob=self.hsv_prob),
-                    cache=False,
-                    cache_type=cache_img,
-                )
-            else:
-                dataset = self.cache_dataset
-
-        self.dataset = MosaicDetection(
-            dataset,
-            mosaic=not no_aug,
+        return VOCDetection(
+            data_dir=os.path.join(get_yolox_datadir(), "VOCdevkit"),
+            image_sets=[('2007', 'trainval'), ('2012', 'trainval')],
             img_size=self.input_size,
             preproc=TrainTransform(
-                max_labels=120,
+                max_labels=50,
                 flip_prob=self.flip_prob,
                 hsv_prob=self.hsv_prob),
-            degrees=self.degrees,
-            translate=self.translate,
-            mosaic_scale=self.mosaic_scale,
-            mixup_scale=self.mixup_scale,
-            shear=self.shear,
-            enable_mixup=self.enable_mixup,
-            mosaic_prob=self.mosaic_prob,
-            mixup_prob=self.mixup_prob,
+            cache=cache,
+            cache_type=cache_type,
         )
-
-        if is_distributed:
-            batch_size = batch_size // dist.get_world_size()
-
-        sampler = InfiniteSampler(
-            len(self.dataset), seed=self.seed if self.seed else 0
-        )
-
-        batch_sampler = YoloBatchSampler(
-            sampler=sampler,
-            batch_size=batch_size,
-            drop_last=False,
-            mosaic=not no_aug,
-        )
-
-        dataloader_kwargs = {"num_workers": self.data_num_workers, "pin_memory": True}
-        dataloader_kwargs["batch_sampler"] = batch_sampler
-
-        # Make sure each process has different random seed, especially for 'fork' method
-        dataloader_kwargs["worker_init_fn"] = worker_init_reset_seed
-
-        train_loader = DataLoader(self.dataset, **dataloader_kwargs)
-
-        return train_loader
 
     def get_eval_loader(self, batch_size, is_distributed, testdev=False, legacy=False):
         from yolox.data import VOCDetection, ValTransform
