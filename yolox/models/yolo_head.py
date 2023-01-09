@@ -321,8 +321,6 @@ class YOLOXHead(nn.Module):
                         cls_preds,
                         bbox_preds,
                         obj_preds,
-                        labels,
-                        imgs,
                     )
                 except RuntimeError as e:
                     # TODO: the string might change, consider a better way
@@ -354,8 +352,6 @@ class YOLOXHead(nn.Module):
                         cls_preds,
                         bbox_preds,
                         obj_preds,
-                        labels,
-                        imgs,
                         "cpu",
                     )
 
@@ -433,7 +429,6 @@ class YOLOXHead(nn.Module):
         self,
         batch_idx,
         num_gt,
-        total_num_anchors,
         gt_bboxes_per_image,
         gt_classes,
         bboxes_preds_per_image,
@@ -441,15 +436,12 @@ class YOLOXHead(nn.Module):
         x_shifts,
         y_shifts,
         cls_preds,
-        bbox_preds,
         obj_preds,
-        labels,
-        imgs,
         mode="gpu",
     ):
 
         if mode == "cpu":
-            print("------------CPU Mode for This Batch-------------")
+            print("-----------Using CPU for the Current Batch-------------")
             gt_bboxes_per_image = gt_bboxes_per_image.cpu().float()
             bboxes_preds_per_image = bboxes_preds_per_image.cpu().float()
             gt_classes = gt_classes.cpu().float()
@@ -457,13 +449,11 @@ class YOLOXHead(nn.Module):
             x_shifts = x_shifts.cpu()
             y_shifts = y_shifts.cpu()
 
-        fg_mask, is_in_boxes_and_center = self.get_in_boxes_info(
+        fg_mask, geometry_relation = self.get_geometry_constraint(
             gt_bboxes_per_image,
             expanded_strides,
             x_shifts,
             y_shifts,
-            total_num_anchors,
-            num_gt,
         )
 
         bboxes_preds_per_image = bboxes_preds_per_image[fg_mask]
@@ -501,7 +491,7 @@ class YOLOXHead(nn.Module):
         cost = (
             pair_wise_cls_loss
             + 3.0 * pair_wise_ious_loss
-            + 100000.0 * (~is_in_boxes_and_center)
+            + float(1e6) * (~geometry_relation)
         )
 
         (
@@ -509,7 +499,7 @@ class YOLOXHead(nn.Module):
             gt_matched_classes,
             pred_ious_this_matching,
             matched_gt_inds,
-        ) = self.dynamic_k_matching(cost, pair_wise_ious, gt_classes, num_gt, fg_mask)
+        ) = self.simota_matching(cost, pair_wise_ious, gt_classes, num_gt, fg_mask)
         del pair_wise_cls_loss, cost, pair_wise_ious, pair_wise_ious_loss
 
         if mode == "cpu":
@@ -526,14 +516,12 @@ class YOLOXHead(nn.Module):
             num_fg,
         )
 
-    def get_in_boxes_info(
+    def get_geometry_constraint(
         self,
         gt_bboxes_per_image,
         expanded_strides,
         x_shifts,
         y_shifts,
-        total_num_anchors,
-        num_gt,
     ):
         expanded_strides_per_image = expanded_strides[0]
         x_shifts_per_image = x_shifts[0] * expanded_strides_per_image
@@ -541,59 +529,23 @@ class YOLOXHead(nn.Module):
         x_centers_per_image = (
             (x_shifts_per_image + 0.5 * expanded_strides_per_image)
             .unsqueeze(0)
-            .repeat(num_gt, 1)
-        )  # [n_anchor] -> [n_gt, n_anchor]
+        )  # [n_anchor] -> [1, n_anchor]
         y_centers_per_image = (
             (y_shifts_per_image + 0.5 * expanded_strides_per_image)
             .unsqueeze(0)
-            .repeat(num_gt, 1)
         )
 
-        gt_bboxes_per_image_l = (
-            (gt_bboxes_per_image[:, 0] - 0.5 * gt_bboxes_per_image[:, 2])
-            .unsqueeze(1)
-            .repeat(1, total_num_anchors)
-        )
-        gt_bboxes_per_image_r = (
-            (gt_bboxes_per_image[:, 0] + 0.5 * gt_bboxes_per_image[:, 2])
-            .unsqueeze(1)
-            .repeat(1, total_num_anchors)
-        )
-        gt_bboxes_per_image_t = (
-            (gt_bboxes_per_image[:, 1] - 0.5 * gt_bboxes_per_image[:, 3])
-            .unsqueeze(1)
-            .repeat(1, total_num_anchors)
-        )
-        gt_bboxes_per_image_b = (
-            (gt_bboxes_per_image[:, 1] + 0.5 * gt_bboxes_per_image[:, 3])
-            .unsqueeze(1)
-            .repeat(1, total_num_anchors)
-        )
-
-        b_l = x_centers_per_image - gt_bboxes_per_image_l
-        b_r = gt_bboxes_per_image_r - x_centers_per_image
-        b_t = y_centers_per_image - gt_bboxes_per_image_t
-        b_b = gt_bboxes_per_image_b - y_centers_per_image
-        bbox_deltas = torch.stack([b_l, b_t, b_r, b_b], 2)
-
-        is_in_boxes = bbox_deltas.min(dim=-1).values > 0.0
-        is_in_boxes_all = is_in_boxes.sum(dim=0) > 0
         # in fixed center
+        center_radius = 1.5
 
-        center_radius = 2.5
-
-        gt_bboxes_per_image_l = (gt_bboxes_per_image[:, 0]).unsqueeze(1).repeat(
-            1, total_num_anchors
-        ) - center_radius * expanded_strides_per_image.unsqueeze(0)
-        gt_bboxes_per_image_r = (gt_bboxes_per_image[:, 0]).unsqueeze(1).repeat(
-            1, total_num_anchors
-        ) + center_radius * expanded_strides_per_image.unsqueeze(0)
-        gt_bboxes_per_image_t = (gt_bboxes_per_image[:, 1]).unsqueeze(1).repeat(
-            1, total_num_anchors
-        ) - center_radius * expanded_strides_per_image.unsqueeze(0)
-        gt_bboxes_per_image_b = (gt_bboxes_per_image[:, 1]).unsqueeze(1).repeat(
-            1, total_num_anchors
-        ) + center_radius * expanded_strides_per_image.unsqueeze(0)
+        gt_bboxes_per_image_l = (gt_bboxes_per_image[:, 0]).unsqueeze(1) - \
+            center_radius * expanded_strides_per_image.unsqueeze(0)
+        gt_bboxes_per_image_r = (gt_bboxes_per_image[:, 0]).unsqueeze(1) + \
+            center_radius * expanded_strides_per_image.unsqueeze(0)
+        gt_bboxes_per_image_t = (gt_bboxes_per_image[:, 1]).unsqueeze(1) - \
+            center_radius * expanded_strides_per_image.unsqueeze(0)
+        gt_bboxes_per_image_b = (gt_bboxes_per_image[:, 1]).unsqueeze(1) + \
+            center_radius * expanded_strides_per_image.unsqueeze(0)
 
         c_l = x_centers_per_image - gt_bboxes_per_image_l
         c_r = gt_bboxes_per_image_r - x_centers_per_image
@@ -601,17 +553,12 @@ class YOLOXHead(nn.Module):
         c_b = gt_bboxes_per_image_b - y_centers_per_image
         center_deltas = torch.stack([c_l, c_t, c_r, c_b], 2)
         is_in_centers = center_deltas.min(dim=-1).values > 0.0
-        is_in_centers_all = is_in_centers.sum(dim=0) > 0
+        anchor_filter = is_in_centers.sum(dim=0) > 0
+        geometry_relation = is_in_centers[:, anchor_filter]
+        
+        return anchor_filter, geometry_relation
 
-        # in boxes and in centers
-        is_in_boxes_anchor = is_in_boxes_all | is_in_centers_all
-
-        is_in_boxes_and_center = (
-            is_in_boxes[:, is_in_boxes_anchor] & is_in_centers[:, is_in_boxes_anchor]
-        )
-        return is_in_boxes_anchor, is_in_boxes_and_center
-
-    def dynamic_k_matching(self, cost, pair_wise_ious, gt_classes, num_gt, fg_mask):
+    def simota_matching(self, cost, pair_wise_ious, gt_classes, num_gt, fg_mask):
         # Dynamic K
         # ---------------------------------------------------------------
         matching_matrix = torch.zeros_like(cost, dtype=torch.uint8)
@@ -620,7 +567,6 @@ class YOLOXHead(nn.Module):
         n_candidate_k = min(10, ious_in_boxes_matrix.size(1))
         topk_ious, _ = torch.topk(ious_in_boxes_matrix, n_candidate_k, dim=1)
         dynamic_ks = torch.clamp(topk_ious.sum(1).int(), min=1)
-        dynamic_ks = dynamic_ks.tolist()
         for gt_idx in range(num_gt):
             _, pos_idx = torch.topk(
                 cost[gt_idx], k=dynamic_ks[gt_idx], largest=False
