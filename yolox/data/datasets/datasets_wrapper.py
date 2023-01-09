@@ -230,7 +230,7 @@ class CacheDataset(Dataset, metaclass=ABCMeta):
 
             logger.info(
                 "Caching images for the first time. "
-                "This might takes some time for your dataset"
+                "This might take some time for your dataset"
             )
 
             num_threads = min(8, max(1, os.cpu_count() - 1))
