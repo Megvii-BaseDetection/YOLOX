@@ -249,8 +249,8 @@ class CacheDataset(Dataset, metaclass=ABCMeta):
                     os.makedirs(os.path.dirname(cache_path_filename), exist_ok=True)
                     np.save(cache_path_filename, x)
                 b += x.nbytes
-                pbar.desc = f'Caching images ({b / gb:.1f}/{mem_required / gb:.1f}GB \
-                    {self.cache_type})'
+                pbar.desc = \
+                    f'Caching images ({b / gb:.1f}/{mem_required / gb:.1f}GB {self.cache_type})'
             pbar.close()
 
     def cal_cache_occupy(self, num_imgs):
