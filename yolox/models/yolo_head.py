@@ -32,7 +32,6 @@ class YOLOXHead(nn.Module):
         """
         super().__init__()
 
-        self.n_anchors = 1
         self.num_classes = num_classes
         self.decode_in_inference = True  # for deploy, set to False
 
@@ -97,7 +96,7 @@ class YOLOXHead(nn.Module):
             self.cls_preds.append(
                 nn.Conv2d(
                     in_channels=int(256 * width),
-                    out_channels=self.n_anchors * self.num_classes,
+                    out_channels=self.num_classes,
                     kernel_size=1,
                     stride=1,
                     padding=0,
@@ -115,7 +114,7 @@ class YOLOXHead(nn.Module):
             self.obj_preds.append(
                 nn.Conv2d(
                     in_channels=int(256 * width),
-                    out_channels=self.n_anchors * 1,
+                    out_channels=1,
                     kernel_size=1,
                     stride=1,
                     padding=0,
@@ -131,12 +130,12 @@ class YOLOXHead(nn.Module):
 
     def initialize_biases(self, prior_prob):
         for conv in self.cls_preds:
-            b = conv.bias.view(self.n_anchors, -1)
+            b = conv.bias.view(1, -1)
             b.data.fill_(-math.log((1 - prior_prob) / prior_prob))
             conv.bias = torch.nn.Parameter(b.view(-1), requires_grad=True)
 
         for conv in self.obj_preds:
-            b = conv.bias.view(self.n_anchors, -1)
+            b = conv.bias.view(1, -1)
             b.data.fill_(-math.log((1 - prior_prob) / prior_prob))
             conv.bias = torch.nn.Parameter(b.view(-1), requires_grad=True)
 
@@ -177,7 +176,7 @@ class YOLOXHead(nn.Module):
                     batch_size = reg_output.shape[0]
                     hsize, wsize = reg_output.shape[-2:]
                     reg_output = reg_output.view(
-                        batch_size, self.n_anchors, 4, hsize, wsize
+                        batch_size, 1, 4, hsize, wsize
                     )
                     reg_output = reg_output.permute(0, 1, 3, 4, 2).reshape(
                         batch_size, -1, 4
@@ -224,9 +223,9 @@ class YOLOXHead(nn.Module):
             grid = torch.stack((xv, yv), 2).view(1, 1, hsize, wsize, 2).type(dtype)
             self.grids[k] = grid
 
-        output = output.view(batch_size, self.n_anchors, n_ch, hsize, wsize)
+        output = output.view(batch_size, 1, n_ch, hsize, wsize)
         output = output.permute(0, 1, 3, 4, 2).reshape(
-            batch_size, self.n_anchors * hsize * wsize, -1
+            batch_size, hsize * wsize, -1
         )
         grid = grid.view(1, -1, 2)
         output[..., :2] = (output[..., :2] + grid) * stride
@@ -265,7 +264,7 @@ class YOLOXHead(nn.Module):
         dtype,
     ):
         bbox_preds = outputs[:, :, :4]  # [batch, n_anchors_all, 4]
-        obj_preds = outputs[:, :, 4].unsqueeze(-1)  # [batch, n_anchors_all, 1]
+        obj_preds = outputs[:, :, 4:5] # [batch, n_anchors_all, 1]
         cls_preds = outputs[:, :, 5:]  # [batch, n_anchors_all, n_cls]
 
         # calculate targets
@@ -311,7 +310,6 @@ class YOLOXHead(nn.Module):
                     ) = self.get_assignments(  # noqa
                         batch_idx,
                         num_gt,
-                        total_num_anchors,
                         gt_bboxes_per_image,
                         gt_classes,
                         bboxes_preds_per_image,
@@ -319,7 +317,6 @@ class YOLOXHead(nn.Module):
                         x_shifts,
                         y_shifts,
                         cls_preds,
-                        bbox_preds,
                         obj_preds,
                     )
                 except RuntimeError as e:
@@ -342,7 +339,6 @@ class YOLOXHead(nn.Module):
                     ) = self.get_assignments(  # noqa
                         batch_idx,
                         num_gt,
-                        total_num_anchors,
                         gt_bboxes_per_image,
                         gt_classes,
                         bboxes_preds_per_image,
@@ -350,7 +346,6 @@ class YOLOXHead(nn.Module):
                         x_shifts,
                         y_shifts,
                         cls_preds,
-                        bbox_preds,
                         obj_preds,
                         "cpu",
                     )
@@ -523,6 +518,11 @@ class YOLOXHead(nn.Module):
         x_shifts,
         y_shifts,
     ):
+        """
+        Calculate whether the center of an object is located in a fixed range of
+        an anchor. This is used to avert inappropriate matching. It can also reduce
+        the number of candidate anchors so that the GPU memory is saved.
+        """
         expanded_strides_per_image = expanded_strides[0]
         x_shifts_per_image = x_shifts[0] * expanded_strides_per_image
         y_shifts_per_image = y_shifts[0] * expanded_strides_per_image
@@ -537,11 +537,11 @@ class YOLOXHead(nn.Module):
 
         # in fixed center
         center_radius = 1.5
-        center_offset = expanded_strides_per_image.unsqueeze(0) * center_radius
-        gt_bboxes_per_image_l = (gt_bboxes_per_image[:, 0:1]) - center_offset
-        gt_bboxes_per_image_r = (gt_bboxes_per_image[:, 0:1]) + center_offset
-        gt_bboxes_per_image_t = (gt_bboxes_per_image[:, 1:2]) - center_offset
-        gt_bboxes_per_image_b = (gt_bboxes_per_image[:, 1:2]) + center_offset
+        center_dist = expanded_strides_per_image.unsqueeze(0) * center_radius
+        gt_bboxes_per_image_l = (gt_bboxes_per_image[:, 0:1]) - center_dist
+        gt_bboxes_per_image_r = (gt_bboxes_per_image[:, 0:1]) + center_dist
+        gt_bboxes_per_image_t = (gt_bboxes_per_image[:, 1:2]) - center_dist
+        gt_bboxes_per_image_b = (gt_bboxes_per_image[:, 1:2]) + center_dist
 
         c_l = x_centers_per_image - gt_bboxes_per_image_l
         c_r = gt_bboxes_per_image_r - x_centers_per_image
