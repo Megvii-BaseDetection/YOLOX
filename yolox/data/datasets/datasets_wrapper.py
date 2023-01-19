@@ -155,7 +155,8 @@ class CacheDataset(Dataset, metaclass=ABCMeta):
             )
 
     def __del__(self):
-        del self.imgs
+        if self.cache and self.cache_type == "ram":
+            del self.imgs
 
     @abstractmethod
     def read_img(self, index, use_cache=True):
