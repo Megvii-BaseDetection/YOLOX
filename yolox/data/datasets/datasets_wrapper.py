@@ -128,10 +128,10 @@ class CacheDataset(Dataset, metaclass=ABCMeta):
     def __init__(
         self,
         input_dimension,
-        num_imgs,
-        data_dir,
-        cache_dir_name,
-        path_filename,
+        num_imgs=None,
+        data_dir=None,
+        cache_dir_name=None,
+        path_filename=None,
         cache=False,
         cache_type="ram",
     ):
