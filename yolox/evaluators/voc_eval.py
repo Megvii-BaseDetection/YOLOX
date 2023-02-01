@@ -107,7 +107,7 @@ def voc_eval(
     for imagename in imagenames:
         R = [obj for obj in recs[imagename] if obj["name"] == classname]
         bbox = np.array([x["bbox"] for x in R])
-        difficult = np.array([x["difficult"] for x in R]).astype(np.bool)
+        difficult = np.array([x["difficult"] for x in R]).astype(np.bool_)
         det = [False] * len(R)
         npos = npos + sum(~difficult)
         class_recs[imagename] = {"bbox": bbox, "difficult": difficult, "det": det}
