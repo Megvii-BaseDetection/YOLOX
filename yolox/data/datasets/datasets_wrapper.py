@@ -230,7 +230,7 @@ class CacheDataset(Dataset, metaclass=ABCMeta):
                     return
 
             logger.info(
-                "Caching images for the first time. "
+                "Caching images...\n"
                 "This might take some time for your dataset"
             )
 
