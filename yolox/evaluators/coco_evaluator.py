@@ -90,8 +90,8 @@ class COCOEvaluator:
         nmsthre: float,
         num_classes: int,
         testdev: bool = False,
-        per_class_AP: bool = False,
-        per_class_AR: bool = False,
+        per_class_AP: bool = True,
+        per_class_AR: bool = True,
     ):
         """
         Args:
@@ -101,8 +101,8 @@ class COCOEvaluator:
             confthre: confidence threshold ranging from 0 to 1, which
                 is defined in the config file.
             nmsthre: IoU threshold of non-max supression ranging from 0 to 1.
-            per_class_AP: Show per class AP during evalution or not. Default to False.
-            per_class_AR: Show per class AR during evalution or not. Default to False.
+            per_class_AP: Show per class AP during evalution or not. Default to True.
+            per_class_AR: Show per class AR during evalution or not. Default to True.
         """
         self.dataloader = dataloader
         self.img_size = img_size
@@ -188,6 +188,7 @@ class COCOEvaluator:
 
         statistics = torch.cuda.FloatTensor([inference_time, nms_time, n_samples])
         if distributed:
+            synchronize()
             data_list = gather(data_list, dst=0)
             output_data = gather(output_data, dst=0)
             data_list = list(itertools.chain(*data_list))
