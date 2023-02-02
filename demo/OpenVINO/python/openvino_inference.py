@@ -128,7 +128,7 @@ def main():
     # ---------------------------Step 8. Process output--------------------------------------------------------------------
     res = res[out_blob]
 
-    predictions = demo_postprocess(res, (h, w), p6=False)[0]
+    predictions = demo_postprocess(res, (h, w))[0]
 
     boxes = predictions[:, :4]
     scores = predictions[:, 4, None] * predictions[:, 5:]
