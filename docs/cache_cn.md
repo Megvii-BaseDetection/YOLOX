@@ -4,9 +4,9 @@
 
 实现支持向 RAM 缓存的最简步骤：
 
-- 创建一个继承自 `CacheDataset` 类的自定义数据集。注意，无论是继承自 `Dataset` 还是 `CacheDataset`，自定义数据集的 `__init__()` 方法都应传入以下关键字参数：`input_dimension`、`cache` 和 `cache_type`。同时 `super().__init__()` 传入 `input_dimension`、`num_imgs`、`cache` 和 `cache_type` 作为输入，其中 num_imgs 是数据集的大小。
+- 创建一个继承自 `CacheDataset` 类的自定义数据集。注意，无论是继承自 `Dataset` 还是 `CacheDataset`，自定义数据集的 `__init__()` 方法都应传入以下关键字参数：`input_dimension`、`cache` 和 `cache_type`。同时 `super().__init__()` 传入 `input_dimension`、`num_imgs`、`cache` 和 `cache_type` 作为输入，其中 `num_imgs` 是数据集的大小。
 - 实现父类的抽象函数 `read_img(self, index, use_cache=True)`，并用 `@CacheDataset.cache_read_img` 来装饰它。这个函数根据 `index` 返回一个 `image`，返回的图片将被用于缓存。所以建议把对图片重复且固定的后处理操作都放在该函数，以减少训练时对图像的后处理时间。
-- 创建一个继承自 `yolox_base.py` 提供的 `Exp` 类的新类。覆写 `get_dataset()` 方法以返回自定义数据集的实例。
+- 创建一个继承自 `yolox_base.py` 提供的 `Exp` 类的新类。覆写 `get_dataset()` 和 `get_eval_dataset()` 方法以返回自定义数据集的实例。
 
 下面是一个 `CustomDataset` 和 `Exp` 类的例子：
 
@@ -51,6 +51,11 @@ class Exp(MyExp):
             input_dimension=self.input_size,
             cache=cache,
             cache_type=cache_type
+        )
+
+    def get_eval_dataset(self):
+        return CustomDataset(
+            input_dimension=self.input_size,
         )
 
     def get_data_loader(self, batch_size, is_distributed, no_aug=False, cache_img: str = None):

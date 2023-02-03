@@ -1,3 +1,6 @@
+<div align="center">
+  [英文](README.md)\|[简体中文](README.zh-CN.md)<br>
+<div>
 # YOLOX Cache
 
 The caching feature is specifically tailored for users with ample memory resources. However, we still offer the option to cache data to disk, but disk performance can vary and may not guarantee optimal user experience. Implementing custom dataset RAM caching is also more straightforward and user-friendly compared to disk caching. With a few simple modifications, users can expect to see a significant increase in training speed, with speeds nearly double that of non-cached datasets.
@@ -6,7 +9,7 @@ Here are the minimal steps to implement support for caching to RAM:
 
 1. Create a custom dataset that inherits from the `CacheDataset` class. Note that whether inheriting from `Dataset` or `CacheDataset `, the `__init__()` method of your custom dataset should take the following keyword arguments: `input_dimension`, `cache`, and `cache_type`. Also, call `super().__init__()` and pass in `input_dimension`, `num_imgs`, `cache`, and `cache_type` as input, where `num_imgs` is the size of the dataset.
 2. Implement the abstract function `read_img(self, index, use_cache=True)` of parent class and decorate it with `@CacheDataset.cache_read_img`.  This function takes an `index` as input and returns an `image`, and the returned image will be used for caching. It is recommended to put all repetitive and fixed post-processing operations on the image in this function to reduce the post-processing time of the image during training.
-3. Create a new class that inherits from the `Exp` class provided by the `yolox_base.py`. Override the `get_dataset()` method to return an instance of your custom dataset.
+3. Create a new class that inherits from the `Exp` class provided by the `yolox_base.py`. Override the `get_dataset()` and `get_eval_dataset()` method to return an instance of your custom dataset.
 4. (Optional) `get_data_loader` is now a default behavior in `yolox_base.py` and generally does not need to be changed. If you have to change it, you need to add the following code at the beginning.
 
 Here is an example of how your `CustomDataset` and `Exp` class might look:
@@ -52,6 +55,11 @@ class Exp(MyExp):
             input_dimension=self.input_size,
             cache=cache,
             cache_type=cache_type
+        )
+
+    def get_eval_dataset(self):
+        return CustomDataset(
+            input_dimension=self.input_size,
         )
 
     def get_data_loader(self, batch_size, is_distributed, no_aug=False, cache_img: str = None):
