@@ -1,9 +1,6 @@
 # encoding: utf-8
 import os
 
-import torch
-import torch.distributed as dist
-
 from yolox.data import get_yolox_datadir
 from yolox.exp import Exp as MyExp
 
@@ -26,6 +23,7 @@ class Exp(MyExp):
 
     def get_dataset(self, cache, cache_type: str = "ram"):
         from yolox.data import VOCDetection, TrainTransform
+
         return VOCDetection(
             data_dir=os.path.join(get_yolox_datadir(), "VOCdevkit"),
             image_sets=[('2007', 'trainval'), ('2012', 'trainval')],
@@ -38,43 +36,23 @@ class Exp(MyExp):
             cache_type=cache_type,
         )
 
-    def get_eval_loader(self, batch_size, is_distributed, testdev=False, legacy=False):
+    def get_eval_dataset(self, testdev=False, legacy=False):
         from yolox.data import VOCDetection, ValTransform
 
-        valdataset = VOCDetection(
+        return VOCDetection(
             data_dir=os.path.join(get_yolox_datadir(), "VOCdevkit"),
             image_sets=[('2007', 'test')],
             img_size=self.test_size,
             preproc=ValTransform(legacy=legacy),
         )
 
-        if is_distributed:
-            batch_size = batch_size // dist.get_world_size()
-            sampler = torch.utils.data.distributed.DistributedSampler(
-                valdataset, shuffle=False
-            )
-        else:
-            sampler = torch.utils.data.SequentialSampler(valdataset)
-
-        dataloader_kwargs = {
-            "num_workers": self.data_num_workers,
-            "pin_memory": True,
-            "sampler": sampler,
-        }
-        dataloader_kwargs["batch_size"] = batch_size
-        val_loader = torch.utils.data.DataLoader(valdataset, **dataloader_kwargs)
-
-        return val_loader
-
     def get_evaluator(self, batch_size, is_distributed, testdev=False, legacy=False):
         from yolox.evaluators import VOCEvaluator
 
-        val_loader = self.get_eval_loader(batch_size, is_distributed, testdev, legacy)
-        evaluator = VOCEvaluator(
-            dataloader=val_loader,
+        return VOCEvaluator(
+            dataloader=self.get_eval_loader(batch_size, is_distributed, testdev, legacy),
             img_size=self.test_size,
             confthre=self.test_conf,
             nmsthre=self.nmsthre,
             num_classes=self.num_classes,
         )
-        return evaluator

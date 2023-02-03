@@ -129,6 +129,7 @@ class Exp(BaseExp):
 
     def get_dataset(self, cache: bool = False, cache_type: str = "ram"):
         from yolox.data import COCODataset, TrainTransform
+
         return COCODataset(
             data_dir=self.data_dir,
             json_file=self.train_ann,
@@ -283,16 +284,21 @@ class Exp(BaseExp):
         )
         return scheduler
 
-    def get_eval_loader(self, batch_size, is_distributed, testdev=False, legacy=False):
+    def get_eval_dataset(self, testdev=False, legacy=False):
         from yolox.data import COCODataset, ValTransform
 
-        valdataset = COCODataset(
+        return COCODataset(
             data_dir=self.data_dir,
             json_file=self.val_ann if not testdev else self.test_ann,
             name="val2017" if not testdev else "test2017",
             img_size=self.test_size,
             preproc=ValTransform(legacy=legacy),
         )
+
+    def get_eval_loader(self, batch_size, is_distributed, testdev=False, legacy=False):
+        from yolox.data import COCODataset, ValTransform
+
+        valdataset = self.get_eval_dataset(testdev, legacy)
 
         if is_distributed:
             batch_size = batch_size // dist.get_world_size()
@@ -315,16 +321,14 @@ class Exp(BaseExp):
     def get_evaluator(self, batch_size, is_distributed, testdev=False, legacy=False):
         from yolox.evaluators import COCOEvaluator
 
-        val_loader = self.get_eval_loader(batch_size, is_distributed, testdev, legacy)
-        evaluator = COCOEvaluator(
-            dataloader=val_loader,
+        return COCOEvaluator(
+            dataloader=self.get_eval_loader(batch_size, is_distributed, testdev, legacy),
             img_size=self.test_size,
             confthre=self.test_conf,
             nmsthre=self.nmsthre,
             num_classes=self.num_classes,
             testdev=testdev,
         )
-        return evaluator
 
     def get_trainer(self, args):
         from yolox.core import Trainer
