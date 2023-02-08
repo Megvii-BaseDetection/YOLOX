@@ -296,8 +296,6 @@ class Exp(BaseExp):
         )
 
     def get_eval_loader(self, batch_size, is_distributed, testdev=False, legacy=False):
-        from yolox.data import COCODataset, ValTransform
-
         valdataset = self.get_eval_dataset(testdev, legacy)
 
         if is_distributed:
