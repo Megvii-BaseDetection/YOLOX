@@ -128,6 +128,14 @@ class Exp(BaseExp):
         return self.model
 
     def get_dataset(self, cache: bool = False, cache_type: str = "ram"):
+        """
+        Get dataset according to cache and cache_type parameters.
+        Args:
+            cache (bool): Whether to cache imgs to ram or disk.
+            cache_type (str, optional): Defaults to "ram".
+                "ram" : Caching imgs to ram for fast training.
+                "disk": Caching imgs to disk for fast training.
+        """
         from yolox.data import COCODataset, TrainTransform
 
         return COCODataset(
@@ -163,9 +171,12 @@ class Exp(BaseExp):
         )
         from yolox.utils import wait_for_the_master
 
+        # if cache is True, we will create self.dataset before launch
+        # else we will create self.dataset after launch
         if self.dataset is None:
             with wait_for_the_master():
-                assert cache_img is None
+                assert cache_img is None, \
+                    "cache_img must be None if you didn't create self.dataset before launch"
                 self.dataset = self.get_dataset(cache=False, cache_type=cache_img)
 
         self.dataset = MosaicDetection(

@@ -188,6 +188,7 @@ class COCOEvaluator:
 
         statistics = torch.cuda.FloatTensor([inference_time, nms_time, n_samples])
         if distributed:
+            # Before gathering data, we need to synchronize the processes
             synchronize()
             data_list = gather(data_list, dst=0)
             output_data = gather(output_data, dst=0)

@@ -21,7 +21,7 @@ class Exp(MyExp):
 
         self.exp_name = os.path.split(os.path.realpath(__file__))[1].split(".")[0]
 
-    def get_dataset(self, cache, cache_type: str = "ram"):
+    def get_dataset(self, cache: bool, cache_type: str = "ram"):
         from yolox.data import VOCDetection, TrainTransform
 
         return VOCDetection(

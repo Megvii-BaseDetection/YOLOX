@@ -125,6 +125,24 @@ class Dataset(torchDataset):
 
 
 class CacheDataset(Dataset, metaclass=ABCMeta):
+    """ This class is a subclass of the base :class:`yolox.data.datasets.Dataset`,
+    that enables cache images to ram or disk.
+
+    Args:
+        input_dimension (tuple): (width,height) tuple with default dimensions of the network
+        num_imgs (int): datset size
+        data_dir (str): the root directory of the dataset, e.g. `/path/to/COCO`.
+        cache_dir_name (str): the name of the directory to cache to disk, for example `"custom_cache"`,
+            then the files cached to disk will be saved under `/path/to/COCO/custom_cache`.
+        path_filename (str): a list of paths to the data relative to the `data_dir`,
+            e.g. if you have data `/path/to/COCO/train/1.jpg`, `/path/to/COCO/train/2.jpg`,
+            then `path_filename = ['train/1.jpg', ' train/2.jpg']`.
+        cache (bool): whether to cache the images to ram or disk.
+        cache_type (str): the type of cache,
+            "ram" : Caching imgs to ram for fast training.
+            "disk": Caching imgs to disk for fast training.
+    """
+
     def __init__(
         self,
         input_dimension,
@@ -187,12 +205,8 @@ class CacheDataset(Dataset, metaclass=ABCMeta):
     ):
         assert num_imgs is not None, "num_imgs must be specified as the size of the dataset"
         if self.cache_type == "disk":
-            assert data_dir is not None, \
-                "data_dir must be specified if cache_type is disk"
-            assert cache_dir_name is not None, \
-                "cache_name must be specified if cache_type is disk"
-            assert path_filename is not None, \
-                "path_filename must be specified if cache_type is disk"
+            assert (data_dir and cache_dir_name and path_filename) is not None, \
+                "data_dir, cache_name and path_filename must be specified if cache_type is disk"
             self.path_filename = path_filename
 
         mem = psutil.virtual_memory()
