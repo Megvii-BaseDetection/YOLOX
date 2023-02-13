@@ -132,7 +132,7 @@ class CacheDataset(Dataset, metaclass=ABCMeta):
         input_dimension (tuple): (width,height) tuple with default dimensions of the network
         num_imgs (int): datset size
         data_dir (str): the root directory of the dataset, e.g. `/path/to/COCO`.
-        cache_dir_name (str): the name of the directory to cache to disk, for example `"custom_cache"`,
+        cache_dir_name (str): the name of the directory to cache to disk, e.g. `"custom_cache"`,
             then the files cached to disk will be saved under `/path/to/COCO/custom_cache`.
         path_filename (str): a list of paths to the data relative to the `data_dir`,
             e.g. if you have data `/path/to/COCO/train/1.jpg`, `/path/to/COCO/train/2.jpg`,
