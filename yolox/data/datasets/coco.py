@@ -9,7 +9,7 @@ import numpy as np
 from pycocotools.coco import COCO
 
 from ..dataloading import get_yolox_datadir
-from .datasets_wrapper import CacheDataset
+from .datasets_wrapper import CacheDataset, cache_read_img
 
 
 def remove_useless_info(coco):
@@ -150,7 +150,7 @@ class COCODataset(CacheDataset):
 
         return img
 
-    @CacheDataset.cache_read_img
+    @cache_read_img
     def read_img(self, index, use_cache=True):
         return self.load_resized_img(index)
 

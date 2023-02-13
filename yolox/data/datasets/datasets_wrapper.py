@@ -180,22 +180,6 @@ class CacheDataset(Dataset, metaclass=ABCMeta):
     def read_img(self, index, use_cache=True):
         raise NotImplementedError
 
-    @staticmethod
-    def cache_read_img(read_img_fn):
-        @wraps(read_img_fn)
-        def wrapper(self, index, use_cache=True):
-            cache = self.cache and use_cache
-            if cache and self.cache_type == "ram":
-                img = self.imgs[index]
-                img = copy.deepcopy(img)
-            elif cache and self.cache_type == "disk":
-                img = np.load(
-                    os.path.join(self.cache_dir, f"{self.path_filename[index].split('.')[0]}.npy"))
-            else:
-                img = read_img_fn(self, index, use_cache)
-            return img
-        return wrapper
-
     def cache_images(
         self,
         num_imgs=None,
@@ -276,3 +260,19 @@ class CacheDataset(Dataset, metaclass=ABCMeta):
             cache_bytes += img.nbytes
         mem_required = cache_bytes * num_imgs / num_samples
         return mem_required
+
+
+def cache_read_img(read_img_fn):
+    @wraps(read_img_fn)
+    def wrapper(self, index, use_cache=True):
+        cache = self.cache and use_cache
+        if cache and self.cache_type == "ram":
+            img = self.imgs[index]
+            img = copy.deepcopy(img)
+        elif cache and self.cache_type == "disk":
+            img = np.load(
+                os.path.join(self.cache_dir, f"{self.path_filename[index].split('.')[0]}.npy"))
+        else:
+            img = read_img_fn(self, index, use_cache)
+        return img
+    return wrapper

@@ -7,17 +7,19 @@ This page explains how to cache your own custom data with YOLOX.
 ## 0. Before you start
 
 **Step1** Clone this repo and follow the [README](../README.md) to install YOLOX.
+
 **Stpe2** Read the [Training on custom data](./train_custom_data.md) tutorial to understand how to prepare your custom data.
 
 ## 1. Inheirit from `CacheDataset`
 
 
 **Step1** Create a custom dataset that inherits from the `CacheDataset` class. Note that whether inheriting from `Dataset` or `CacheDataset `, the `__init__()` method of your custom dataset should take the following keyword arguments: `input_dimension`, `cache`, and `cache_type`. Also, call `super().__init__()` and pass in `input_dimension`, `num_imgs`, `cache`, and `cache_type` as input, where `num_imgs` is the size of the dataset.
-**Step2** Implement the abstract function `read_img(self, index, use_cache=True)` of parent class and decorate it with `@CacheDataset.cache_read_img`.  This function takes an `index` as input and returns an `image`, and the returned image will be used for caching. It is recommended to put all repetitive and fixed post-processing operations on the image in this function to reduce the post-processing time of the image during training.
+
+**Step2** Implement the abstract function `read_img(self, index, use_cache=True)` of parent class and decorate it with `@cache_read_img`.  This function takes an `index` as input and returns an `image`, and the returned image will be used for caching. It is recommended to put all repetitive and fixed post-processing operations on the image in this function to reduce the post-processing time of the image during training.
 
 ```python
 # CustomDataset.py
-from yolox.data.datasets import CacheDataset
+from yolox.data.datasets import CacheDataset, cache_read_img
 
 class CustomDataset(CacheDataset):
     def __init__(self, input_dimension, cache, cache_type, *args, **kwargs):
@@ -30,7 +32,7 @@ class CustomDataset(CacheDataset):
         )
         # ...
 
-    @CacheDataset.cache_read_img
+    @cache_read_img
     def read_img(self, index, use_cache=True):
         # get image ...
         # (optional) repetitive and fixed post-processing operations for image
@@ -40,6 +42,7 @@ class CustomDataset(CacheDataset):
 ## 2. Create your Exp file and return your custom dataset
 
 **Step1** Create a new class that inherits from the `Exp` class provided by the `yolox_base.py`. Override the `get_dataset()` and `get_eval_dataset()` method to return an instance of your custom dataset.
+
 **Step2** Implement your own `get_evaluator` method to return an instance of your custom evaluator.
 
 ```python
@@ -61,7 +64,7 @@ class Exp(MyExp):
 
     def get_evaluator(self, batch_size, is_distributed, testdev=False, legacy=False):
         return CustomEvaluator(
-            dataloader=self.get_eval_loader(batch_size, is_distributed, testdev, legacy),
+            dataloader=self.get_eval_loader(batch_size, is_distributed, testdev=testdev, legacy=legacy),
             img_size=self.test_size,
             confthre=self.test_conf,
             nmsthre=self.nmsthre,

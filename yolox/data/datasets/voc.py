@@ -16,7 +16,7 @@ import numpy as np
 
 from yolox.evaluators.voc_eval import voc_eval
 
-from .datasets_wrapper import CacheDataset
+from .datasets_wrapper import CacheDataset, cache_read_img
 from .voc_classes import VOC_CLASSES
 
 
@@ -189,7 +189,7 @@ class VOCDetection(CacheDataset):
 
         return img
 
-    @CacheDataset.cache_read_img
+    @cache_read_img
     def read_img(self, index, use_cache=True):
         return self.load_resized_img(index)
 

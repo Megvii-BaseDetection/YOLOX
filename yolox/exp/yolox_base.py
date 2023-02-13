@@ -295,8 +295,10 @@ class Exp(BaseExp):
         )
         return scheduler
 
-    def get_eval_dataset(self, testdev=False, legacy=False):
+    def get_eval_dataset(self, **kwargs):
         from yolox.data import COCODataset, ValTransform
+        testdev = kwargs.get("testdev", False)
+        legacy = kwargs.get("legacy", False)
 
         return COCODataset(
             data_dir=self.data_dir,
@@ -306,8 +308,8 @@ class Exp(BaseExp):
             preproc=ValTransform(legacy=legacy),
         )
 
-    def get_eval_loader(self, batch_size, is_distributed, testdev=False, legacy=False):
-        valdataset = self.get_eval_dataset(testdev, legacy)
+    def get_eval_loader(self, batch_size, is_distributed, **kwargs):
+        valdataset = self.get_eval_dataset(**kwargs)
 
         if is_distributed:
             batch_size = batch_size // dist.get_world_size()
@@ -331,7 +333,7 @@ class Exp(BaseExp):
         from yolox.evaluators import COCOEvaluator
 
         return COCOEvaluator(
-            dataloader=self.get_eval_loader(batch_size, is_distributed, testdev, legacy),
+            dataloader=self.get_eval_loader(batch_size, is_distributed, testdev=testdev, legacy=legacy),
             img_size=self.test_size,
             confthre=self.test_conf,
             nmsthre=self.nmsthre,

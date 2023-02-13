@@ -36,8 +36,9 @@ class Exp(MyExp):
             cache_type=cache_type,
         )
 
-    def get_eval_dataset(self, testdev=False, legacy=False):
+    def get_eval_dataset(self, **kwargs):
         from yolox.data import VOCDetection, ValTransform
+        legacy = kwargs.get("legacy", False)
 
         return VOCDetection(
             data_dir=os.path.join(get_yolox_datadir(), "VOCdevkit"),
@@ -50,7 +51,7 @@ class Exp(MyExp):
         from yolox.evaluators import VOCEvaluator
 
         return VOCEvaluator(
-            dataloader=self.get_eval_loader(batch_size, is_distributed, testdev, legacy),
+            dataloader=self.get_eval_loader(batch_size, is_distributed, testdev=testdev, legacy=legacy),
             img_size=self.test_size,
             confthre=self.test_conf,
             nmsthre=self.nmsthre,
