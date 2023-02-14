@@ -141,6 +141,7 @@ We also support multi-nodes training. Just add the following args:
 * --machine\_rank: specify the rank of each node
 
 Suppose you want to train YOLOX on 2 machines, and your master machines's IP is 123.123.123.123, use port 12312 and TCP.
+
 On master machine, run
 ```shell
 python tools/train.py -n yolox-s -b 128 --dist-url tcp://123.123.123.123:12312 --num_machines 2 --machine_rank 0
@@ -164,6 +165,7 @@ python tools/train.py -n yolox-s -d 8 -b 64 --fp16 -o [--cache] --logger wandb w
 An example wandb dashboard is available [here](https://wandb.ai/manan-goel/yolox-nano/runs/3pzfeom0)
 
 **Others**
+
 See more information with the following command:
 ```shell
 python -m yolox.tools.train --help

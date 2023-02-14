@@ -150,8 +150,8 @@ class COCODataset(CacheDataset):
 
         return img
 
-    @cache_read_img
-    def read_img(self, index, use_cache=True):
+    @cache_read_img(use_cache=True)
+    def read_img(self, index):
         return self.load_resized_img(index)
 
     def pull_item(self, index):

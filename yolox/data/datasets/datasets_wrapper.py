@@ -177,7 +177,13 @@ class CacheDataset(Dataset, metaclass=ABCMeta):
             del self.imgs
 
     @abstractmethod
-    def read_img(self, index, use_cache=True):
+    def read_img(self, index):
+        """
+        Given index, return the corresponding image
+
+        Args:
+            index (int): image index
+        """
         raise NotImplementedError
 
     def cache_images(
@@ -224,7 +230,7 @@ class CacheDataset(Dataset, metaclass=ABCMeta):
                         f"*******************************************************************\\n"
                     )
                 else:
-                    logger.info("Found disk cache!")
+                    logger.info(f"Found disk cache at {self.cache_dir}")
                     return
 
             logger.info(
@@ -262,17 +268,33 @@ class CacheDataset(Dataset, metaclass=ABCMeta):
         return mem_required
 
 
-def cache_read_img(read_img_fn):
-    @wraps(read_img_fn)
-    def wrapper(self, index, use_cache=True):
-        cache = self.cache and use_cache
-        if cache and self.cache_type == "ram":
-            img = self.imgs[index]
-            img = copy.deepcopy(img)
-        elif cache and self.cache_type == "disk":
-            img = np.load(
-                os.path.join(self.cache_dir, f"{self.path_filename[index].split('.')[0]}.npy"))
-        else:
-            img = read_img_fn(self, index, use_cache)
-        return img
-    return wrapper
+
+def cache_read_img(use_cache=True):
+    def decorator(read_img_fn):
+        """
+        Decorate the read_img function to cache the image
+
+        Args:
+            read_img_fn: read_img function
+            use_cache (bool, optional): For the decorated read_img function,
+                                        whether to read the image from cache.
+                                        Defaults to True.
+        """
+        @wraps(read_img_fn)
+        def wrapper(self, index, use_cache=use_cache):
+            cache = self.cache and use_cache
+            if cache:
+                if self.cache_type == "ram":
+                    img = self.imgs[index]
+                    img = copy.deepcopy(img)
+                elif self.cache_type == "disk":
+                    img = np.load(
+                        os.path.join(self.cache_dir, f"{self.path_filename[index].split('.')[0]}.npy"))
+                else:
+                    raise ValueError(f"Unknown cache type: {self.cache_type}")
+            else:
+                img = read_img_fn(self, index)
+            return img
+        return wrapper
+    return decorator
+
