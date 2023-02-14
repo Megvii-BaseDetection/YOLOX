@@ -277,8 +277,8 @@ def cache_read_img(use_cache=True):
         Args:
             read_img_fn: read_img function
             use_cache (bool, optional): For the decorated read_img function,
-                                        whether to read the image from cache.
-                                        Defaults to True.
+                whether to read the image from cache.
+                Defaults to True.
         """
         @wraps(read_img_fn)
         def wrapper(self, index, use_cache=use_cache):
