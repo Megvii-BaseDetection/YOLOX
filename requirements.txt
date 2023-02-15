@@ -1,5 +1,5 @@
 numpy
-torch>=1.4.*,<2
+torch~=1.4
 opencv_python==4.*
 scipy==1.*
 loguru
