@@ -265,6 +265,10 @@ class Trainer:
             )
 
             if self.rank == 0:
+                if self.args.logger == "tensorboard":
+                    self.tblogger.add_scalar("train/lr", self.meter["lr"].latest, self.epoch + 1)
+                    for k, v in loss_meter.items():
+                        self.tblogger.add_scalar(f"train/{k}", v.latest, self.epoch + 1)
                 if self.args.logger == "wandb":
                     metrics = {"train/" + k: v.latest for k, v in loss_meter.items()}
                     metrics.update({
