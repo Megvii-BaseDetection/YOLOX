@@ -269,7 +269,6 @@ class CacheDataset(Dataset, metaclass=ABCMeta):
         return mem_required
 
 
-
 def cache_read_img(use_cache=True):
     def decorator(read_img_fn):
         """
@@ -290,7 +289,8 @@ def cache_read_img(use_cache=True):
                     img = copy.deepcopy(img)
                 elif self.cache_type == "disk":
                     img = np.load(
-                        os.path.join(self.cache_dir, f"{self.path_filename[index].split('.')[0]}.npy"))
+                        os.path.join(
+                            self.cache_dir, f"{self.path_filename[index].split('.')[0]}.npy"))
                 else:
                     raise ValueError(f"Unknown cache type: {self.cache_type}")
             else:
@@ -298,4 +298,3 @@ def cache_read_img(use_cache=True):
             return img
         return wrapper
     return decorator
-
