@@ -106,23 +106,6 @@ class Exp(BaseExp):
         self.test_conf = 0.01
         # nms threshold
         self.nmsthre = 0.65
-        self.cache_dataset = None
-        self.dataset = None
-
-    def create_cache_dataset(self, cache_type: str = "ram"):
-        from yolox.data import COCODataset, TrainTransform
-        self.cache_dataset = COCODataset(
-            data_dir=self.data_dir,
-            json_file=self.train_ann,
-            img_size=self.input_size,
-            preproc=TrainTransform(
-                max_labels=50,
-                flip_prob=self.flip_prob,
-                hsv_prob=self.hsv_prob
-            ),
-            cache=True,
-            cache_type=cache_type,
-        )
 
     def get_model(self):
         from yolox.models import YOLOX, YOLOPAFPN, YOLOXHead
@@ -144,6 +127,30 @@ class Exp(BaseExp):
         self.model.train()
         return self.model
 
+    def get_dataset(self, cache: bool = False, cache_type: str = "ram"):
+        """
+        Get dataset according to cache and cache_type parameters.
+        Args:
+            cache (bool): Whether to cache imgs to ram or disk.
+            cache_type (str, optional): Defaults to "ram".
+                "ram" : Caching imgs to ram for fast training.
+                "disk": Caching imgs to disk for fast training.
+        """
+        from yolox.data import COCODataset, TrainTransform
+
+        return COCODataset(
+            data_dir=self.data_dir,
+            json_file=self.train_ann,
+            img_size=self.input_size,
+            preproc=TrainTransform(
+                max_labels=50,
+                flip_prob=self.flip_prob,
+                hsv_prob=self.hsv_prob
+            ),
+            cache=cache,
+            cache_type=cache_type,
+        )
+
     def get_data_loader(self, batch_size, is_distributed, no_aug=False, cache_img: str = None):
         """
         Get dataloader according to cache_img parameter.
@@ -155,7 +162,6 @@ class Exp(BaseExp):
                 None: Do not use cache, in this case cache_data is also None.
         """
         from yolox.data import (
-            COCODataset,
             TrainTransform,
             YoloBatchSampler,
             DataLoader,
@@ -165,25 +171,16 @@ class Exp(BaseExp):
         )
         from yolox.utils import wait_for_the_master
 
-        with wait_for_the_master():
-            if self.cache_dataset is None:
-                assert cache_img is None, "cache is True, but cache_dataset is None"
-                dataset = COCODataset(
-                    data_dir=self.data_dir,
-                    json_file=self.train_ann,
-                    img_size=self.input_size,
-                    preproc=TrainTransform(
-                        max_labels=50,
-                        flip_prob=self.flip_prob,
-                        hsv_prob=self.hsv_prob),
-                    cache=False,
-                    cache_type=cache_img,
-                )
-            else:
-                dataset = self.cache_dataset
+        # if cache is True, we will create self.dataset before launch
+        # else we will create self.dataset after launch
+        if self.dataset is None:
+            with wait_for_the_master():
+                assert cache_img is None, \
+                    "cache_img must be None if you didn't create self.dataset before launch"
+                self.dataset = self.get_dataset(cache=False, cache_type=cache_img)
 
         self.dataset = MosaicDetection(
-            dataset,
+            dataset=self.dataset,
             mosaic=not no_aug,
             img_size=self.input_size,
             preproc=TrainTransform(
@@ -298,16 +295,21 @@ class Exp(BaseExp):
         )
         return scheduler
 
-    def get_eval_loader(self, batch_size, is_distributed, testdev=False, legacy=False):
+    def get_eval_dataset(self, **kwargs):
         from yolox.data import COCODataset, ValTransform
+        testdev = kwargs.get("testdev", False)
+        legacy = kwargs.get("legacy", False)
 
-        valdataset = COCODataset(
+        return COCODataset(
             data_dir=self.data_dir,
             json_file=self.val_ann if not testdev else self.test_ann,
             name="val2017" if not testdev else "test2017",
             img_size=self.test_size,
             preproc=ValTransform(legacy=legacy),
         )
+
+    def get_eval_loader(self, batch_size, is_distributed, **kwargs):
+        valdataset = self.get_eval_dataset(**kwargs)
 
         if is_distributed:
             batch_size = batch_size // dist.get_world_size()
@@ -330,16 +332,15 @@ class Exp(BaseExp):
     def get_evaluator(self, batch_size, is_distributed, testdev=False, legacy=False):
         from yolox.evaluators import COCOEvaluator
 
-        val_loader = self.get_eval_loader(batch_size, is_distributed, testdev, legacy)
-        evaluator = COCOEvaluator(
-            dataloader=val_loader,
+        return COCOEvaluator(
+            dataloader=self.get_eval_loader(batch_size, is_distributed,
+                                            testdev=testdev, legacy=legacy),
             img_size=self.test_size,
             confthre=self.test_conf,
             nmsthre=self.nmsthre,
             num_classes=self.num_classes,
             testdev=testdev,
         )
-        return evaluator
 
     def get_trainer(self, args):
         from yolox.core import Trainer

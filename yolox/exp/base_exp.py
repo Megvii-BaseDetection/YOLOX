@@ -22,9 +22,14 @@ class BaseExp(metaclass=ABCMeta):
         self.output_dir = "./YOLOX_outputs"
         self.print_interval = 100
         self.eval_interval = 10
+        self.dataset = None
 
     @abstractmethod
     def get_model(self) -> Module:
+        pass
+
+    @abstractmethod
+    def get_dataset(self, cache: bool = False, cache_type: str = "ram"):
         pass
 
     @abstractmethod
