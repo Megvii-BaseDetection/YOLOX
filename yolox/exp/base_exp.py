@@ -5,7 +5,7 @@
 import ast
 import pprint
 from abc import ABCMeta, abstractmethod
-from typing import Dict
+from typing import Dict, Sequence
 from tabulate import tabulate
 
 import torch
@@ -72,6 +72,16 @@ class BaseExp(metaclass=ABCMeta):
             if hasattr(self, k):
                 src_value = getattr(self, k)
                 src_type = type(src_value)
+
+                # pre-process input if source type is a sequence
+                if isinstance(src_value, Sequence):
+                    v = [t.strip() for t in v.split(",")]
+
+                    # find type of tuple
+                    if len(src_value) > 0:
+                        src_item_type = type(src_value[0])
+                        v = [src_item_type(t) for t in v]
+
                 if src_value is not None and src_type != type(v):
                     try:
                         v = src_type(v)
