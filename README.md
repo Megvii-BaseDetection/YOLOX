@@ -244,7 +244,7 @@ If you use YOLOX in your research, please cite our work by using the following B
 ```
 ## In memory of Dr. Jian Sun
 Without the guidance of [Dr. Sun Jian](http://www.jiansun.org/), YOLOX would not have been released and open sourced to the community.
-The passing away of Dr. Sun Jian is a great loss to the Computer Vision field. We have added this section here to express our remembrance and condolences to our captain Dr. Sun.
+The passing away of Dr. Sun Jian is a big loss to the Computer Vision field. We have added this section here to express our remembrance and condolences to our captain Dr. Sun.
 It is hoped that every AI practitioner in the world will stick to the concept of "continuous innovation to expand cognitive boundaries, and extraordinary technology to achieve product value" and move forward all the way.
 
 <div align="center"><img src="assets/sunjian.png" width="200"></div>
