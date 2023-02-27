@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 # Copyright (c) Megvii Inc. All rights reserved.
 
-import cv2
 import os
 import random
 
+import cv2
 import numpy as np
 
 __all__ = [
