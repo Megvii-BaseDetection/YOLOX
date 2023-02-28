@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding:utf-8 -*-
 # Copyright (c) Megvii Inc. All rights reserved.
 
 import ast
@@ -66,7 +65,7 @@ class BaseExp(metaclass=ABCMeta):
         return tabulate(exp_table, headers=table_header, tablefmt="fancy_grid")
 
     def merge(self, cfg_list):
-        assert len(cfg_list) % 2 == 0
+        assert len(cfg_list) % 2 == 0, f"length must be even, check value here: {cfg_list}"
         for k, v in zip(cfg_list[0::2], cfg_list[1::2]):
             # only update value with same key
             if hasattr(self, k):
@@ -74,7 +73,7 @@ class BaseExp(metaclass=ABCMeta):
                 src_type = type(src_value)
 
                 # pre-process input if source type is list or tuple
-                if isinstance(src_value, List) or isinstance(src_value, Tuple):
+                if isinstance(src_value, (List, Tuple)):
                     v = v.strip("[]()")
                     v = [t.strip() for t in v.split(",")]
 
