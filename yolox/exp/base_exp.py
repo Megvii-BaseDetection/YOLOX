@@ -75,6 +75,7 @@ class BaseExp(metaclass=ABCMeta):
 
                 # pre-process input if source type is a sequence
                 if isinstance(src_value, Sequence):
+                    v = v.strip("[]()")
                     v = [t.strip() for t in v.split(",")]
 
                     # find type of tuple
