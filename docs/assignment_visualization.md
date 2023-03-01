@@ -26,7 +26,7 @@ After running the command, the logger will show you where the visualization resu
 Here is an example of visualization result:
 <div align="center"><img src="../assets/assignment.png" width="640"></div>
 
-Those dots in one box is the matched anchor of gt box. **The color of dots is the same as the color of the box** to help you determine which object is assigned to the anchor. Note the box and dots is instance level annotation, which means the same class may have different colors.
+Those dots in one box is the matched anchor of gt box. **The color of dots is the same as the color of the box** to help you determine which object is assigned to the anchor. Note the box and dots are **instance level** visualization, which means the same class may have different colors.
 **If the gt box doesn't match any anchor, the box will be marked as red and the red text "unmatched" will be drawn over the box**.
 
 Please feel free to open an issue if you have any questions.
