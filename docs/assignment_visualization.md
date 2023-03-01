@@ -9,10 +9,7 @@ We provide a visualization tool to help you visualize your label assignment resu
 Here is an example of command to visualize your label assignment result:
 
 ```shell
-python3 tools/visualize_assign.py -n yolox-s -d 1 -b 8 --max-batch 2
-                                     yolox-m
-                                     yolox-l
-                                     yolox-x
+python3 tools/visualize_assign.py -f /path/to/your/exp.py yolox-s -d 1 -b 8 --max-batch 2
 ```
 
 `max-batch` here means the maximum number of batches to visualize. The default value is 1, which the tool means only visualize the first batch.

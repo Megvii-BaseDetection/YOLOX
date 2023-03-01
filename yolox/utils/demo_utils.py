@@ -24,6 +24,7 @@ def visualize_assign(img, boxes, coords, match_results, save_name=None) -> np.nd
         boxes: gt boxes in xyxy format
         coords: coords of matched anchors
         match_results: match results of each gt box and coord.
+        save_name: name of save image, if None, image will not be saved. Default: None.
     """
     for box_id, box in enumerate(boxes):
         x1, y1, x2, y2 = box
