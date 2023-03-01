@@ -10,7 +10,8 @@ This repo is an implementation of PyTorch version YOLOX, there is also a [MegEng
 <img src="assets/git_fig.png" width="1000" >
 
 ## Updates!!
-* 【2022/04/14】 We suport jit compile op.
+* 【2023/02/28】 We support assignment visualization tool, see doc [here](./docs/assignment_visualization.md).
+* 【2022/04/14】 We support jit compile op.
 * 【2021/08/19】 We optimize the training process with **2x** faster training and **~1%** higher performance! See [notes](docs/updates_note.md) for more details.
 * 【2021/08/05】 We release [MegEngine version YOLOX](https://github.com/MegEngine/YOLOX).
 * 【2021/07/28】 We fix the fatal error of [memory leak](https://github.com/Megvii-BaseDetection/YOLOX/issues/103)
@@ -206,6 +207,7 @@ python -m yolox.tools.eval -n  yolox-s -c yolox_s.pth -b 1 -d 1 --conf 0.001 --f
 *  [Training on custom data](docs/train_custom_data.md)
 *  [Caching for custom data](docs/cache.md)
 *  [Manipulating training image size](docs/manipulate_training_image_size.md)
+*  [Assignment visualization](docs/assignment_visualization.md)
 *  [Freezing model](docs/freeze_module.md)
 
 </details>
@@ -243,8 +245,8 @@ If you use YOLOX in your research, please cite our work by using the following B
 }
 ```
 ## In memory of Dr. Jian Sun
-Without the guidance of [Dr. Sun Jian](http://www.jiansun.org/), YOLOX would not have been released and open sourced to the community.
-The passing away of Dr. Sun Jian is a great loss to the Computer Vision field. We have added this section here to express our remembrance and condolences to our captain Dr. Sun.
+Without the guidance of [Dr. Jian Sun](http://www.jiansun.org/), YOLOX would not have been released and open sourced to the community.
+The passing away of Dr. Jian is a huge loss to the Computer Vision field. We add this section here to express our remembrance and condolences to our captain Dr. Jian.
 It is hoped that every AI practitioner in the world will stick to the concept of "continuous innovation to expand cognitive boundaries, and extraordinary technology to achieve product value" and move forward all the way.
 
 <div align="center"><img src="assets/sunjian.png" width="200"></div>

@@ -46,3 +46,7 @@ class YOLOX(nn.Module):
             outputs = self.head(fpn_outs)
 
         return outputs
+
+    def visualize(self, x, targets, save_prefix="assign_vis_"):
+        fpn_outs = self.backbone(x)
+        self.head.visualize_assign_result(fpn_outs, targets, x, save_prefix)
