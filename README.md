@@ -2,6 +2,10 @@
 <img src="assets/demo.png" >
 
 ## Introduction
+
+[![License][badge-license]](LICENSE)
+[![Download Total Count][badge-download-count]](https://github.com/Megvii-BaseDetection/YOLOX/releases)
+
 YOLOX is an anchor-free version of YOLO, with a simpler design but better performance! It aims to bridge the gap between research and industrial communities.
 For more details, please refer to our [report on Arxiv](https://arxiv.org/abs/2107.08430).
 
