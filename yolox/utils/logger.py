@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding:utf-8 -*-
 # Copyright (c) Megvii Inc. All rights reserved.
 
 import inspect
@@ -58,7 +57,8 @@ class StreamToLoguru:
             sys.__stdout__.write(buf)
 
     def flush(self):
-        pass
+        # flush is related with CPR(cursor position report) in terminal
+        return sys.__stdout__.flush()
 
     def isatty(self):
         # when using colab, jax is installed by default and issue like
@@ -66,7 +66,11 @@ class StreamToLoguru:
         # due to missing attribute like`isatty`.
         # For more details, checked the following link:
         # https://github.com/google/jax/blob/10720258ea7fb5bde997dfa2f3f71135ab7a6733/jax/_src/pretty_printer.py#L54  # noqa
-        return True
+        return sys.__stdout__.isatty()
+
+    def fileno(self):
+        # To solve the issue when using debug tools like pdb
+        return sys.__stdout__.fileno()
 
 
 def redirect_sys_output(log_level="INFO"):

@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-# -*- coding:utf-8 -*-
 # Copyright (c) Megvii Inc. All rights reserved.
 
 import os
@@ -10,6 +9,8 @@ import torch.distributed as dist
 import torch.nn as nn
 
 from .base_exp import BaseExp
+
+__all__ = ["Exp", "check_exp_value"]
 
 
 class Exp(BaseExp):
@@ -350,3 +351,8 @@ class Exp(BaseExp):
 
     def eval(self, model, evaluator, is_distributed, half=False, return_outputs=False):
         return evaluator.evaluate(model, is_distributed, half, return_outputs=return_outputs)
+
+
+def check_exp_value(exp: Exp):
+    h, w = exp.input_size
+    assert h % 32 == 0 and w % 32 == 0, "input size must be multiples of 32"
