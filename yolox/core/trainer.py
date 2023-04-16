@@ -135,8 +135,7 @@ class Trainer:
         torch.cuda.set_device(self.local_rank)
         model = self.exp.get_model()
         logger.info(
-            "Model Summary: {}".format(
-                get_model_info(model, self.exp.test_size))
+            "Model Summary: {}".format(get_model_info(model, self.exp.test_size))
         )
         model.to(self.device)
 
@@ -166,8 +165,7 @@ class Trainer:
             occupy_mem(self.local_rank)
 
         if self.is_distributed:
-            model = DDP(model, device_ids=[
-                        self.local_rank], broadcast_buffers=False)
+            model = DDP(model, device_ids=[self.local_rank], broadcast_buffers=False)
 
         if self.use_model_ema:
             self.ema_model = ModelEMA(model, 0.9998)
@@ -181,8 +179,7 @@ class Trainer:
         # Tensorboard and Wandb loggers
         if self.rank == 0:
             if self.args.logger == "tensorboard":
-                self.tblogger = SummaryWriter(
-                    os.path.join(self.file_name, "tensorboard"))
+                self.tblogger = SummaryWriter(os.path.join(self.file_name, "tensorboard"))
             elif self.args.logger == "wandb":
                 self.wandb_logger = WandbLogger.initialize_wandb_logger(
                     self.args,
@@ -190,16 +187,14 @@ class Trainer:
                     self.evaluator.dataloader.dataset
                 )
             else:
-                raise ValueError(
-                    "logger must be either 'tensorboard' or 'wandb'")
+                raise ValueError("logger must be either 'tensorboard' or 'wandb'")
 
         logger.info("Training start...")
         logger.info("\n{}".format(model))
 
     def after_train(self):
         logger.info(
-            "Training of experiment is done and the best AP is {:.2f}".format(
-                self.best_ap * 100)
+            "Training of experiment is done and the best AP is {:.2f}".format(self.best_ap * 100)
         )
         if self.rank == 0:
             if self.args.logger == "wandb":
@@ -239,19 +234,16 @@ class Trainer:
         # log needed information
         if (self.iter + 1) % self.exp.print_interval == 0:
             # TODO check ETA logic
-            left_iters = self.max_iter * self.max_epoch - \
-                (self.progress_in_iter + 1)
+            left_iters = self.max_iter * self.max_epoch - (self.progress_in_iter + 1)
             eta_seconds = self.meter["iter_time"].global_avg * left_iters
-            eta_str = "ETA: {}".format(
-                datetime.timedelta(seconds=int(eta_seconds)))
+            eta_str = "ETA: {}".format(datetime.timedelta(seconds=int(eta_seconds)))
 
             progress_str = "epoch: {}/{}, iter: {}/{}".format(
                 self.epoch + 1, self.max_epoch, self.iter + 1, self.max_iter
             )
             loss_meter = self.meter.get_filtered_meter("loss")
             loss_str = ", ".join(
-                ["{}: {:.1f}".format(k, v.latest)
-                 for k, v in loss_meter.items()]
+                ["{}: {:.1f}".format(k, v.latest) for k, v in loss_meter.items()]
             )
 
             time_meter = self.meter.get_filtered_meter("time")
@@ -259,8 +251,7 @@ class Trainer:
                 ["{}: {:.3f}s".format(k, v.avg) for k, v in time_meter.items()]
             )
 
-            mem_str = "gpu mem: {:.0f}Mb, mem: {:.1f}Gb".format(
-                gpu_mem_usage(), mem_usage())
+            mem_str = "gpu mem: {:.0f}Mb, mem: {:.1f}Gb".format(gpu_mem_usage(), mem_usage())
 
             logger.info(
                 "{}, {}, {}, {}, lr: {:.3e}".format(
@@ -281,13 +272,11 @@ class Trainer:
                         self.tblogger.add_scalar(
                             f"train/{k}", v.latest, self.progress_in_iter)
                 if self.args.logger == "wandb":
-                    metrics = {"train/" + k: v.latest for k,
-                               v in loss_meter.items()}
+                    metrics = {"train/" + k: v.latest for k, v in loss_meter.items()}
                     metrics.update({
                         "train/lr": self.meter["lr"].latest
                     })
-                    self.wandb_logger.log_metrics(
-                        metrics, step=self.progress_in_iter)
+                    self.wandb_logger.log_metrics(metrics, step=self.progress_in_iter)
 
             self.meter.clear_meters()
 
@@ -305,8 +294,7 @@ class Trainer:
         if self.args.resume:
             logger.info("resume training")
             if self.args.ckpt is None:
-                ckpt_file = os.path.join(
-                    self.file_name, "latest" + "_ckpt.pth")
+                ckpt_file = os.path.join(self.file_name, "latest" + "_ckpt.pth")
             else:
                 ckpt_file = self.args.ckpt
 
@@ -356,8 +344,7 @@ class Trainer:
         if self.rank == 0:
             if self.args.logger == "tensorboard":
                 self.tblogger.add_scalar("val/COCOAP50", ap50, self.epoch + 1)
-                self.tblogger.add_scalar(
-                    "val/COCOAP50_95", ap50_95, self.epoch + 1)
+                self.tblogger.add_scalar("val/COCOAP50_95", ap50_95, self.epoch + 1)
             if self.args.logger == "wandb":
                 self.wandb_logger.log_metrics({
                     "val/COCOAP50": ap50,
