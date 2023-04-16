@@ -388,5 +388,4 @@ class Trainer:
                         "best_ap": self.best_ap,
                         "curr_ap": ap
                     }
-                )
-                
+                )              
