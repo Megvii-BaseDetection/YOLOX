@@ -389,4 +389,3 @@ class Trainer:
                         "curr_ap": ap
                     }
                 )
-                
