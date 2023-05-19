@@ -65,7 +65,7 @@ setuptools.setup(
     name="yolox",
     version=get_yolox_version(),
     author="megvii basedet team",
-    url="https://github.com/Megvii-BaseDetection/YOLOX",
+    url="https://github.com/360iQ/YOLOX.git",
     package_dir=get_package_dir(),
     packages=setuptools.find_packages(exclude=("tests", "tools")) + list(get_package_dir().keys()),
     python_requires=">=3.6",
@@ -82,7 +82,7 @@ setuptools.setup(
     ],
     project_urls={
         "Documentation": "https://yolox.readthedocs.io",
-        "Source": "https://github.com/Megvii-BaseDetection/YOLOX",
+        "Source": "https://github.com/360iQ/YOLOX.git",
         "Tracker": "https://github.com/Megvii-BaseDetection/YOLOX/issues",
     },
 )
