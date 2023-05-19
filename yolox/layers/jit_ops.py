@@ -51,7 +51,8 @@ class JitOp:
 
     def cxx_args(self) -> List:
         """Get optional list of compiler flags to forward"""
-        args = ["-O2"] if sys.platform == "win32" else ["-O3", "-std=c++14", "-g", "-Wno-reorder"]
+        args = ["-O2"] if sys.platform == "win32" else ["-O3", "-std=c++14", "-g", "-Wno-reorder",
+                                                        "$(python3.10-config --includes)"]
         return args
 
     def nvcc_args(self) -> List:
