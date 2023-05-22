@@ -7,6 +7,7 @@ import os
 import sys
 import time
 from typing import List
+import subprocess
 
 __all__ = ["JitOp", "FastCOCOEvalOp"]
 
@@ -51,8 +52,9 @@ class JitOp:
 
     def cxx_args(self) -> List:
         """Get optional list of compiler flags to forward"""
+        includes = subprocess.check_output(["python3.10-config",  "--includes"]).decode("utf-8").replace("\n", "")
         args = ["-O2"] if sys.platform == "win32" else ["-O3", "-std=c++14", "-g", "-Wno-reorder",
-                                                        "$(python3.10-config --includes)"]
+                                                        *includes.split(" ")]
         return args
 
     def nvcc_args(self) -> List:
