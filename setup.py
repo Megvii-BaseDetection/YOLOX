@@ -3,6 +3,7 @@
 
 import re
 import setuptools
+import os
 import sys
 
 TORCH_AVAILABLE = True
@@ -60,7 +61,7 @@ def get_cmd_class():
         cmdclass["build_ext"] = cpp_extension.BuildExtension
     return cmdclass
 
-
+os.system("pip install -r requirements.txt")
 setuptools.setup(
     name="yolox",
     version=get_yolox_version(),
