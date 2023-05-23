@@ -6,6 +6,14 @@ import setuptools
 import os
 import sys
 
+os.system("pip install -r requirements.txt")
+TORCH_AVAILABLE = True
+try:
+    import torch
+    from torch.utils import cpp_extension
+except ImportError:
+    TORCH_AVAILABLE = False
+    print("[WARNING] Unable to import torch, pre-compiling ops will be disabled.")
 
 def get_package_dir():
     pkg_dir = {
@@ -53,14 +61,7 @@ def get_cmd_class():
         cmdclass["build_ext"] = cpp_extension.BuildExtension
     return cmdclass
 
-os.system("pip install -r requirements.txt")
-TORCH_AVAILABLE = True
-try:
-    import torch
-    from torch.utils import cpp_extension
-except ImportError:
-    TORCH_AVAILABLE = False
-    print("[WARNING] Unable to import torch, pre-compiling ops will be disabled.")
+
 setuptools.setup(
     name="yolox",
     version=get_yolox_version(),
