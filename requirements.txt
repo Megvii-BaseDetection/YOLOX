@@ -1,18 +1,16 @@
-numpy==1.23.4
-opencv_python==4.7.0.72
 loguru==0.7.0
-tqdm==4.64.1
-torchvision==0.13.1
-thop==0.1.1.post2209072238
 ninja==1.11.1
-tabulate==0.9.0
-psutil==5.9.4
-tensorboard
-sympy==1.12
-# verified versions
-# pycocotools corresponds to https://github.com/ppwwyyxx/cocoapi
-pycocotools>=2.0.2
+numpy==1.23.4
 onnx==1.12.0  # 1.12.0 is the last version that supports protobuf < 3.20.2, which is required by tensorflow 2.9.1
 onnx-simplifier
+opencv_python==4.7.0.72
+psutil==5.9.4
 pybind11
-torch==1.12.1
+pycocotools>=2.0.2
+sympy==1.12
+tabulate==0.9.0
+tensorboard
+thop==0.1.1.post2209072238
+torch==1.12.1  # When updating torch, please update torch version also in ComputerVisionAI repo.
+torchvision==0.13.1
+tqdm==4.64.1
