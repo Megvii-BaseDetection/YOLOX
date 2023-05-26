@@ -13,7 +13,7 @@ class LRScheduler:
 
         Args:
             lr (float): learning rate.
-            iters_per_peoch (int): number of iterations in one epoch.
+            iters_per_epoch (int): number of iterations in one epoch.
             total_epochs (int): number of epochs in training.
             kwargs (dict):
                 - cos: None
