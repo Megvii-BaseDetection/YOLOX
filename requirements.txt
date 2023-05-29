@@ -2,7 +2,7 @@ loguru==0.7.0
 ninja==1.11.1
 numpy==1.23.4
 onnx==1.12.0  # 1.12.0 is the last version that supports protobuf < 3.20.2, which is required by tensorflow 2.9.1
-onnx-simplifier
+onnx-simplifier==0.4.28
 opencv_python==4.7.0.72
 psutil==5.9.4
 pybind11
