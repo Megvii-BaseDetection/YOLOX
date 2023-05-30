@@ -30,7 +30,11 @@ def make_parser():
     parser.add_argument(
         "--path", default="./assets/dog.jpg", help="path to images or video"
     )
-    parser.add_argument("--camid", type=int, default=0, help="webcam demo camera id")
+    parser.add_argument(
+        "--camid", 
+        default=0, 
+        help="camera id for webcam or usb, support rtsp and other formats, default for USB camera"
+    )
     parser.add_argument(
         "--save_result",
         action="store_true",
@@ -218,8 +222,10 @@ def imageflow_demo(predictor, vis_folder, current_time, args):
         os.makedirs(save_folder, exist_ok=True)
         if args.demo == "video":
             save_path = os.path.join(save_folder, os.path.basename(args.path))
-        else:
+        elif args.demo == "webcam":
             save_path = os.path.join(save_folder, "camera.mp4")
+        else:
+            logger.info("video demo type is not specified")
         logger.info(f"video save_path is {save_path}")
         vid_writer = cv2.VideoWriter(
             save_path, cv2.VideoWriter_fourcc(*"mp4v"), fps, (int(width), int(height))
