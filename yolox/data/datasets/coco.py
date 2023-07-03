@@ -3,6 +3,7 @@
 # Copyright (c) Megvii, Inc. and its affiliates.
 import copy
 import os
+from pathlib import Path
 
 import cv2
 import numpy as np
@@ -143,7 +144,13 @@ class COCODataset(CacheDataset):
     def load_image(self, index):
         file_name = self.annotations[index][3]
 
+        # 従来どおりのflatなフォルダ構成
         img_file = os.path.join(self.data_dir, self.name, file_name)
+
+        # 階層的なフォルダ構成の場合
+        if not Path(img_file).is_file():
+            img_file = os.path.join(self.data_dir, file_name)
+            assert Path(img_file).is_file()
 
         img = cv2.imread(img_file)
         assert img is not None, f"file named {img_file} not found"
