@@ -64,7 +64,9 @@ def main():
     logger.info("args value: {}".format(args))
     exp = get_exp(args.exp_file, args.name)
     exp.merge(args.opts)
-
+    if exp.color_channel != args.num_channels:
+        logger.warning(f"When exporting to ONNX, it is important to ensure that the image channels match those used during training.")
+        
     if not args.experiment_name:
         args.experiment_name = exp.exp_name
 
