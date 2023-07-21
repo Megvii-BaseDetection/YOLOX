@@ -7,3 +7,5 @@ from .data_prefetcher import DataPrefetcher
 from .dataloading import DataLoader, get_yolox_datadir, worker_init_reset_seed
 from .datasets import *
 from .samplers import InfiniteSampler, YoloBatchSampler
+
+ENABLED_NESTED_FOLDER = True  # only for forked version
