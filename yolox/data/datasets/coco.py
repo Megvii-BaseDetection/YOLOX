@@ -12,8 +12,6 @@ from pycocotools.coco import COCO
 from ..dataloading import get_yolox_datadir
 from .datasets_wrapper import CacheDataset, cache_read_img
 
-ENABLED_NESTED_FOLDER = True  # only for forked version
-
 def md5sum(p) -> str:
     return hashlib.md5(open(p, "rb").read()).hexdigest()
 
