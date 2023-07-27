@@ -3,6 +3,7 @@
 # Copyright (c) Megvii, Inc. and its affiliates.
 import copy
 import os
+import hashlib
 
 import cv2
 import numpy as np
@@ -12,6 +13,9 @@ from ..dataloading import get_yolox_datadir
 from .datasets_wrapper import CacheDataset, cache_read_img
 
 ENABLED_NESTED_FOLDER = True  # only for forked version
+
+def md5sum(p) -> str:
+    return hashlib.md5(open(p, "rb").read()).hexdigest()
 
 def remove_useless_info(coco):
     """
@@ -150,7 +154,11 @@ class COCODataset(CacheDataset):
             # Hierarchical folder structure case
             img_file = os.path.join(self.data_dir, file_name)
 
+        if not os.path.isfile(img_file):
+            print(f"file not found {img_file}")
         img = cv2.imread(img_file)
+        if img is None:
+            print(f"{md5sum(img_file)=} {img_file=}")
         assert img is not None, f"file named {img_file} not found"
 
         return img
