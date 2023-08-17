@@ -292,7 +292,7 @@ class COCOEvaluator:
                 cocoDt = cocoGt.loadRes(tmp)
             try:
                 from yolox.layers import COCOeval_opt as COCOeval
-            except ImportError:
+            except (ImportError, ModuleNotFoundError):
                 from pycocotools.cocoeval import COCOeval
 
                 logger.warning("Use standard COCOeval.")
