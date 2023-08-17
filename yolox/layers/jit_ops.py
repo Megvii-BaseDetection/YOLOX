@@ -9,7 +9,7 @@ import time
 from typing import List
 import subprocess
 
-__all__ = ["JitOp", "FastCOCOEvalOp"]
+__all__ = ["JitOp"]
 
 
 class JitOp:
@@ -84,7 +84,7 @@ class JitOp:
         try:
             # try to import op from pre-installed package
             return importlib.import_module(self.absolute_name())
-        except Exception:  # op not compiled, jit load
+        except (Exception, ModuleNotFoundError):  # op not compiled, jit load
             from yolox.utils import wait_for_the_master
             with wait_for_the_master():  # to avoid race condition
                 return self.jit_load(verbose)
@@ -121,21 +121,21 @@ class JitOp:
 
 
 class FastCOCOEvalOp(JitOp):
-
-    def __init__(self, name="fast_cocoeval"):
-        super().__init__(name=name)
-
-    def absolute_name(self):
-        return f'yolox.layers.{self.name}'
-
-    def sources(self):
-        sources = glob.glob(os.path.join("yolox", "layers", "cocoeval", "*.cpp"))
-        if not sources:  # source will be empty list if the so file is removed after install
-            # use abosolute path to compile
-            import yolox
-            code_path = os.path.join(yolox.__path__[0], "layers", "cocoeval", "*.cpp")
-            sources = glob.glob(code_path)
-        return sources
-
-    def include_dirs(self):
-        return [os.path.join("yolox", "layers", "cocoeval")]
+    pass
+    # def __init__(self, name="fast_cocoeval"):
+    #     super().__init__(name=name)
+    #
+    # def absolute_name(self):
+    #     return f'yolox.layers.{self.name}'
+    #
+    # def sources(self):
+    #     sources = glob.glob(os.path.join("yolox", "layers", "cocoeval", "*.cpp"))
+    #     if not sources:  # source will be empty list if the so file is removed after install
+    #         # use abosolute path to compile
+    #         import yolox
+    #         code_path = os.path.join(yolox.__path__[0], "layers", "cocoeval", "*.cpp")
+    #         sources = glob.glob(code_path)
+    #     return sources
+    #
+    # def include_dirs(self):
+    #     return [os.path.join("yolox", "layers", "cocoeval")]
