@@ -11,6 +11,6 @@ sympy==1.12
 tabulate==0.9.0
 tensorboard
 thop==0.1.1.post2209072238
-torch==1.12.1  # When updating torch, please update torch version also in ComputerVisionAI repo.
-torchvision==0.13.1
+torch==2.0.0  # When updating torch, please update torch version also in ComputerVisionAI repo.
+torchvision==0.15.1
 tqdm==4.64.1
