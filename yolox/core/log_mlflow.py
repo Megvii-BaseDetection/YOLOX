@@ -12,9 +12,13 @@ def mlflow_logger_init(exp_name):
     mlflow.start_run()
 
 
-def mlflow_log_params(exp, best_ap, epoch):
+def mlflow_log_params(exp, args):
     mlflow.log_param("Epochs", exp.max_epoch)
-    mlflow.log_param("AP", best_ap)
+    mlflow.log_param("Num_classes", exp.num_classes)
+    mlflow.log_param("Depth", exp.depth)
+    mlflow.log_param("Width", exp.width)
+    mlflow.log_param("Batch size", args.batch_size)
+    mlflow.log_param("basic_lr_per_img", exp.basic_lr_per_img)
 
 
 def mlflow_log_end_run():

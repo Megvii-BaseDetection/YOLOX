@@ -191,6 +191,8 @@ class Trainer:
             else:
                 raise ValueError("logger must be either 'tensorboard' or 'wandb'")
 
+        mlflow_log_params(self.exp, self.args)
+
         logger.info("Training start...")
         logger.info("\n{}".format(model))
 
@@ -220,8 +222,6 @@ class Trainer:
 
     def after_epoch(self):
         self.save_ckpt(ckpt_name="latest")
-
-        mlflow_log_params(self.exp, self.best_ap, self.epoch)
 
         if (self.epoch + 1) % self.exp.eval_interval == 0:
             all_reduce_norm(self.model)
