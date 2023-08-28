@@ -45,11 +45,6 @@ def get_long_description():
     return long_description
 
 
-def get_ext_modules():
-    ext_module = []
-    return ext_module
-
-
 def get_cmd_class():
     cmdclass = {}
     if TORCH_AVAILABLE:
@@ -70,7 +65,6 @@ setuptools.setup(
     long_description=get_long_description(),
     long_description_content_type="text/markdown",
     include_package_data=True,  # include files in MANIFEST.in
-    ext_modules=get_ext_modules(),
     cmdclass=get_cmd_class(),
     classifiers=[
         "Programming Language :: Python :: 3", "Operating System :: OS Independent",
