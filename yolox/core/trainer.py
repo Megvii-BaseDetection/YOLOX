@@ -10,7 +10,7 @@ import torch
 from torch.nn.parallel import DistributedDataParallel as DDP
 from torch.utils.tensorboard import SummaryWriter
 
-from tools.log_mlflow import mlflow_logger_init, mlflow_log_params, mlflow_log_end_run
+from yolox.core.log_mlflow import mlflow_logger_init, mlflow_log_params, mlflow_log_end_run
 from yolox.data import DataPrefetcher
 from yolox.exp import Exp
 from yolox.utils import (
