@@ -122,20 +122,3 @@ class JitOp:
 
 class FastCOCOEvalOp(JitOp):
     pass
-    # def __init__(self, name="fast_cocoeval"):
-    #     super().__init__(name=name)
-    #
-    # def absolute_name(self):
-    #     return f'yolox.layers.{self.name}'
-    #
-    # def sources(self):
-    #     sources = glob.glob(os.path.join("yolox", "layers", "cocoeval", "*.cpp"))
-    #     if not sources:  # source will be empty list if the so file is removed after install
-    #         # use abosolute path to compile
-    #         import yolox
-    #         code_path = os.path.join(yolox.__path__[0], "layers", "cocoeval", "*.cpp")
-    #         sources = glob.glob(code_path)
-    #     return sources
-    #
-    # def include_dirs(self):
-    #     return [os.path.join("yolox", "layers", "cocoeval")]
