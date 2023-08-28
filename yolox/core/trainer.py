@@ -191,7 +191,7 @@ class Trainer:
             else:
                 raise ValueError("logger must be either 'tensorboard' or 'wandb'")
 
-        mlflow_log_params(self.exp, self.args, self.optimizer, self.data_type)
+        mlflow_log_params(self.exp, self.args, self.optimizer, self.model)
 
         logger.info("Training start...")
         logger.info("\n{}".format(model))
