@@ -10,6 +10,7 @@ import torch
 from torch.nn.parallel import DistributedDataParallel as DDP
 from torch.utils.tensorboard import SummaryWriter
 
+from tools.log_mlflow import mlflow_logger_init, mlflow_log_params, mlflow_log_end_run
 from yolox.data import DataPrefetcher
 from yolox.exp import Exp
 from yolox.utils import (
@@ -130,6 +131,8 @@ class Trainer:
         logger.info("args: {}".format(self.args))
         logger.info("exp value:\n{}".format(self.exp))
 
+        mlflow_logger_init(self.exp.exp_name)
+
         # model related init
         torch.cuda.set_device(self.local_rank)
         model = self.exp.get_model()
@@ -198,6 +201,7 @@ class Trainer:
         if self.rank == 0:
             if self.args.logger == "wandb":
                 self.wandb_logger.finish()
+        mlflow_log_end_run()
 
     def before_epoch(self):
         logger.info("---> start train epoch{}".format(self.epoch + 1))
@@ -216,6 +220,8 @@ class Trainer:
 
     def after_epoch(self):
         self.save_ckpt(ckpt_name="latest")
+
+        mlflow_log_params(self.exp, self.best_ap, self.epoch)
 
         if (self.epoch + 1) % self.exp.eval_interval == 0:
             all_reduce_norm(self.model)
