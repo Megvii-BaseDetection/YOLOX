@@ -6,11 +6,10 @@ import contextlib
 import io
 import itertools
 import json
+import mlflow
 import tempfile
 import time
 from collections import ChainMap, defaultdict
-
-import mlflow
 from loguru import logger
 from tabulate import tabulate
 from tqdm import tqdm
@@ -19,7 +18,6 @@ import numpy as np
 
 import torch
 
-from yolox.core.trainer import Trainer
 from yolox.data.datasets import COCO_CLASSES
 from yolox.utils import (
     gather,
