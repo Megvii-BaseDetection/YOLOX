@@ -59,6 +59,7 @@ class Trainer:
 
         # metric record
         self.meter = MeterBuffer(window_size=exp.print_interval)
+        self.epoch_meter = MeterBuffer(window_size=exp.print_interval)
         self.file_name = os.path.join(exp.output_dir, args.experiment_name)
 
         if self.rank == 0:
@@ -120,6 +121,12 @@ class Trainer:
             param_group["lr"] = lr
 
         iter_end_time = time.time()
+        self.meter.update(
+            iter_time=iter_end_time - iter_start_time,
+            data_time=data_end_time - iter_start_time,
+            lr=lr,
+            **outputs,
+        )
         self.meter.update(
             iter_time=iter_end_time - iter_start_time,
             data_time=data_end_time - iter_start_time,
@@ -283,12 +290,15 @@ class Trainer:
                     })
                     self.wandb_logger.log_metrics(metrics, step=self.progress_in_iter)
 
+                    self.meter.clear_meters()
+
         if self.iter + 1 == self.max_iter:
             mlflow_log_metrics(
                 self.epoch,
-                self.meter["lr"].latest,
+                self.epoch_meter["lr"].avr,
+                self.epoch_meter["total_loss"].avr,
             )
-        self.meter.clear_meters()
+            self.epoch_meter.clear_meters()
 
         # random resizing
         if (self.progress_in_iter + 1) % 10 == 0:
