@@ -9,6 +9,8 @@ import json
 import tempfile
 import time
 from collections import ChainMap, defaultdict
+
+import mlflow
 from loguru import logger
 from tabulate import tabulate
 from tqdm import tqdm
@@ -65,6 +67,7 @@ def per_class_AP_table(coco_eval, class_names=COCO_CLASSES, headers=["class", "A
         precision = precision[precision > -1]
         ap = np.mean(precision) if precision.size else float("nan")
         per_class_AP[name] = float(ap * 100)
+        mlflow.log_metric(f"AP_{name}", float(ap * 100))
 
     num_cols = min(colums, len(per_class_AP) * len(headers))
     result_pair = [x for pair in per_class_AP.items() for x in pair]
