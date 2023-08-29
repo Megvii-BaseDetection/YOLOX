@@ -238,7 +238,7 @@ class Trainer:
         mlflow.log_metric("lr", self.meter["lr"].latest, step=self.epoch)
         mlflow.log_metric("best_ap", self.best_ap * 100, step=self.epoch)
         self.epoch_meter.clear_meters()
-
+        # x equals current epoch
         if (self.epoch + 1) % self.exp.eval_interval == 0:
             all_reduce_norm(self.model)
             self.evaluate_and_save_model()
@@ -411,3 +411,7 @@ class Trainer:
                         "curr_ap": ap
                     }
                 )
+
+    @property
+    def current_training_epoch(self):
+        return self.epoch

@@ -19,6 +19,7 @@ import numpy as np
 
 import torch
 
+from yolox.core import trainer
 from yolox.data.datasets import COCO_CLASSES
 from yolox.utils import (
     gather,
@@ -67,7 +68,7 @@ def per_class_AP_table(coco_eval, class_names=COCO_CLASSES, headers=["class", "A
         precision = precision[precision > -1]
         ap = np.mean(precision) if precision.size else float("nan")
         per_class_AP[name] = float(ap * 100)
-        mlflow.log_metric(f"AP_{name}", float(ap * 100), step=coco_eval.params.epoch)
+        mlflow.log_metric(f"AP_{name}", float(ap * 100), step=trainer.current_training_epoch)
 
     num_cols = min(colums, len(per_class_AP) * len(headers))
     result_pair = [x for pair in per_class_AP.items() for x in pair]
