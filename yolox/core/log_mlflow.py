@@ -3,17 +3,17 @@ import mlflow
 from datetime import datetime
 
 
-def mlflow_logger_init(exp_name):
+def logger_init(exp_name):
     """Initialize mlflow logger."""
     MLFLOW_SERVER = "http://192.168.189.67:8888"
-    mlflow_exp_name = exp_name + datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    mlflow_exp_name = exp_name + " " + datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
     mlflow.set_tracking_uri(MLFLOW_SERVER)
     mlflow.set_experiment(mlflow_exp_name)
     mlflow.start_run()
 
 
-def mlflow_log_params_and_model(exp, args, optimizer, model):
+def log_params_and_model(exp, args, optimizer, model):
     """Log params and model to mlflow."""
     mlflow.log_param("epochs", exp.max_epoch)
     mlflow.log_param("num_classes", exp.num_classes)
@@ -29,7 +29,7 @@ def mlflow_log_params_and_model(exp, args, optimizer, model):
     mlflow.pytorch.log_model(model, "model")
 
 
-def mlflow_log_metrics(epoch_meter, epoch):
+def log_metrics(epoch_meter, epoch):
     """Log metrics to mlflow."""
     epoch_loss_meter = epoch_meter.get_filtered_meter("loss")
     for k, v in epoch_loss_meter.items():
@@ -37,12 +37,12 @@ def mlflow_log_metrics(epoch_meter, epoch):
     mlflow.log_metric("lr", epoch_meter["lr"].latest, step=epoch + 1)
 
 
-def mlflow_log_map(m_ap, epoch):
+def log_map(m_ap, epoch):
     """Log mAP to mlflow."""
     mlflow.log_metric("mAP", m_ap * 100, step=epoch + 1)
 
 
-def mlflow_log_best_ap_end_run(best_ap):
+def log_best_map_end_run(best_m_ap):
     """Log best ap and end run"""
-    mlflow.log_param("best_ap", best_ap * 100)
+    mlflow.log_param("best_mAP", best_m_ap * 100)
     mlflow.end_run()
