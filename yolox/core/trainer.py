@@ -413,5 +413,5 @@ class Trainer:
                 )
 
     @property
-    def current_training_epoch(self):
+    def current_training_epoch(self) -> int:
         return self.epoch
