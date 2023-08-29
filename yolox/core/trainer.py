@@ -297,8 +297,7 @@ class Trainer:
         if self.iter + 1 == self.max_iter:
             loss_meter = self.meter.get_filtered_meter("loss")
             for k, v in loss_meter.items():
-                print(f"K: {k}, V: {v}")
-
+                mlflow.log_metric(k, v.latest, step=self.epoch)
             self.epoch_meter.clear_meters()
 
         # random resizing
