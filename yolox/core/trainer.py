@@ -10,7 +10,7 @@ import torch
 from torch.nn.parallel import DistributedDataParallel as DDP
 from torch.utils.tensorboard import SummaryWriter
 
-from yolox.core.log_mlflow import mlflow_logger_init, mlflow_log_params, mlflow_log_end_run
+from yolox.core.log_mlflow import mlflow_logger_init, mlflow_log_params, mlflow_log_end_run, mlflow_log_metrics
 from yolox.data import DataPrefetcher
 from yolox.exp import Exp
 from yolox.utils import (
@@ -283,6 +283,11 @@ class Trainer:
                     })
                     self.wandb_logger.log_metrics(metrics, step=self.progress_in_iter)
 
+            if self.iter + 1 == self.max_iter:
+                mlflow_log_metrics(
+                    self.epoch,
+                    self.meter["total_loss"].global_avg
+                )
             self.meter.clear_meters()
 
         # random resizing
