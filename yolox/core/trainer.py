@@ -4,6 +4,8 @@
 import datetime
 import os
 import time
+
+import mlflow
 from loguru import logger
 
 import torch
@@ -293,10 +295,9 @@ class Trainer:
                     self.meter.clear_meters()
 
         if self.iter + 1 == self.max_iter:
-            mlflow_log_metrics(
-                self.epoch,
-                self.epoch_meter["lr"].latest
-            )
+            loss_meter = self.meter.get_filtered_meter("loss")
+            for k, v in loss_meter.items():
+                mlflow.log_metric(k, v, step=self.epoch)
             self.epoch_meter.clear_meters()
 
         # random resizing
