@@ -232,6 +232,11 @@ class Trainer:
     def after_epoch(self):
         self.save_ckpt(ckpt_name="latest")
 
+        loss_meter = self.meter.get_filtered_meter("loss")
+        for k, v in loss_meter.items():
+            mlflow.log_metric(k, v.latest, step=self.epoch)
+        self.epoch_meter.clear_meters()
+
         if (self.epoch + 1) % self.exp.eval_interval == 0:
             all_reduce_norm(self.model)
             self.evaluate_and_save_model()
@@ -294,11 +299,6 @@ class Trainer:
 
                     self.meter.clear_meters()
 
-        if self.iter + 1 == self.max_iter:
-            loss_meter = self.meter.get_filtered_meter("loss")
-            for k, v in loss_meter.items():
-                mlflow.log_metric(k, v.latest, step=self.epoch)
-            self.epoch_meter.clear_meters()
 
         # random resizing
         if (self.progress_in_iter + 1) % 10 == 0:
