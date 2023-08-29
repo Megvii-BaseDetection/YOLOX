@@ -13,8 +13,8 @@ def mlflow_logger_init(exp_name):
     mlflow.start_run()
 
 
-def mlflow_log_params(exp, args, optimizer, model):
-    """Log parameters to mlflow."""
+def mlflow_log_params_and_model(exp, args, optimizer, model):
+    """Log params and model to mlflow."""
     mlflow.log_param("epochs", exp.max_epoch)
     mlflow.log_param("num_classes", exp.num_classes)
     mlflow.log_param("depth", exp.depth)
@@ -29,13 +29,20 @@ def mlflow_log_params(exp, args, optimizer, model):
     mlflow.pytorch.log_model(model, "model")
 
 
-def mlflow_log_metrics(epoch, total_loss, lr):
+def mlflow_log_metrics(epoch_meter, epoch):
     """Log metrics to mlflow."""
+    epoch_loss_meter = epoch_meter.get_filtered_meter("loss")
+    for k, v in epoch_loss_meter.items():
+        mlflow.log_metric(k, v.latest, step=epoch + 1)
+    mlflow.log_metric("lr", epoch_meter["lr"].latest, step=epoch + 1)
 
-    mlflow.log_metric("lr", lr, step=epoch)
-    mlflow.log_metric("total_loss:", total_loss, step=epoch)
+
+def mlflow_log_map(m_ap, epoch):
+    """Log mAP to mlflow."""
+    mlflow.log_metric("mAP", m_ap * 100, step=epoch + 1)
 
 
-def mlflow_log_end_run():
-    """End mlflow run."""
+def mlflow_log_best_ap_end_run(best_ap):
+    """Log best ap and end run"""
+    mlflow.log_param("best_ap", best_ap * 100)
     mlflow.end_run()

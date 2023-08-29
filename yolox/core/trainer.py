@@ -212,8 +212,7 @@ class Trainer:
         if self.rank == 0:
             if self.args.logger == "wandb":
                 self.wandb_logger.finish()
-        mlflow.log_param("best_ap", self.best_ap * 100)
-        mlflow_log_end_run()
+        mlflow_log_end_run(self.best_ap)
 
     def before_epoch(self):
         logger.info("---> start train epoch{}".format(self.epoch + 1))
@@ -233,11 +232,8 @@ class Trainer:
     def after_epoch(self):
         self.save_ckpt(ckpt_name="latest")
 
-        epoch_loss_meter = self.epoch_meter.get_filtered_meter("loss")
-        for k, v in epoch_loss_meter.items():
-            mlflow.log_metric(k, v.latest, step=self.epoch + 1)
-        mlflow.log_metric("lr", self.meter["lr"].latest, step=self.epoch + 1)
-        self.epoch_meter.clear_meters()
+        mlflow_log_metrics(epoch_meter, self.epoch)
+        epoch_meter.clear_meters()
 
         if (self.epoch + 1) % self.exp.eval_interval == 0:
             all_reduce_norm(self.model)
@@ -380,7 +376,7 @@ class Trainer:
         if self.save_history_ckpt:
             self.save_ckpt(f"epoch_{self.epoch + 1}", ap=ap50_95)
 
-        mlflow.log_metric("AP", ap50_95, step=self.epoch + 1)
+        mlflow_log_map(ap50_95, self.epoch)
 
     def save_ckpt(self, ckpt_name, update_best_ckpt=False, ap=None):
         if self.rank == 0:
