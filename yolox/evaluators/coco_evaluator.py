@@ -43,6 +43,7 @@ def per_class_AR_table(coco_eval, class_names=COCO_CLASSES, headers=["class", "A
         recall = recall[recall > -1]
         ar = np.mean(recall) if recall.size else float("nan")
         per_class_AR[name] = float(ar * 100)
+        mlflow.log_metric(f"AR_{name}", float(ar * 100))
 
     num_cols = min(colums, len(per_class_AR) * len(headers))
     result_pair = [x for pair in per_class_AR.items() for x in pair]
@@ -68,7 +69,7 @@ def per_class_AP_table(coco_eval, class_names=COCO_CLASSES, headers=["class", "A
         precision = precision[precision > -1]
         ap = np.mean(precision) if precision.size else float("nan")
         per_class_AP[name] = float(ap * 100)
-        mlflow.log_metric(f"AP_{name}", float(ap * 100), step=Trainer.current_training_epoch)
+        mlflow.log_metric(f"AP_{name}", float(ap * 100))
 
     num_cols = min(colums, len(per_class_AP) * len(headers))
     result_pair = [x for pair in per_class_AP.items() for x in pair]

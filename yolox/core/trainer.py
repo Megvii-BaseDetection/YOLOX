@@ -129,7 +129,7 @@ class Trainer:
             lr=lr,
             **outputs,
         )
-        self.meter.update(
+        self.epoch_meter.update(
             iter_time=iter_end_time - iter_start_time,
             data_time=data_end_time - iter_start_time,
             lr=lr,
@@ -212,6 +212,7 @@ class Trainer:
         if self.rank == 0:
             if self.args.logger == "wandb":
                 self.wandb_logger.finish()
+        mlflow.log_param("best_ap", self.best_ap * 100)
         mlflow_log_end_run()
 
     def before_epoch(self):
@@ -234,11 +235,10 @@ class Trainer:
 
         epoch_loss_meter = self.epoch_meter.get_filtered_meter("loss")
         for k, v in epoch_loss_meter.items():
-            mlflow.log_metric(k, v.latest, step=self.epoch)
-        mlflow.log_metric("lr", self.meter["lr"].latest, step=self.epoch)
-        mlflow.log_metric("best_ap", self.best_ap * 100, step=self.epoch)
+            mlflow.log_metric(k, v.latest, step=self.epoch + 1)
+        mlflow.log_metric("lr", self.meter["lr"].latest, step=self.epoch + 1)
         self.epoch_meter.clear_meters()
-        # x equals current epoch
+
         if (self.epoch + 1) % self.exp.eval_interval == 0:
             all_reduce_norm(self.model)
             self.evaluate_and_save_model()
@@ -299,8 +299,7 @@ class Trainer:
                     })
                     self.wandb_logger.log_metrics(metrics, step=self.progress_in_iter)
 
-                    self.meter.clear_meters()
-
+            self.meter.clear_meters()
 
         # random resizing
         if (self.progress_in_iter + 1) % 10 == 0:
@@ -381,6 +380,8 @@ class Trainer:
         if self.save_history_ckpt:
             self.save_ckpt(f"epoch_{self.epoch + 1}", ap=ap50_95)
 
+        mlflow.log_metric("AP", ap50_95, step=self.epoch + 1)
+
     def save_ckpt(self, ckpt_name, update_best_ckpt=False, ap=None):
         if self.rank == 0:
             save_model = self.ema_model.ema if self.use_model_ema else self.model
@@ -411,7 +412,3 @@ class Trainer:
                         "curr_ap": ap
                     }
                 )
-
-    @property
-    def current_training_epoch(self) -> int:
-        return self.epoch
