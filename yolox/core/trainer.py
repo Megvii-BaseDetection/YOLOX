@@ -286,7 +286,7 @@ class Trainer:
             if self.iter + 1 == self.max_iter:
                 mlflow_log_metrics(
                     self.epoch,
-                    self.meter["total_loss"].global_avg
+                    self.meter["lr"].latest,
                 )
             self.meter.clear_meters()
 

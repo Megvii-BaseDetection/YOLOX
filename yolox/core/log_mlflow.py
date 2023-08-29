@@ -29,9 +29,9 @@ def mlflow_log_params(exp, args, optimizer, model):
     mlflow.pytorch.log_model(model, "model")
 
 
-def mlflow_log_metrics(epoch, total_loss):
+def mlflow_log_metrics(epoch, lr):
     """Log metrics to mlflow."""
-    mlflow.log_metric("total_loss", total_loss, step=epoch)
+    mlflow.log_metric("lr", lr, step=epoch)
 
 
 def mlflow_log_end_run():
