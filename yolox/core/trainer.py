@@ -283,12 +283,12 @@ class Trainer:
                     })
                     self.wandb_logger.log_metrics(metrics, step=self.progress_in_iter)
 
-            if self.iter + 1 == self.max_iter:
-                mlflow_log_metrics(
-                    self.epoch,
-                    self.meter["lr"].latest,
-                )
-            self.meter.clear_meters()
+        if self.iter + 1 == self.max_iter:
+            mlflow_log_metrics(
+                self.epoch,
+                self.meter["lr"].latest,
+            )
+        self.meter.clear_meters()
 
         # random resizing
         if (self.progress_in_iter + 1) % 10 == 0:
