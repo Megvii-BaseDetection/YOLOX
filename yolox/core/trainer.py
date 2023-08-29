@@ -232,9 +232,10 @@ class Trainer:
     def after_epoch(self):
         self.save_ckpt(ckpt_name="latest")
 
-        loss_meter = self.meter.get_filtered_meter("loss")
-        for k, v in loss_meter.items():
-            mlflow.log_metric(k, v.latest, step=self.epoch)
+        epoch_loss_meter = self.epoch_meter.get_filtered_meter("loss")
+        for k, v in epoch_loss_meter.items():
+            mlflow.log_metric(k, v.avg, step=self.epoch)
+        mlflow.log_metric("lr", self.meter["lr"].latest, step=self.epoch)
         self.epoch_meter.clear_meters()
 
         if (self.epoch + 1) % self.exp.eval_interval == 0:
