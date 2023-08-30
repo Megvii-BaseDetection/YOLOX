@@ -37,7 +37,7 @@ def log_metrics(epoch_meter, epoch):
     mlflow.log_metric("lr", epoch_meter["lr"].latest, step=epoch + 1)
 
 
-def log_map(m_ap, per_class_AP, per_class_AR, epoch):
+def log_valid_metrics(m_ap, per_class_AP, per_class_AR, epoch):
     """Log mAP, AP per class and AR per class to mlflow."""
     for class_name, ap in per_class_AP.items():
         mlflow.log_metric(f"{class_name}_AP", ap * 100, step=epoch + 1)
