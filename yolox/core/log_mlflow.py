@@ -40,9 +40,9 @@ def log_metrics(epoch_meter, epoch):
 def log_valid_metrics(m_ap, per_class_AP, per_class_AR, epoch):
     """Log mAP, AP per class and AR per class to mlflow."""
     for class_name, ap in per_class_AP.items():
-        mlflow.log_metric(f"{class_name}_AP", ap * 100, step=epoch + 1)
+        mlflow.log_metric(f"{class_name}_AP", ap, step=epoch + 1)
     for class_name, ar in per_class_AR.items():
-        mlflow.log_metric(f"{class_name}_AR", ar * 100, step=epoch + 1)
+        mlflow.log_metric(f"{class_name}_AR", ar, step=epoch + 1)
     mlflow.log_metric("mAP", m_ap * 100, step=epoch + 1)
 
 
