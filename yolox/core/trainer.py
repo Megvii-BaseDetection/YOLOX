@@ -349,7 +349,7 @@ class Trainer:
                 evalmodel = evalmodel.module
 
         with adjust_status(evalmodel, training=False):
-            (ap50_95, ap50, summary), predictions = self.exp.eval(
+            (ap50_95, ap50, summary, per_class_AP, per_class_AR), predictions = self.exp.eval(
                 evalmodel, self.evaluator, self.is_distributed, return_outputs=True
             )
 
@@ -374,7 +374,7 @@ class Trainer:
         if self.save_history_ckpt:
             self.save_ckpt(f"epoch_{self.epoch + 1}", ap=ap50_95)
 
-        log_mlflow.log_map(ap50_95, self.epoch)
+        log_mlflow.log_valid_metrics(ap50_95, per_class_AP, per_class_AR, self.epoch)
 
     def save_ckpt(self, ckpt_name, update_best_ckpt=False, ap=None):
         if self.rank == 0:
