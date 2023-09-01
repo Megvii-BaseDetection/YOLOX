@@ -6,7 +6,6 @@ import contextlib
 import io
 import itertools
 import json
-import mlflow
 import tempfile
 import time
 from collections import ChainMap, defaultdict
@@ -255,7 +254,7 @@ class COCOEvaluator:
 
     def evaluate_prediction(self, data_dict, statistics):
         if not is_main_process():
-            return 0, 0, None, {0: 0}, {0: 0}
+            return 0, 0, None, {}, {}
 
         logger.info("Evaluate in main process...")
 
@@ -293,7 +292,6 @@ class COCOEvaluator:
                 cocoDt = cocoGt.loadRes(tmp)
 
             from pycocotools.cocoeval import COCOeval
-            logger.warning("Use standard COCOeval.")
 
             cocoEval = COCOeval(cocoGt, cocoDt, annType[1])
             cocoEval.evaluate()
@@ -312,4 +310,4 @@ class COCOEvaluator:
                 info += "per class AR:\n" + AR_table + "\n"
             return cocoEval.stats[0], cocoEval.stats[1], info, per_class_AP, per_class_AR
         else:
-            return 0, 0, info, {0: 0}, {0: 0}
+            return 0, 0, info, {}, {}

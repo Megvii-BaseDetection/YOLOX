@@ -84,7 +84,7 @@ class JitOp:
         try:
             # try to import op from pre-installed package
             return importlib.import_module(self.absolute_name())
-        except (Exception, ModuleNotFoundError):  # op not compiled, jit load
+        except (Exception, ModuleNotFoundError):
             from yolox.utils import wait_for_the_master
             with wait_for_the_master():  # to avoid race condition
                 return self.jit_load(verbose)
