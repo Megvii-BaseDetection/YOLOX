@@ -48,7 +48,7 @@ def per_class_AR_table(coco_eval, class_names=COCO_CLASSES, headers=["class", "A
     table = tabulate(
         row_pair, tablefmt="pipe", floatfmt=".3f", headers=table_headers, numalign="left",
     )
-    return table
+    return table, per_class_AR
 
 
 def per_class_AP_table(coco_eval, class_names=COCO_CLASSES, headers=["class", "AP"], colums=6):
@@ -73,7 +73,7 @@ def per_class_AP_table(coco_eval, class_names=COCO_CLASSES, headers=["class", "A
     table = tabulate(
         row_pair, tablefmt="pipe", floatfmt=".3f", headers=table_headers, numalign="left",
     )
-    return table
+    return table, per_class_AP
 
 
 class COCOEvaluator:
@@ -254,7 +254,7 @@ class COCOEvaluator:
 
     def evaluate_prediction(self, data_dict, statistics):
         if not is_main_process():
-            return 0, 0, None
+            return 0, 0, None, {}, {}
 
         logger.info("Evaluate in main process...")
 
@@ -290,12 +290,8 @@ class COCOEvaluator:
                 _, tmp = tempfile.mkstemp()
                 json.dump(data_dict, open(tmp, "w"))
                 cocoDt = cocoGt.loadRes(tmp)
-            try:
-                from yolox.layers import COCOeval_opt as COCOeval
-            except ImportError:
-                from pycocotools.cocoeval import COCOeval
 
-                logger.warning("Use standard COCOeval.")
+            from pycocotools.cocoeval import COCOeval
 
             cocoEval = COCOeval(cocoGt, cocoDt, annType[1])
             cocoEval.evaluate()
@@ -307,11 +303,11 @@ class COCOEvaluator:
             cat_ids = list(cocoGt.cats.keys())
             cat_names = [cocoGt.cats[catId]['name'] for catId in sorted(cat_ids)]
             if self.per_class_AP:
-                AP_table = per_class_AP_table(cocoEval, class_names=cat_names)
+                AP_table, per_class_AP = per_class_AP_table(cocoEval, class_names=cat_names)
                 info += "per class AP:\n" + AP_table + "\n"
             if self.per_class_AR:
-                AR_table = per_class_AR_table(cocoEval, class_names=cat_names)
+                AR_table, per_class_AR = per_class_AR_table(cocoEval, class_names=cat_names)
                 info += "per class AR:\n" + AR_table + "\n"
-            return cocoEval.stats[0], cocoEval.stats[1], info
+            return cocoEval.stats[0], cocoEval.stats[1], info, per_class_AP, per_class_AR
         else:
-            return 0, 0, info
+            return 0, 0, info, {}, {}
