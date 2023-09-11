@@ -27,7 +27,7 @@ def make_parser():
     parser.add_argument("-d", "--devices", default=1, type=int, help="device for training")
     parser.add_argument("-f", "--exp_file", default=r'exps/example/yolox_voc/yolox_voc_s.py', type=str, help="plz input your experiment description file")
     parser.add_argument("--resume", default=False, action="store_true", help="resume training")
-    parser.add_argument("-c", "--ckpt", default=r'C:\Users\TGOEV\source\GitHub\YOLOX\yolox_s.pth', type=str, help="checkpoint file")
+    parser.add_argument("-c", "--ckpt", default=r'..\yolox_s.pth', type=str, help="checkpoint file")
     parser.add_argument("-e", "--start_epoch", default=None, type=int, help="resume training start epoch")
     parser.add_argument("--num_machines", default=1, type=int, help="num of node for training")
     parser.add_argument("--machine_rank", default=0, type=int, help="node rank for multi-node training")
