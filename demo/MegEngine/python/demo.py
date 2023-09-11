@@ -22,17 +22,11 @@ IMAGE_EXT = [".jpg", ".jpeg", ".webp", ".bmp", ".png"]
 
 def make_parser():
     parser = argparse.ArgumentParser("YOLOX Demo!")
-    parser.add_argument(
-        "demo", default="image", help="demo type, eg. image, video and webcam"
-    )
+    parser.add_argument("demo", default="image", help="demo type, eg. image, video and webcam")
     parser.add_argument("-n", "--name", type=str, default="yolox-s", help="model name")
     parser.add_argument("--path", default="./test.png", help="path to images or video")
     parser.add_argument("--camid", type=int, default=0, help="webcam demo camera id")
-    parser.add_argument(
-        "--save_result",
-        action="store_true",
-        help="whether to save the inference result of image/video",
-    )
+    parser.add_argument("--save_result", action="store_true", help="whether to save the inference result of image/video")
 
     parser.add_argument("-c", "--ckpt", default=None, type=str, help="ckpt for eval")
     parser.add_argument("--conf", default=None, type=float, help="test conf")
