@@ -16,40 +16,11 @@ from yolox.utils import mkdir, multiclass_nms, demo_postprocess, vis
 
 def make_parser():
     parser = argparse.ArgumentParser("onnxruntime inference sample")
-    parser.add_argument(
-        "-m",
-        "--model",
-        type=str,
-        default="yolox.onnx",
-        help="Input your onnx model.",
-    )
-    parser.add_argument(
-        "-i",
-        "--image_path",
-        type=str,
-        default='test_image.png',
-        help="Path to your input image.",
-    )
-    parser.add_argument(
-        "-o",
-        "--output_dir",
-        type=str,
-        default='demo_output',
-        help="Path to your output directory.",
-    )
-    parser.add_argument(
-        "-s",
-        "--score_thr",
-        type=float,
-        default=0.3,
-        help="Score threshould to filter the result.",
-    )
-    parser.add_argument(
-        "--input_shape",
-        type=str,
-        default="640,640",
-        help="Specify an input shape for inference.",
-    )
+    parser.add_argument("-m", "--model", type=str, default="yolox.onnx", help="Input your onnx model.")
+    parser.add_argument("-i", "--image_path", type=str, default='test_image.png', help="Path to your input image.")
+    parser.add_argument("-o", "--output_dir", type=str, default='demo_output', help="Path to your output directory.")
+    parser.add_argument("-s", "--score_thr", type=float, default=0.3, help="Score threshould to filter the result.")
+    parser.add_argument("--input_shape", type=str, default="640,640", help="Specify an input shape for inference.")
     return parser
 
 
