@@ -16,45 +16,19 @@ from yolox.utils import replace_module
 
 def make_parser():
     parser = argparse.ArgumentParser("YOLOX onnx deploy")
-    parser.add_argument(
-        "--output-name", type=str, default="yolox.onnx", help="output name of models"
-    )
-    parser.add_argument(
-        "--input", default="images", type=str, help="input node name of onnx model"
-    )
-    parser.add_argument(
-        "--output", default="output", type=str, help="output node name of onnx model"
-    )
-    parser.add_argument(
-        "-o", "--opset", default=11, type=int, help="onnx opset version"
-    )
+    parser.add_argument("--output-name", type=str, default="yolox_s.onnx", help="output name of models")
+    parser.add_argument("--input", default="images", type=str, help="input node name of onnx model")
+    parser.add_argument("--output", default="output", type=str, help="output node name of onnx model")
+    parser.add_argument("-o", "--opset", default=11, type=int, help="onnx opset version")
     parser.add_argument("--batch-size", type=int, default=1, help="batch size")
-    parser.add_argument(
-        "--dynamic", action="store_true", help="whether the input shape should be dynamic or not"
-    )
+    parser.add_argument( "--dynamic", action="store_true", help="whether the input shape should be dynamic or not")
     parser.add_argument("--no-onnxsim", action="store_true", help="use onnxsim or not")
-    parser.add_argument(
-        "-f",
-        "--exp_file",
-        default=None,
-        type=str,
-        help="experiment description file",
-    )
+    parser.add_argument("-f", "--exp_file", default=None, type=str, help="experiment description file")
     parser.add_argument("-expn", "--experiment-name", type=str, default=None)
-    parser.add_argument("-n", "--name", type=str, default=None, help="model name")
-    parser.add_argument("-c", "--ckpt", default=None, type=str, help="ckpt path")
-    parser.add_argument(
-        "opts",
-        help="Modify config options using the command-line",
-        default=None,
-        nargs=argparse.REMAINDER,
-    )
-    parser.add_argument(
-        "--decode_in_inference",
-        action="store_true",
-        help="decode in inference or not"
-    )
-
+    parser.add_argument("-n", "--name", type=str, default='yolox-s', help="model name")
+    parser.add_argument("-c", "--ckpt", default='yolox_s.pth', type=str, help="ckpt path")
+    parser.add_argument("opts", help="Modify config options using the command-line", default=None, nargs=argparse.REMAINDER)
+    parser.add_argument("--decode_in_inference", action="store_true", help="decode in inference or not")
     return parser
 
 
