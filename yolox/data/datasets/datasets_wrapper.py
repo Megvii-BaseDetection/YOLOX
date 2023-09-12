@@ -173,9 +173,9 @@ class CacheDataset(Dataset, metaclass=ABCMeta):
                 path_filename=path_filename,
             )
 
-    def __del__(self):
-        if self.cache and self.cache_type == "ram":
-            del self.imgs
+    # def __del__(self):
+    #     if self.cache and self.cache_type == "ram":
+    #         del self.imgs
 
     @abstractmethod
     def read_img(self, index):
