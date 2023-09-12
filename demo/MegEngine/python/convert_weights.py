@@ -10,13 +10,7 @@ import torch
 def make_parser():
     parser = argparse.ArgumentParser()
     parser.add_argument("-w", "--weights", type=str, help="path of weight file")
-    parser.add_argument(
-        "-o",
-        "--output",
-        default="weight_mge.pkl",
-        type=str,
-        help="path of weight file",
-    )
+    parser.add_argument("-o", "--output", default="weight_mge.pkl", type=str, help="path of weight file")
     return parser
 
 
