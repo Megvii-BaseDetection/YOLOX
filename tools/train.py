@@ -23,15 +23,15 @@ def make_parser():
     # distributed
     parser.add_argument("--dist-backend", default="nccl", type=str, help="distributed backend")
     parser.add_argument("--dist-url", default=None, type=str, help="url used to set up distributed training")
-    parser.add_argument("-b", "--batch-size", type=int, default=8, help="batch size")
+    parser.add_argument("-b", "--batch-size", type=int, default=2, help="batch size")
     parser.add_argument("-d", "--devices", default=1, type=int, help="device for training")
     parser.add_argument("-f", "--exp_file", default=r'exps/example/yolox_voc/yolox_voc_s.py', type=str, help="plz input your experiment description file")
     parser.add_argument("--resume", default=False, action="store_true", help="resume training")
-    parser.add_argument("-c", "--ckpt", default=r'..\yolox_s.pth', type=str, help="checkpoint file")
+    parser.add_argument("-c", "--ckpt", default=r'./yolox_s.pth', type=str, help="checkpoint file")
     parser.add_argument("-e", "--start_epoch", default=None, type=int, help="resume training start epoch")
     parser.add_argument("--num_machines", default=1, type=int, help="num of node for training")
     parser.add_argument("--machine_rank", default=0, type=int, help="node rank for multi-node training")
-    parser.add_argument("--fp16", dest="fp16", default=True, action="store_true", help="Adopting mix precision training.")
+    parser.add_argument("--fp16", dest="fp16", default=False, action="store_true", help="Adopting mix precision training.")
     parser.add_argument("--cache", type=str, nargs="?", const="ram", help="Caching imgs to ram/disk for fast training.")
     parser.add_argument("-o", "--occupy", dest="occupy", default=False, action="store_true", help="occupy GPU memory first for training.")
     parser.add_argument("-l", "--logger", type=str, help="Logger to be used for metrics. \ Implemented loggers include `tensorboard` and `wandb`.", default="tensorboard")
@@ -63,7 +63,7 @@ def main(exp: Exp, args):
 if __name__ == "__main__":
     configure_module()
     args = make_parser().parse_args()
-    from yolox.exp.yolox_base import Exp
+    from exps.example.yolox_voc.yolox_voc_s import Exp
     exp = Exp()
     # exp = get_exp(args.exp_file, args.name)
     exp.merge(args.opts)

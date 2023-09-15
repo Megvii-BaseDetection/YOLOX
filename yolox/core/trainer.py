@@ -95,6 +95,7 @@ class Trainer:
     def train_one_iter(self):
         iter_start_time = time.time()
 
+        # inps, targets = self.train_loader[self.epoch]
         inps, targets = self.prefetcher.next()
         inps = inps.to(self.data_type)
         targets = targets.to(self.data_type)
@@ -102,8 +103,9 @@ class Trainer:
         inps, targets = self.exp.preprocess(inps, targets, self.input_size)
         data_end_time = time.time()
 
-        with torch.cuda.amp.autocast(enabled=self.amp_training):
-            outputs = self.model(inps, targets)
+        # with torch.cuda.amp.autocast(enabled=self.amp_training):
+        #     outputs = self.model(inps, targets)
+        outputs = self.model(inps, targets)
 
         loss = outputs["total_loss"]
 
@@ -156,6 +158,7 @@ class Trainer:
         )
         logger.info("init prefetcher, this might take one minute or less...")
         self.prefetcher = DataPrefetcher(self.train_loader)
+        # self.prefetcher = self.train_loader
         # max_iter means iters per epoch
         self.max_iter = len(self.train_loader)
 

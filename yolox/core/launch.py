@@ -57,7 +57,7 @@ def launch(
         args (tuple): arguments passed to main_func
     """
     # world_size = num_machines * num_gpus_per_machine #ToDo
-    world_size = 2
+    world_size = 1
     if world_size > 1:
         # https://github.com/pytorch/pytorch/pull/14391
         # TODO prctl in spawned processes
@@ -67,7 +67,7 @@ def launch(
                 num_machines == 1
             ), "dist_url=auto cannot work with distributed training."
             port = _find_free_port()
-            dist_url = f"tcp://127.0.0.1:{port}"
+            dist_url = f"tcp://localhost:{port}"
 
         start_method = "spawn"
         cache = vars(args[1]).get("cache", False)
