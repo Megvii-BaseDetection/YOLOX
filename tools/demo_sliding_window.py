@@ -11,7 +11,7 @@ import cv2
 
 import torch
 
-from yolox.data.data_augment import ValTransform, sliding_window
+from yolox.data.data_augment import preproc, sliding_window
 from yolox.data.datasets import COCO_CLASSES, VOC_CLASSES
 from yolox.exp import get_exp
 from yolox.utils import fuse_model, get_model_info, postprocess, vis
@@ -62,6 +62,7 @@ def make_parser():
         action="store_true",
         help="Adopting mix precision evaluating.",
     )
+    """
     parser.add_argument(
         "--legacy",
         dest="legacy",
@@ -69,6 +70,7 @@ def make_parser():
         action="store_true",
         help="To be compatible with older versions",
     )
+    """
     parser.add_argument(
         "--fuse",
         dest="fuse",
@@ -106,8 +108,8 @@ class Predictor(object):
         trt_file=None,
         decoder=None,
         device="cpu",
-        fp16=False,
-        legacy=False,
+        #fp16=False,
+        #legacy=False,
     ):
         self.model = model
         self.cls_names = cls_names
@@ -117,8 +119,8 @@ class Predictor(object):
         self.nmsthre = exp.nmsthre
         self.test_size = exp.test_size
         self.device = device
-        self.fp16 = fp16
-        self.preproc = ValTransform(legacy=legacy)
+        #self.fp16 = fp16
+        #self.preproc = ValTransform(legacy=legacy)
         if trt_file is not None:
             from torch2trt import TRTModule
 
@@ -128,6 +130,9 @@ class Predictor(object):
             x = torch.ones(1, 3, exp.test_size[0], exp.test_size[1]).cuda()
             self.model(x)
             self.model = model_trt
+        self.rgb_means = (0.485, 0.456, 0.406)
+        self.std = (0.229, 0.224, 0.225)
+
 
     def inference(self, img):
         img_info = {"id": 0}
@@ -141,9 +146,33 @@ class Predictor(object):
         img_info["height"] = height
         img_info["width"] = width
         img_info["raw_img"] = img
-
+        
+        #img = cv2.copyMakeBorder(img, top, bottom, left, right, cv2.BORDER_CONSTANT,value=(0,0,0))
         #ratio = min(self.test_size[0] / img.shape[0], self.test_size[1] / img.shape[1])
         #img_info["ratio"] = ratio
+        """
+        if (img.shape[0]>exp.test_size[0]):
+            h_r = (img.shape[0]//exp.test_size[0]+1)*exp.test_size[0]-img.shape[0]
+        elif(img.shape[0]<exp.test_size[0]):
+            h_r = (exp.test_size[0]-img.shape[0])
+        else:
+            h_r = 0
+        if (img.shape[1]>exp.test_size[1]):
+            w_r = (img.shape[1]//exp.test_size[1]+1)*exp.test_size[1]-img.shape[1]
+        elif(img.shape[1]<exp.test_size[1]):
+            w_r = (exp.test_size[1]-img.shape[1])
+        else:
+            w_r = 0
+        top = h_r//2
+        bottom =  h_r-top
+        left = w_r//2
+        right =  w_r-left
+        print("top: ",top)
+        print("left: ",left)
+        print("original img size: ",img.shape)
+        img = cv2.copyMakeBorder(img, top, bottom, left, right, cv2.BORDER_CONSTANT,value=(0,0,0))              
+        print("after img size: ",img.shape)
+        """
         (winW, winH) = (exp.test_size[1], exp.test_size[0])
         (imgW, imgH)= (img.shape[1],img.shape[0])
         if (imgH%winH):
@@ -164,13 +193,13 @@ class Predictor(object):
             if window.shape[0] != winH or window.shape[1] != winW:
                 continue
 
-            Wimg, _ = self.preproc(window, None, self.test_size)
+            Wimg, _ = preproc(window, self.test_size, self.rgb_means, self.std)
             Wimg = torch.from_numpy(Wimg).unsqueeze(0)
             Wimg = Wimg.float()
             if self.device == "gpu":
                 Wimg = Wimg.cuda()
-                if self.fp16:
-                    Wimg = Wimg.half()  # to FP16
+                #if self.fp16:
+                #    Wimg = Wimg.half()  # to FP16
 
             with torch.no_grad():
                 t0 = time.time()
@@ -187,9 +216,9 @@ class Predictor(object):
             outputs = self.decoder(outputs, dtype=outputs.type())
         outputs = postprocess(
             outputs, self.num_classes, self.confthre,
-            self.nmsthre, class_agnostic=True
+            self.nmsthre#, class_agnostic=True
         )
-        
+        """
         if outputs[0] is None:
             pass
         elif len(outputs[0]) == 2:
@@ -204,8 +233,8 @@ class Predictor(object):
             temp[0][6] = torch.add(outputs[0][0, 6], outputs[0][1, 6]) / 2
             li_outputs.append(temp)
             outputs = li_outputs
-        
 
+        """
         logger.info("Infer time: {:.4f}s".format(time.time() - t0))
         return outputs, img_info
 
@@ -371,7 +400,7 @@ def main(exp, args):
 
     predictor = Predictor(
         model, exp, COCO_CLASSES, trt_file, decoder,
-        args.device, args.fp16, args.legacy,
+        args.device#, args.fp16, args.legacy,
     )
     current_time = time.localtime()
     if args.demo == "image":
