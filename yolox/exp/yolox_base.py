@@ -14,7 +14,7 @@ __all__ = ["Exp", "check_exp_value"]
 
 
 class Exp(BaseExp):
-    def __init__(self):
+    def __init__(self, max_epoch):
         super().__init__()
 
         # ---------------- model config ---------------- #
@@ -70,7 +70,7 @@ class Exp(BaseExp):
         # epoch number used for warmup
         self.warmup_epochs = 5
         # max training epoch
-        self.max_epoch = 1
+        self.max_epoch = max_epoch
         # minimum learning rate during warmup
         self.warmup_lr = 0
         self.min_lr_ratio = 0.05

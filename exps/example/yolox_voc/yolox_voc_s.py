@@ -6,8 +6,8 @@ from yolox.exp import Exp as MyExp
 
 
 class Exp(MyExp):
-    def __init__(self, num_classes):
-        super(Exp, self).__init__()
+    def __init__(self, num_classes, max_epoch):
+        super(Exp, self).__init__(max_epoch)
         self.num_classes = num_classes
         self.depth = 0.33
         self.width = 0.50

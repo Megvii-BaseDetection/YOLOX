@@ -270,12 +270,14 @@ class Trainer:
             )
 
             import csv
-            if not os.path.exists(self.file_name + 'results.csv'):
+            csv_file_path = os.path.join(self.file_name, 'results.csv')
+
+            if not os.path.exists(csv_file_path):
                 with open(self.file_name + 'results.csv', 'w', newline='') as csv_file:
                     writer = csv.writer(csv_file)
                     writer.writerow(['iter', 'mem_usage', 'loss_str', 'lr'])
 
-            with open(self.file_name + 'results.csv', 'a', newline='') as csv_file:
+            with open(csv_file_path, 'a', newline='') as csv_file:
                 writer = csv.writer(csv_file)
                 writer.writerow([
                     self.epoch, mem_usage(), loss_str, self.meter["lr"].latest

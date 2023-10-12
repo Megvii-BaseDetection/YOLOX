@@ -17,7 +17,7 @@ from yolox.utils import configure_module, configure_nccl, configure_omp, get_num
 
 def make_parser():
     parser = argparse.ArgumentParser("YOLOX train parser")
-    parser.add_argument("-expn", "--experiment-name", type=str, default=None)
+    parser.add_argument("-expn", "--experiment-name", type=str, default="Test")
     parser.add_argument("-n", "--name", type=str, default=None, help="model name")
 
     # distributed
@@ -30,6 +30,7 @@ def make_parser():
     parser.add_argument("-c", "--ckpt", default=None, type=str, help="checkpoint file")
 
     parser.add_argument("-cl", "--num_classes", default=None, type=str, help="num of classes")
+    parser.add_argument("-max_e", "--max_epoch", default=1, type=str, help="num of classes")
     # parser.add_argument("-c", "--ckpt", default=r'./yolox_s.pth', type=str, help="checkpoint file")
     parser.add_argument("-e", "--start_epoch", default=None, type=int, help="resume training start epoch")
     parser.add_argument("--num_machines", default=1, type=int, help="num of node for training")
@@ -70,7 +71,7 @@ if __name__ == "__main__":
 
     args.num_classes = 1
     assert args.num_classes is not None
-    exp = Exp(args.num_classes)
+    exp = Exp(args.num_classes, args.max_epoch)
 
     exp.merge(args.opts)
     check_exp_value(exp)
