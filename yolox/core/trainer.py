@@ -160,7 +160,8 @@ class Trainer:
         self.prefetcher = DataPrefetcher(self.train_loader)
         # self.prefetcher = self.train_loader
         # max_iter means iters per epoch
-        self.max_iter = len(self.train_loader)
+        self.max_iter = 20
+        # self.max_iter = len(self.train_loader)
 
         self.lr_scheduler = self.exp.get_lr_scheduler(
             self.exp.basic_lr_per_img * self.args.batch_size, self.max_iter
@@ -220,11 +221,11 @@ class Trainer:
                 self.save_ckpt(ckpt_name="last_mosaic_epoch")
 
     def after_epoch(self):
-        self.save_ckpt(ckpt_name="latest")
+        self.save_ckpt(ckpt_name=f"latest_{self.epoch}")
 
-        if (self.epoch + 1) % self.exp.eval_interval == 0:
-            all_reduce_norm(self.model)
-            self.evaluate_and_save_model()
+        # if (self.epoch + 1) % self.exp.eval_interval == 0:
+        #     all_reduce_norm(self.model)
+        #     self.evaluate_and_save_model()
 
     def before_iter(self):
         pass
@@ -268,6 +269,18 @@ class Trainer:
                 + (", size: {:d}, {}".format(self.input_size[0], eta_str))
             )
 
+            import csv
+            if not os.path.exists(self.file_name + 'results.csv'):
+                with open(self.file_name + 'results.csv', 'w', newline='') as csv_file:
+                    writer = csv.writer(csv_file)
+                    writer.writerow(['iter', 'mem_usage', 'loss_str', 'lr'])
+
+            with open(self.file_name + 'results.csv', 'a', newline='') as csv_file:
+                writer = csv.writer(csv_file)
+                writer.writerow([
+                    self.epoch, mem_usage(), loss_str, self.meter["lr"].latest
+                ])
+
             if self.rank == 0:
                 if self.args.logger == "tensorboard":
                     self.tblogger.add_scalar(
@@ -289,6 +302,7 @@ class Trainer:
             self.input_size = self.exp.random_resize(
                 self.train_loader, self.epoch, self.rank, self.is_distributed
             )
+
 
     @property
     def progress_in_iter(self):
@@ -342,31 +356,32 @@ class Trainer:
                 evalmodel, self.evaluator, self.is_distributed, return_outputs=True
             )
 
-        update_best_ckpt = ap50_95 > self.best_ap
-        self.best_ap = max(self.best_ap, ap50_95)
+        # update_best_ckpt = ap50_95 > self.best_ap
+        # self.best_ap = max(self.best_ap, ap50_95)
 
-        if self.rank == 0:
-            if self.args.logger == "tensorboard":
-                self.tblogger.add_scalar("val/COCOAP50", ap50, self.epoch + 1)
-                self.tblogger.add_scalar("val/COCOAP50_95", ap50_95, self.epoch + 1)
-            if self.args.logger == "wandb":
-                self.wandb_logger.log_metrics({
-                    "val/COCOAP50": ap50,
-                    "val/COCOAP50_95": ap50_95,
-                    "train/epoch": self.epoch + 1,
-                })
-                self.wandb_logger.log_images(predictions)
-            logger.info("\n" + summary)
-        synchronize()
+        # if self.rank == 0:
+        #     if self.args.logger == "tensorboard":
+        #         self.tblogger.add_scalar("val/COCOAP50", ap50, self.epoch + 1)
+        #         self.tblogger.add_scalar("val/COCOAP50_95", ap50_95, self.epoch + 1)
+        #     if self.args.logger == "wandb":
+        #         self.wandb_logger.log_metrics({
+        #             "val/COCOAP50": ap50,
+        #             "val/COCOAP50_95": ap50_95,
+        #             "train/epoch": self.epoch + 1,
+        #         })
+        #         self.wandb_logger.log_images(predictions)
+        #     logger.info("\n" + summary)
+        # synchronize()
 
-        self.save_ckpt("last_epoch", update_best_ckpt, ap=ap50_95)
-        if self.save_history_ckpt:
-            self.save_ckpt(f"epoch_{self.epoch + 1}", ap=ap50_95)
+        # self.save_ckpt("last_epoch", update_best_ckpt, ap=ap50_95)
+        # if self.save_history_ckpt:
+        #     self.save_ckpt(f"epoch_{self.epoch + 1}", ap=ap50_95)
 
     def save_ckpt(self, ckpt_name, update_best_ckpt=False, ap=None):
         if self.rank == 0:
+            checkpoint_name = os.path.join(self.file_name, "checkpoints")
             save_model = self.ema_model.ema if self.use_model_ema else self.model
-            logger.info("Save weights to {}".format(self.file_name))
+            logger.info("Save weights to {}".format(checkpoint_name))
             ckpt_state = {
                 "start_epoch": self.epoch + 1,
                 "model": save_model.state_dict(),
@@ -377,7 +392,7 @@ class Trainer:
             save_checkpoint(
                 ckpt_state,
                 update_best_ckpt,
-                self.file_name,
+                checkpoint_name,
                 ckpt_name,
             )
 

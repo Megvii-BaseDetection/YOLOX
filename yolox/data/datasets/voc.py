@@ -101,7 +101,7 @@ class VOCDetection(CacheDataset):
     def __init__(
         self,
         data_dir,
-        image_sets=[("2007", "trainval"), ("2012", "trainval")],
+        image_sets=[("2012", "train")],
         img_size=(416, 416),
         preproc=None,
         target_transform=AnnotationTransform(),
@@ -228,7 +228,7 @@ class VOCDetection(CacheDataset):
 
         all_boxes[class][image] = [] or np.array of shape #dets x 5
         """
-        self._write_voc_results_file(all_boxes)
+        # self._write_voc_results_file(all_boxes)
         IouTh = np.linspace(
             0.5, 0.95, int(np.round((0.95 - 0.5) / 0.05)) + 1, endpoint=True
         )

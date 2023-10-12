@@ -28,6 +28,8 @@ def make_parser():
     parser.add_argument("-f", "--exp_file", default=r'exps/example/yolox_voc/yolox_voc_s.py', type=str, help="plz input your experiment description file")
     parser.add_argument("--resume", default=False, action="store_true", help="resume training")
     parser.add_argument("-c", "--ckpt", default=None, type=str, help="checkpoint file")
+
+    parser.add_argument("-cl", "--num_classes", default=None, type=str, help="num of classes")
     # parser.add_argument("-c", "--ckpt", default=r'./yolox_s.pth', type=str, help="checkpoint file")
     parser.add_argument("-e", "--start_epoch", default=None, type=int, help="resume training start epoch")
     parser.add_argument("--num_machines", default=1, type=int, help="num of node for training")
@@ -65,10 +67,11 @@ if __name__ == "__main__":
     configure_module()
     args = make_parser().parse_args()
     from exps.example.yolox_voc.yolox_voc_s import Exp
-    exp = Exp()
-    # print(f"\n{exp}"*9999)
 
-    # exp = get_exp(args.exp_file, args.name)
+    args.num_classes = 1
+    assert args.num_classes is not None
+    exp = Exp(args.num_classes)
+
     exp.merge(args.opts)
     check_exp_value(exp)
 
