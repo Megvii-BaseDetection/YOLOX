@@ -30,7 +30,7 @@ def make_parser():
     parser.add_argument("-c", "--ckpt", default=None, type=str, help="checkpoint file")
 
     parser.add_argument("-cl", "--num_classes", default=None, type=str, help="num of classes")
-    parser.add_argument("-max_e", "--max_epoch", default=1, type=str, help="num of classes")
+    parser.add_argument("-max_e", "--max_epoch", default=3, type=str, help="num of classes")
     # parser.add_argument("-c", "--ckpt", default=r'./yolox_s.pth', type=str, help="checkpoint file")
     parser.add_argument("-e", "--start_epoch", default=None, type=int, help="resume training start epoch")
     parser.add_argument("--num_machines", default=1, type=int, help="num of node for training")

@@ -33,21 +33,24 @@ def make_parser():
 
 
 @logger.catch
-def main():
+def main(ckpt_file, num_classes, output_name):
     args = make_parser().parse_args()
-    logger.info("args value: {}".format(args))
-    exp = get_exp(args.exp_file, args.name)
+    # logger.info("args value: {}".format(args))
+    # exp = get_exp(args.exp_file, args.name)
+
+    from exps.example.yolox_voc.yolox_voc_s import Exp
+    exp = Exp(1, 0)
     exp.merge(args.opts)
 
-    if not args.experiment_name:
-        args.experiment_name = exp.exp_name
+    # if not args.experiment_name:
+    #     args.experiment_name = exp.exp_name
 
     model = exp.get_model()
-    if args.ckpt is None:
-        file_name = os.path.join(exp.output_dir, args.experiment_name)
-        ckpt_file = os.path.join(file_name, "best_ckpt.pth")
-    else:
-        ckpt_file = args.ckpt
+    # if args.ckpt is None:
+    #     file_name = os.path.join(exp.output_dir, args.experiment_name)
+    #     ckpt_file = os.path.join(file_name, "best_ckpt.pth")
+    # else:
+    #     ckpt_file = args.ckpt
 
     # load the model state dict
     ckpt = torch.load(ckpt_file, map_location="cpu")
@@ -62,29 +65,29 @@ def main():
     logger.info("loading checkpoint done.")
     dummy_input = torch.randn(args.batch_size, 3, exp.test_size[0], exp.test_size[1])
 
-    torch.onnx._export(
+    torch.onnx.export(
         model,
         dummy_input,
-        args.output_name,
+        output_name,
         input_names=[args.input],
         output_names=[args.output],
         dynamic_axes={args.input: {0: 'batch'},
                       args.output: {0: 'batch'}} if args.dynamic else None,
         opset_version=args.opset,
     )
-    logger.info("generated onnx model named {}".format(args.output_name))
+    logger.info("generated onnx model named {}".format(output_name))
 
-    if not args.no_onnxsim:
-        import onnx
-        from onnxsim import simplify
-
-        # use onnx-simplifier to reduce reduent model.
-        onnx_model = onnx.load(args.output_name)
-        model_simp, check = simplify(onnx_model)
-        assert check, "Simplified ONNX model could not be validated"
-        onnx.save(model_simp, args.output_name)
-        logger.info("generated simplified onnx model named {}".format(args.output_name))
+    # if not args.no_onnxsim:
+    #     import onnx
+    #     from onnxsim import simplify
+    #
+    #     # use onnx-simplifier to reduce reduent model.
+    #     onnx_model = onnx.load(args.output_name)
+    #     model_simp, check = simplify(onnx_model)
+    #     assert check, "Simplified ONNX model could not be validated"
+    #     onnx.save(model_simp, args.output_name)
+    #     logger.info("generated simplified onnx model named {}".format(args.output_name))
 
 
 if __name__ == "__main__":
-    main()
+    main(r"C:\Users\TGOEV\source\GitHub\YOLOX\tools\YOLOX_outputs\Test2\checkpoints/latest_0_ckpt.pth", 1, "out.onnx")

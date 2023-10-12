@@ -410,3 +410,7 @@ class Trainer:
                         "curr_ap": ap
                     }
                 )
+
+            from tools.export_onnx import main
+
+            main(os.path.join(checkpoint_name, ckpt_name +"_ckpt.pth"), self.exp.num_classes, os.path.join(checkpoint_name, ckpt_name +".onnx"))
