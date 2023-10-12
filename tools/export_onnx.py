@@ -34,13 +34,13 @@ def make_parser():
 
 @logger.catch
 def main(ckpt_file, num_classes, output_name):
-    args = make_parser().parse_args()
+    # args = make_parser().parse_args()
     # logger.info("args value: {}".format(args))
     # exp = get_exp(args.exp_file, args.name)
 
     from exps.example.yolox_voc.yolox_voc_s import Exp
     exp = Exp(1, 0)
-    exp.merge(args.opts)
+    # exp.merge(args.opts)
 
     # if not args.experiment_name:
     #     args.experiment_name = exp.exp_name
@@ -60,21 +60,32 @@ def main(ckpt_file, num_classes, output_name):
         ckpt = ckpt["model"]
     model.load_state_dict(ckpt)
     model = replace_module(model, nn.SiLU, SiLU)
-    model.head.decode_in_inference = args.decode_in_inference
+    # model.head.decode_in_inference = args.decode_in_inference
+    model.head.decode_in_inference = False
 
     logger.info("loading checkpoint done.")
-    dummy_input = torch.randn(args.batch_size, 3, exp.test_size[0], exp.test_size[1])
+    dummy_input = torch.randn(1, 3, exp.test_size[0], exp.test_size[1])
 
     torch.onnx.export(
         model,
         dummy_input,
         output_name,
-        input_names=[args.input],
-        output_names=[args.output],
-        dynamic_axes={args.input: {0: 'batch'},
-                      args.output: {0: 'batch'}} if args.dynamic else None,
-        opset_version=args.opset,
+        input_names=['images'],
+        output_names=['output'],
+        dynamic_axes={'images': {0: 'batch'},
+                      'output': {0: 'batch'}} if False else None,
+        opset_version=11,
     )
+    # torch.onnx.export(
+    #     model,
+    #     dummy_input,
+    #     output_name,
+    #     input_names=[args.input],
+    #     output_names=[args.output],
+    #     dynamic_axes={args.input: {0: 'batch'},
+    #                   args.output: {0: 'batch'}} if args.dynamic else None,
+    #     opset_version=args.opset,
+    # )
     logger.info("generated onnx model named {}".format(output_name))
 
     # if not args.no_onnxsim:

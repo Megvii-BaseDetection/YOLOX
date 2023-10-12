@@ -160,7 +160,6 @@ class Trainer:
         self.prefetcher = DataPrefetcher(self.train_loader)
         # self.prefetcher = self.train_loader
         # max_iter means iters per epoch
-        self.max_iter = 20
         # self.max_iter = len(self.train_loader)
 
         self.lr_scheduler = self.exp.get_lr_scheduler(
@@ -383,7 +382,7 @@ class Trainer:
         if self.rank == 0:
             checkpoint_name = os.path.join(self.file_name, "checkpoints")
             save_model = self.ema_model.ema if self.use_model_ema else self.model
-            logger.info("Save weights to {}".format(checkpoint_name))
+            logger.info("Save weights to {}.{}".format(checkpoint_name, ckpt_name))
             ckpt_state = {
                 "start_epoch": self.epoch + 1,
                 "model": save_model.state_dict(),
