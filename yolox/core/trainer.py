@@ -160,7 +160,7 @@ class Trainer:
         self.prefetcher = DataPrefetcher(self.train_loader)
         # self.prefetcher = self.train_loader
         # max_iter means iters per epoch
-        # self.max_iter = len(self.train_loader)
+        self.max_iter = len(self.train_loader)
 
         self.lr_scheduler = self.exp.get_lr_scheduler(
             self.exp.basic_lr_per_img * self.args.batch_size, self.max_iter
@@ -273,11 +273,11 @@ class Trainer:
 
             if not os.path.exists(csv_file_path):
                 with open(csv_file_path, 'w', newline='') as csv_file:
-                    writer = csv.writer(csv_file)
+                    writer = csv.writer(csv_file, delimiter=';')
                     writer.writerow(['iter', 'mem_usage', 'loss_str', 'lr'])
 
             with open(csv_file_path, 'a', newline='') as csv_file:
-                writer = csv.writer(csv_file)
+                writer = csv.writer(csv_file, delimiter=';')
                 writer.writerow([
                     self.epoch, mem_usage(), [loss_str], self.meter["lr"].latest
                 ])
