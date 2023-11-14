@@ -24,7 +24,7 @@ def make_parser():
     parser = argparse.ArgumentParser("YOLOX Demo!")
     parser.add_argument("demo", default="image", help="demo type, eg. image, video and webcam")
     parser.add_argument("-n", "--name", type=str, default="yolox-s", help="model name")
-    parser.add_argument("--path", default="C:/temp/3.jpg", help="path to images or video")
+    parser.add_argument("--path", default=r"C:\Users\TGOEV\source\repos\detectionapp\gui\src\assets\test/d3b94c6d-5ce6-4944-b72c-cf4a4d7574e7.png", help="path to images or video")
     parser.add_argument("--camid", type=int, default=0, help="webcam demo camera id")
     parser.add_argument("--save_result", action="store_true", help="whether to save the inference result of image/video")
 
