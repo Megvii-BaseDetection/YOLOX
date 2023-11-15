@@ -21,7 +21,7 @@ def make_parser():
 
     # distributed
     parser.add_argument("-expn", "--experiment-name", type=str, default="Test3")
-    parser.add_argument("-max_e", "--max_epoch", default=3, type=int, help="num of classes")
+    parser.add_argument("-max_e", "--max_epoch", default=50, type=int, help="num of classes")
     parser.add_argument("-b", "--batch-size", type=int, default=2, help="batch size")
     parser.add_argument("-out", "--output_folder", default=None, type=str, help="plz input your default output folder")
     parser.add_argument("-cl", "--num_classes", default=None, type=int, help="num of classes")
