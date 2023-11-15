@@ -14,7 +14,7 @@ __all__ = ["Exp", "check_exp_value"]
 
 
 class Exp(BaseExp):
-    def __init__(self, max_epoch):
+    def __init__(self):
         super().__init__()
 
         # ---------------- model config ---------------- #
@@ -70,7 +70,7 @@ class Exp(BaseExp):
         # epoch number used for warmup
         self.warmup_epochs = 5
         # max training epoch
-        self.max_epoch = max_epoch
+        self.max_epoch = 300
         # minimum learning rate during warmup
         self.warmup_lr = 0
         self.min_lr_ratio = 0.05
@@ -222,8 +222,7 @@ class Exp(BaseExp):
         return train_loader
 
     def random_resize(self, data_loader, epoch, rank, is_distributed):
-        # tensor = torch.LongTensor(2).cuda()
-        tensor = torch.LongTensor(2)
+        tensor = torch.LongTensor(2).cuda()
 
         if rank == 0:
             size_factor = self.input_size[1] * 1.0 / self.input_size[0]

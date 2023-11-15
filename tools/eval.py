@@ -30,25 +30,84 @@ def make_parser():
     parser.add_argument("-n", "--name", type=str, default=None, help="model name")
 
     # distributed
-    parser.add_argument("--dist-backend", default="nccl", type=str, help="distributed backend")
-    parser.add_argument("--dist-url", default=None, type=str, help="url used to set up distributed training",)
+    parser.add_argument(
+        "--dist-backend", default="nccl", type=str, help="distributed backend"
+    )
+    parser.add_argument(
+        "--dist-url",
+        default=None,
+        type=str,
+        help="url used to set up distributed training",
+    )
     parser.add_argument("-b", "--batch-size", type=int, default=64, help="batch size")
-    parser.add_argument("-d", "--devices", default=None, type=int, help="device for training")
-    parser.add_argument("--num_machines", default=1, type=int, help="num of node for training")
-    parser.add_argument("--machine_rank", default=0, type=int, help="node rank for multi-node training")
-    parser.add_argument("-f", "--exp_file", default=None, type=str, help="please input your experiment description file")
+    parser.add_argument(
+        "-d", "--devices", default=None, type=int, help="device for training"
+    )
+    parser.add_argument(
+        "--num_machines", default=1, type=int, help="num of node for training"
+    )
+    parser.add_argument(
+        "--machine_rank", default=0, type=int, help="node rank for multi-node training"
+    )
+    parser.add_argument(
+        "-f",
+        "--exp_file",
+        default=None,
+        type=str,
+        help="please input your experiment description file",
+    )
     parser.add_argument("-c", "--ckpt", default=None, type=str, help="ckpt for eval")
     parser.add_argument("--conf", default=None, type=float, help="test conf")
     parser.add_argument("--nms", default=None, type=float, help="test nms threshold")
     parser.add_argument("--tsize", default=None, type=int, help="test img size")
     parser.add_argument("--seed", default=None, type=int, help="eval seed")
-    parser.add_argument("--fp16", dest="fp16", default=False, action="store_true", help="Adopting mix precision evaluating.")
-    parser.add_argument("--fuse", dest="fuse", default=False, action="store_true", help="Fuse conv and bn for testing.")
-    parser.add_argument("--trt", dest="trt", default=False, action="store_true", help="Using TensorRT model for testing.")
-    parser.add_argument("--legacy", dest="legacy", default=False, action="store_true", help="To be compatible with older versions")
-    parser.add_argument("--test", dest="test", default=False, action="store_true", help="Evaluating on test-dev set.")
-    parser.add_argument("--speed", dest="speed", default=False, action="store_true", help="speed test only.")
-    parser.add_argument("opts", help="Modify config options using the command-line", default=None, nargs=argparse.REMAINDER,
+    parser.add_argument(
+        "--fp16",
+        dest="fp16",
+        default=False,
+        action="store_true",
+        help="Adopting mix precision evaluating.",
+    )
+    parser.add_argument(
+        "--fuse",
+        dest="fuse",
+        default=False,
+        action="store_true",
+        help="Fuse conv and bn for testing.",
+    )
+    parser.add_argument(
+        "--trt",
+        dest="trt",
+        default=False,
+        action="store_true",
+        help="Using TensorRT model for testing.",
+    )
+    parser.add_argument(
+        "--legacy",
+        dest="legacy",
+        default=False,
+        action="store_true",
+        help="To be compatible with older versions",
+    )
+    parser.add_argument(
+        "--test",
+        dest="test",
+        default=False,
+        action="store_true",
+        help="Evaluating on test-dev set.",
+    )
+    parser.add_argument(
+        "--speed",
+        dest="speed",
+        default=False,
+        action="store_true",
+        help="speed test only.",
+    )
+    parser.add_argument(
+        "opts",
+        help="Modify config options using the command-line",
+        default=None,
+        nargs=argparse.REMAINDER,
     )
     return parser
 

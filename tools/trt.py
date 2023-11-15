@@ -18,9 +18,18 @@ def make_parser():
     parser = argparse.ArgumentParser("YOLOX ncnn deploy")
     parser.add_argument("-expn", "--experiment-name", type=str, default=None)
     parser.add_argument("-n", "--name", type=str, default=None, help="model name")
-    parser.add_argument("-f", "--exp_file", default=None, type=str, help="please input your experiment description file")
+
+    parser.add_argument(
+        "-f",
+        "--exp_file",
+        default=None,
+        type=str,
+        help="please input your experiment description file",
+    )
     parser.add_argument("-c", "--ckpt", default=None, type=str, help="ckpt path")
-    parser.add_argument("-w", '--workspace', type=int, default=32, help='max workspace size in detect')
+    parser.add_argument(
+        "-w", '--workspace', type=int, default=32, help='max workspace size in detect'
+    )
     parser.add_argument("-b", '--batch', type=int, default=1, help='max batch size in detect')
     return parser
 

@@ -184,13 +184,9 @@ class YOLOXHead(nn.Module):
                     origin_preds.append(reg_output.clone())
 
             else:
-                # output = torch.tensor(reg_output, obj_output.sigmoid(), cls_output.sigmoid())
                 output = torch.cat(
                     [reg_output, obj_output.sigmoid(), cls_output.sigmoid()], 1
                 )
-                # output = torch.cat(
-                #     [output, cls_output.sigmoid()], 1
-                # )
 
             outputs.append(output)
 

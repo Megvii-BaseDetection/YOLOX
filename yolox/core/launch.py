@@ -56,8 +56,7 @@ def launch(
                        Can be set to auto to automatically select a free port on localhost
         args (tuple): arguments passed to main_func
     """
-    # world_size = num_machines * num_gpus_per_machine #ToDo
-    world_size = 1
+    world_size = num_machines * num_gpus_per_machine
     if world_size > 1:
         # https://github.com/pytorch/pytorch/pull/14391
         # TODO prctl in spawned processes
@@ -67,7 +66,7 @@ def launch(
                 num_machines == 1
             ), "dist_url=auto cannot work with distributed training."
             port = _find_free_port()
-            dist_url = f"tcp://localhost:{port}"
+            dist_url = f"tcp://127.0.0.1:{port}"
 
         start_method = "spawn"
         cache = vars(args[1]).get("cache", False)
@@ -78,17 +77,15 @@ def launch(
                 "As Windows platform doesn't support fork method, "
                 "do not add --cache in your training command."
             )
-            start_method = "spawn"
+            start_method = "fork"
 
-        num_processes = 2
-        backend = 'gloo'
         mp.start_processes(
             _distributed_worker,
-            nprocs=num_processes,
+            nprocs=num_gpus_per_machine,
             args=(
                 main_func,
-                num_processes,
-                0,
+                world_size,
+                num_gpus_per_machine,
                 machine_rank,
                 backend,
                 dist_url,
@@ -112,9 +109,9 @@ def _distributed_worker(
     args,
     timeout=DEFAULT_TIMEOUT,
 ):
-    # assert (
-    #     torch.cuda.is_available()
-    # ), "cuda is not available. Please check your installation."
+    assert (
+        torch.cuda.is_available()
+    ), "cuda is not available. Please check your installation."
     global_rank = machine_rank * num_gpus_per_machine + local_rank
     logger.info("Rank {} initialization finished.".format(global_rank))
     try:
@@ -131,7 +128,6 @@ def _distributed_worker(
 
     # Setup the local process group (which contains ranks within the same machine)
     assert comm._LOCAL_PROCESS_GROUP is None
-    num_gpus_per_machine = 1
     num_machines = world_size // num_gpus_per_machine
     for i in range(num_machines):
         ranks_on_i = list(
@@ -145,7 +141,7 @@ def _distributed_worker(
     # See: https://github.com/facebookresearch/maskrcnn-benchmark/issues/172
     comm.synchronize()
 
-    # assert num_gpus_per_machine <= torch.cuda.device_count()
-    # torch.cuda.set_device(local_rank)
+    assert num_gpus_per_machine <= torch.cuda.device_count()
+    torch.cuda.set_device(local_rank)
 
     main_func(*args)

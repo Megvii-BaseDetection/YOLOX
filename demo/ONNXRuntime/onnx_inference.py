@@ -16,11 +16,40 @@ from yolox.utils import mkdir, multiclass_nms, demo_postprocess, vis
 
 def make_parser():
     parser = argparse.ArgumentParser("onnxruntime inference sample")
-    parser.add_argument("-m", "--model", type=str, default=r"C:\Users\TGOEV\source\GitHub\YOLOX\tools/yolox_s.onnx", help="Input your onnx model.")
-    parser.add_argument("-i", "--image_path", type=str, default=r'C:\temp/3.jpg', help="Path to your input image.")
-    parser.add_argument("-o", "--output_dir", type=str, default=r'C:\Users\TGOEV\source\GitHub\YOLOX\assets/out', help="Path to your output directory.")
-    parser.add_argument("-s", "--score_thr", type=float, default=0.3, help="Score threshould to filter the result.")
-    parser.add_argument("--input_shape", type=str, default="640,640", help="Specify an input shape for inference.")
+    parser.add_argument(
+        "-m",
+        "--model",
+        type=str,
+        default="yolox.onnx",
+        help="Input your onnx model.",
+    )
+    parser.add_argument(
+        "-i",
+        "--image_path",
+        type=str,
+        default='test_image.png',
+        help="Path to your input image.",
+    )
+    parser.add_argument(
+        "-o",
+        "--output_dir",
+        type=str,
+        default='demo_output',
+        help="Path to your output directory.",
+    )
+    parser.add_argument(
+        "-s",
+        "--score_thr",
+        type=float,
+        default=0.3,
+        help="Score threshould to filter the result.",
+    )
+    parser.add_argument(
+        "--input_shape",
+        type=str,
+        default="640,640",
+        help="Specify an input shape for inference.",
+    )
     return parser
 
 
@@ -46,7 +75,7 @@ if __name__ == '__main__':
     boxes_xyxy[:, 2] = boxes[:, 0] + boxes[:, 2]/2.
     boxes_xyxy[:, 3] = boxes[:, 1] + boxes[:, 3]/2.
     boxes_xyxy /= ratio
-    dets = multiclass_nms(boxes_xyxy, scores, nms_thr=1, score_thr=0)
+    dets = multiclass_nms(boxes_xyxy, scores, nms_thr=0.45, score_thr=0.1)
     if dets is not None:
         final_boxes, final_scores, final_cls_inds = dets[:, :4], dets[:, 4], dets[:, 5]
         origin_img = vis(origin_img, final_boxes, final_scores, final_cls_inds,

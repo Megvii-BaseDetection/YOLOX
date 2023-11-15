@@ -63,6 +63,7 @@ def nms(boxes, scores, nms_thr):
 
     areas = (x2 - x1 + 1) * (y2 - y1 + 1)
     order = scores.argsort()[::-1]
+
     keep = []
     while order.size > 0:
         i = order[0]
@@ -120,6 +121,7 @@ def multiclass_nms_class_agnostic(boxes, scores, nms_thr, score_thr):
     """Multiclass NMS implemented in Numpy. Class-agnostic version."""
     cls_inds = scores.argmax(1)
     cls_scores = scores[np.arange(len(cls_inds)), cls_inds]
+
     valid_score_mask = cls_scores > score_thr
     if valid_score_mask.sum() == 0:
         return None
