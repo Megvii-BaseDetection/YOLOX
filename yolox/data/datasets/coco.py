@@ -94,6 +94,7 @@ class COCODataset(CacheDataset):
         :return: dictionary with image name as key and path to image as value.
         """
         image_paths = glob(os.path.join(self.data_dir, '**/*.jpg'), recursive=True)
+        print(f"Found {len(image_paths)} images in {self.data_dir}")
         return {os.path.basename(image_path): image_path for image_path in image_paths}
 
     def _load_coco_annotations(self):
