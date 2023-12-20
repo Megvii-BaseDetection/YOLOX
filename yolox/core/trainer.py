@@ -60,7 +60,8 @@ class Trainer:
         # metric record
         self.meter = MeterBuffer(window_size=exp.print_interval)
         self.epoch_meter = MeterBuffer(window_size=exp.print_interval)
-        self.file_name = os.path.join(exp.output_dir, args.experiment_name)
+        self.file_name = os.path.join(exp.output_dir, args.experiment_name) if exp.output_dir == "./YOLOX_outputs" \
+            else exp.output_dir
 
         if self.rank == 0:
             os.makedirs(self.file_name, exist_ok=True)

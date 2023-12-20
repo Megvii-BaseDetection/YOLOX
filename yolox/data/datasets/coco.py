@@ -3,6 +3,7 @@
 # Copyright (c) Megvii, Inc. and its affiliates.
 import copy
 import os
+from glob import glob
 
 import cv2
 import numpy as np
@@ -73,6 +74,7 @@ class COCODataset(CacheDataset):
         self.annotations = self._load_coco_annotations()
 
         path_filename = [os.path.join(name, anno[3]) for anno in self.annotations]
+        self.image_paths = self.get_image_paths()
         super().__init__(
             input_dimension=img_size,
             num_imgs=self.num_imgs,
@@ -85,6 +87,14 @@ class COCODataset(CacheDataset):
 
     def __len__(self):
         return self.num_imgs
+
+    def get_image_paths(self):
+        """
+        Get paths to all images in dataset.
+        :return: dictionary with image name as key and path to image as value.
+        """
+        image_paths = glob(os.path.join(self.data_dir, '**/*.jpg'), recursive=True)
+        return {os.path.basename(image_path): image_path for image_path in image_paths}
 
     def _load_coco_annotations(self):
         return [self.load_anno_from_ids(_ids) for _ids in self.ids]
@@ -141,14 +151,13 @@ class COCODataset(CacheDataset):
         return resized_img
 
     def load_image(self, index):
-        file_name = self.annotations[index][3]
+        image_file_name = self.annotations[index][3]
+        image_file_path = self.image_paths[image_file_name]
 
-        img_file = os.path.join(self.data_dir, self.name, file_name)
+        image = cv2.imread(image_file_path)
+        assert image is not None, f"file named {image_file_path} not found"
 
-        img = cv2.imread(img_file)
-        assert img is not None, f"file named {img_file} not found"
-
-        return img
+        return image
 
     @cache_read_img(use_cache=True)
     def read_img(self, index):
