@@ -145,17 +145,11 @@ def preproc(img, input_size, swap=(2, 0, 1)):
     else:
         padded_img = np.ones(input_size, dtype=np.uint8) * 114
 
-    r = min(input_size[0] / img.shape[0], input_size[1] / img.shape[1])
-    resized_img = cv2.resize(
-        img,
-        (int(img.shape[1] * r), int(img.shape[0] * r)),
-        interpolation=cv2.INTER_LINEAR,
-    ).astype(np.uint8)
-    padded_img[: int(img.shape[0] * r), : int(img.shape[1] * r)] = resized_img
+    padded_img[: int(img.shape[0]), : int(img.shape[1])] = img
 
     padded_img = padded_img.transpose(swap)
     padded_img = np.ascontiguousarray(padded_img, dtype=np.float32)
-    return padded_img, r
+    return padded_img
 
 
 class TrainTransform:
@@ -169,7 +163,7 @@ class TrainTransform:
         labels = targets[:, 4].copy()
         if len(boxes) == 0:
             targets = np.zeros((self.max_labels, 5), dtype=np.float32)
-            image, r_o = preproc(image, input_dim)
+            image = preproc(image, input_dim)
             return image, targets
 
         image_o = image.copy()
@@ -184,18 +178,16 @@ class TrainTransform:
             augment_hsv(image)
         image_t, boxes = _mirror(image, boxes, self.flip_prob)
         height, width, _ = image_t.shape
-        image_t, r_ = preproc(image_t, input_dim)
+        image_t = preproc(image_t, input_dim)
         # boxes [xyxy] 2 [cx,cy,w,h]
         boxes = xyxy2cxcywh(boxes)
-        boxes *= r_
 
         mask_b = np.minimum(boxes[:, 2], boxes[:, 3]) > 1
         boxes_t = boxes[mask_b]
         labels_t = labels[mask_b]
 
         if len(boxes_t) == 0:
-            image_t, r_o = preproc(image_o, input_dim)
-            boxes_o *= r_o
+            image_t = preproc(image_o, input_dim)
             boxes_t = boxes_o
             labels_t = labels_o
 

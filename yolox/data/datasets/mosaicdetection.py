@@ -91,11 +91,6 @@ class MosaicDetection(Dataset):
 
             for i_mosaic, index in enumerate(indices):
                 img, _labels, _, img_id = self._dataset.pull_item(index)
-                h0, w0 = img.shape[:2]  # orig hw
-                scale = min(1. * input_h / h0, 1. * input_w / w0)
-                img = cv2.resize(
-                    img, (int(w0 * scale), int(h0 * scale)), interpolation=cv2.INTER_LINEAR
-                )
                 # generate output mosaic image
                 (h, w, c) = img.shape[:3]
                 if i_mosaic == 0:
@@ -112,10 +107,10 @@ class MosaicDetection(Dataset):
                 labels = _labels.copy()
                 # Normalized xywh to pixel xyxy format
                 if _labels.size > 0:
-                    labels[:, 0] = scale * _labels[:, 0] + padw
-                    labels[:, 1] = scale * _labels[:, 1] + padh
-                    labels[:, 2] = scale * _labels[:, 2] + padw
-                    labels[:, 3] = scale * _labels[:, 3] + padh
+                    labels[:, 0] = _labels[:, 0] + padw
+                    labels[:, 1] = _labels[:, 1] + padh
+                    labels[:, 2] = _labels[:, 2] + padw
+                    labels[:, 3] = _labels[:, 3] + padh
                 mosaic_labels.append(labels)
 
             if len(mosaic_labels):
@@ -151,13 +146,13 @@ class MosaicDetection(Dataset):
             # img_info and img_id are not used for training.
             # They are also hard to be specified on a mosaic image.
             # -----------------------------------------------------------------
-            return mix_img, padded_labels, img_info, img_id
+            return mix_img, padded_labels, img_info, idx
 
         else:
             self._dataset._input_dim = self.input_dim
             img, label, img_info, img_id = self._dataset.pull_item(idx)
             img, label = self.preproc(img, label, self.input_dim)
-            return img, label, img_info, img_id
+            return img, label, img_info, idx
 
     def mixup(self, origin_img, origin_labels, input_dim):
         jit_factor = random.uniform(*self.mixup_scale)
