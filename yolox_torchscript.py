@@ -8,6 +8,6 @@ class DeployModule(nn.Module):
         super().__init__()
         self.yolox = YOLOX()
 
-    def forward(self, x: dict[str, dict[str, torch.Tensor]], targets=None):
-        image = x['inputs']['input'].permute(0, 3, 1, 2)
+    def forward(self, x: torch.Tensor, targets=None):
+        image = x.permute(0, 3, 1, 2)
         return self.yolox(image)
