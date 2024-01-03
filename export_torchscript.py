@@ -7,7 +7,14 @@ from yolox_torchscript import DeployModule
 
 
 @logger.catch
-def export(exp_file, ckpt_path, output_path):
+def export(exp_file: str, ckpt_path: str, output_path: str):
+    """
+    Export YoloX model to torchscript.
+
+    :param exp_file: Path to experiment file.
+    :param ckpt_path: Path to checkpoint file.
+    :param output_path: Path to output model.
+    """
     exp = get_exp(exp_file)
     exp.merge([])
 
