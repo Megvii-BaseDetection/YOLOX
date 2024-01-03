@@ -30,9 +30,8 @@ def export(exp_file: str, ckpt_path: str, output_path: str):
     logger.info("loading checkpoint done.")
 
     image = torch.tensor(np.zeros((1, 416, 416, 3)).tolist())
-    zone = torch.tensor([(400, 10), (400, 400), (250, 400), (250, 10), (250, 20), (250, 30)])
 
-    torchscript_model = torch.jit.trace(model_deploy, {"inputs": {"input": image, "zone": zone}})
+    torchscript_model = torch.jit.trace(model_deploy, image)
     torchscript_model.save(output_path)
     logger.info("generated torchscript model named {}".format(output_path))
 
