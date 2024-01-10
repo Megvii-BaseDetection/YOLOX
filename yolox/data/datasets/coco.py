@@ -11,6 +11,7 @@ from pycocotools.coco import COCO
 
 from ..dataloading import get_yolox_datadir
 from .datasets_wrapper import CacheDataset, cache_read_img
+from yolox.utils.logger import logger
 
 
 def remove_useless_info(coco):
@@ -94,7 +95,7 @@ class COCODataset(CacheDataset):
         :return: dictionary with image name as key and path to image as value.
         """
         image_paths = glob(os.path.join(self.data_dir, '**/*.jpg'), recursive=True)
-        print(f"Found {len(image_paths)} images in {self.data_dir}")
+        logger.info(f"Found {len(image_paths)} images in {self.data_dir}")
         return {os.path.basename(image_path): image_path for image_path in image_paths}
 
     def _load_coco_annotations(self):
