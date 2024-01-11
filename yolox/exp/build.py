@@ -18,8 +18,13 @@ def get_exp_by_file(exp_file):
 
 
 def get_exp_by_name(exp_name):
-    exp = exp_name.replace("-", "_")  # convert string like "yolox-s" to "yolox_s"
-    module_name = ".".join(["yolox", "exp", "default", exp])
+    """
+    Get Exp object by name.
+    :param exp_name: model architecture name. One of ("yolox_s", "yolox_m", "yolox_l",
+        "yolox_x", "yolox_tiny", "yolox_nano", "yolov3").
+    :return: Exp object.
+    """
+    module_name = ".".join(["yolox", "exp", "default", exp_name])
     exp_object = importlib.import_module(module_name).Exp()
     return exp_object
 
@@ -31,7 +36,7 @@ def get_exp(exp_file=None, exp_name=None):
 
     Args:
         exp_file (str): file path of experiment.
-        exp_name (str): name of experiment. "yolo-s",
+        exp_name (str): name of experiment. "yolo_s",
     """
     assert (
         exp_file is not None or exp_name is not None
