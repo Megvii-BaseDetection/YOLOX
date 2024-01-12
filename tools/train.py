@@ -18,7 +18,9 @@ from yolox.utils import configure_module, configure_nccl, configure_omp, get_num
 def make_parser():
     parser = argparse.ArgumentParser("YOLOX train parser")
     parser.add_argument("-expn", "--experiment-name", type=str, default=None)
-    parser.add_argument("-n", "--name", type=str, default=None, help="model name")
+    parser.add_argument("-n", "--name", type=str, default=None,
+                        help='one of ("yolox_s", "yolox_m", "yolox_l",'
+                             '"yolox_x", "yolox_tiny", "yolox_nano", "yolov3")')
 
     # distributed
     parser.add_argument(
