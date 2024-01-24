@@ -30,6 +30,9 @@ class IOUloss(nn.Module):
         self.loss_type = loss_type
         logger.info(f"IOUloss is using {self.loss_type} loss function.")
 
+    def __repr__(self):
+        return f"{self.__class__.__name__}(loss_type={self.loss_type})"
+
     def forward(self, pred, target):
         assert pred.shape[0] == target.shape[0]
 
