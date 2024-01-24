@@ -7,7 +7,7 @@ import torch.nn as nn
 
 
 class IOUloss(nn.Module):
-    def __init__(self, reduction="none", loss_type="iou"):
+    def __init__(self, reduction="none", loss_type="diou"):
         super(IOUloss, self).__init__()
         self.reduction = reduction
         self.loss_type = loss_type
@@ -34,6 +34,7 @@ class IOUloss(nn.Module):
 
         if self.loss_type == "iou":
             loss = 1 - iou ** 2
+
         elif self.loss_type == "giou":
             c_tl = torch.min(
                 (pred[:, :2] - pred[:, 2:] / 2), (target[:, :2] - target[:, 2:] / 2)
@@ -44,6 +45,18 @@ class IOUloss(nn.Module):
             area_c = torch.prod(c_br - c_tl, 1)
             giou = iou - (area_c - area_u) / area_c.clamp(1e-16)
             loss = 1 - giou.clamp(min=-1.0, max=1.0)
+
+        elif self.loss_type == "diou":
+            d = (pred[:, :2] - target[:, :2]).pow(2).sum(1).sqrt()
+            c = (tl - br).pow(2).sum(1).sqrt()
+            loss = 1 - iou + ((d ** 2) / (c ** 2))
+
+        elif self.loss_type == "ciou":
+            d = (pred[:, :2] - target[:, :2]).pow(2).sum(1).sqrt()
+            c = (tl - br).pow(2).sum(1).sqrt()
+            v = (4 / torch.pi ** 2) * (torch.arctan(target[:, 2] / target[:, 3]) - torch.arctan(pred[:, 2] / pred[:, 3])) ** 2
+            alpha = v / ((1 - iou) + v)
+            loss = 1 - iou + ((d ** 2) / ((c ** 2) + 1e-16)) + alpha * v
 
         if self.reduction == "mean":
             loss = loss.mean()
