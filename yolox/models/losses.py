@@ -67,7 +67,7 @@ class IOUloss(nn.Module):
         elif self.loss_type == "ciou":
             d, c = get_d_c_parameters(pred, target)
             v = (4 / torch.pi ** 2) * (torch.arctan(target[:, 2] / target[:, 3]) - torch.arctan(pred[:, 2] / pred[:, 3])) ** 2
-            alpha = v / ((1 - iou) + v)
+            alpha = v / ((1 - iou) + v).clamp(1e-16)
             loss = 1 - iou + ((d ** 2) / (c ** 2).clamp(1e-16)) + alpha * v
 
         else:
