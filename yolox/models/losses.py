@@ -28,7 +28,6 @@ class IOUloss(nn.Module):
         super(IOUloss, self).__init__()
         self.reduction = reduction
         self.loss_type = loss_type
-        logger.info(f"IOUloss is using {self.loss_type} loss function.")
 
     def __repr__(self):
         return f"{self.__class__.__name__}(loss_type={self.loss_type})"
@@ -62,17 +61,6 @@ class IOUloss(nn.Module):
             area_c = torch.prod(c_br - c_tl, 1)
             giou = iou - (area_c - area_union) / area_c.clamp(1e-16)
             loss = 1 - giou.clamp(min=-1.0, max=1.0)
-
-        elif self.loss_type == "diou":
-            d, c = get_d_c_parameters(pred, target)
-            loss = 1 - iou + ((d ** 2) / (c ** 2).clamp(1e-16))
-
-        elif self.loss_type == "ciou":
-            d, c = get_d_c_parameters(pred, target)
-            v = (4 / torch.pi ** 2) * (torch.arctan(target[:, 2] / target[:, 3]) - torch.arctan(pred[:, 2] / pred[:, 3])) ** 2
-            alpha = v / ((1 - iou) + v).clamp(1e-16)
-            loss = 1 - iou + ((d ** 2) / (c ** 2).clamp(1e-16)) + alpha * v
-
         else:
             raise NotImplementedError(f"Loss type {self.loss_type} not implemented.")
 
