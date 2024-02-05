@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding:utf-8 -*-
 # Copyright (c) Megvii, Inc. and its affiliates.
-
+from collections import OrderedDict
 import unittest
 
 import torch
@@ -14,13 +14,15 @@ from yolox.exp import get_exp
 class TestModelUtils(unittest.TestCase):
 
     def setUp(self):
-        self.model: nn.Module = get_exp(exp_name="yolox-s").get_model()
+        self.model: nn.Module = get_exp(exp_name="yolox_s").get_model()
 
     def test_model_state_adjust_status(self):
         data = torch.ones(1, 10, 10, 10)
         # use bn since bn changes state during train/val
         model = nn.BatchNorm2d(10)
-        prev_state = model.state_dict()
+        prev_state = OrderedDict()
+        for key, val in model.state_dict().items():
+            prev_state[key] = val.clone().detach()
 
         modes = [False, True]
         results = [True, False]
