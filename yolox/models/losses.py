@@ -24,7 +24,7 @@ def get_d_c_parameters(box1, box2) -> tuple[torch.Tensor, torch.Tensor]:
 
 
 class IOUloss(nn.Module):
-    def __init__(self, reduction="none", loss_type="diou"):
+    def __init__(self, reduction="none", loss_type="iou"):
         super(IOUloss, self).__init__()
         self.reduction = reduction
         self.loss_type = loss_type
@@ -32,7 +32,7 @@ class IOUloss(nn.Module):
     def __repr__(self):
         return f"{self.__class__.__name__}(loss_type={self.loss_type})"
 
-    def forward(self, pred, target):
+    def forward(self, pred: torch.Tensor, target: torch.Tensor) -> torch.Tensor:
         assert pred.shape[0] == target.shape[0]
 
         pred = pred.view(-1, 4)
