@@ -4,6 +4,7 @@ import torch
 from torch import nn
 
 from yolox.models import IOUloss
+from yolox.models.losses import get_smallest_enclosing_box
 
 
 class TestIOULoss(unittest.TestCase):
@@ -23,3 +24,12 @@ class TestIOULoss(unittest.TestCase):
 
     def test_giou_loss(self):
         self._test_loss(IOUloss(loss_type='giou'), torch.tensor([0.9026, 0.5, 0.5, 1.5]))
+
+    def test_get_smallest_enclosing_box(self):
+        bboxes1 = torch.tensor([[1, 1, 1, 1], [0, 0, 1, 1]])
+        bboxes2 = torch.tensor([[1, 1, 1, 1], [1, 1, 1, 1]])
+        gt_values = (torch.tensor([[0.5, 0.5], [-0.5, -0.5]]), torch.tensor([[1.5, 1.5], [1.5, 1.5]]))
+        values = get_smallest_enclosing_box(bboxes1, bboxes2)
+        for value, gt_value in zip(values, gt_values):
+            assert (value == gt_value).all(), f"{value} != {gt_value}"
+

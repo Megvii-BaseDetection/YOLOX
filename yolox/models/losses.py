@@ -6,7 +6,7 @@ import torch
 import torch.nn as nn
 
 
-def get_smalest_enclosing_box(box1, box2) -> tuple[torch.Tensor, torch.Tensor]:
+def get_smallest_enclosing_box(box1, box2) -> tuple[torch.Tensor, torch.Tensor]:
     box_top_left = torch.min(
         (box1[:, :2] - box1[:, 2:] / 2), (box2[:, :2] - box2[:, 2:] / 2)
     )
@@ -14,13 +14,6 @@ def get_smalest_enclosing_box(box1, box2) -> tuple[torch.Tensor, torch.Tensor]:
         (box1[:, :2] + box1[:, 2:] / 2), (box2[:, :2] + box2[:, 2:] / 2)
     )
     return box_top_left, box_bottom_right
-
-
-def get_d_c_parameters(box1, box2) -> tuple[torch.Tensor, torch.Tensor]:
-    d = (box1[:, :2] - box2[:, :2]).pow(2).sum(1).sqrt()
-    c_tl, c_br = get_smalest_enclosing_box(box1, box2)
-    c = (c_br - c_tl).pow(2).sum(1).sqrt()
-    return d, c
 
 
 class IOUloss(nn.Module):
@@ -57,7 +50,7 @@ class IOUloss(nn.Module):
             loss = 1 - iou ** 2
 
         elif self.loss_type == "giou":
-            c_tl, c_br = get_smalest_enclosing_box(pred, target)
+            c_tl, c_br = get_smallest_enclosing_box(pred, target)
             area_c = torch.prod(c_br - c_tl, 1)
             giou = iou - (area_c - area_union) / area_c.clamp(1e-16)
             loss = 1 - giou.clamp(min=-1.0, max=1.0)
