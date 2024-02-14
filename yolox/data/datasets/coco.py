@@ -4,6 +4,7 @@
 import copy
 import os
 from glob import glob
+import time
 
 import cv2
 import numpy as np
@@ -157,6 +158,9 @@ class COCODataset(CacheDataset):
         image_file_path = self.image_paths[image_file_name]
 
         image = cv2.imread(image_file_path)
+        if image is None:
+            time.sleep(3)
+            image = cv2.imread(image_file_path)
         assert image is not None, f"file named {image_file_path} not found"
 
         return image
