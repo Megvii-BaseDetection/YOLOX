@@ -209,18 +209,19 @@ static void generate_yolox_proposals(std::vector<GridAndStride> grid_strides, fl
 
 float* blobFromImage(cv::Mat& img){
     float* blob = new float[img.total()*3];
-    int channels = 3;
     int img_h = img.rows;
     int img_w = img.cols;
-    for (size_t c = 0; c < channels; c++) 
-    {
-        for (size_t  h = 0; h < img_h; h++) 
-        {
-            for (size_t w = 0; w < img_w; w++) 
-            {
-                blob[c * img_w * img_h + h * img_w + w] =
-                    (float)img.at<cv::Vec3b>(h, w)[c];
-            }
+
+    int i = 0;
+	for (int row = 0; row < img_h; ++row) {
+		uchar* uc_pixel = img.data + row * img.step;
+		for (int col = 0; col < img_w; ++col)
+		{
+			blob[i] = (float)uc_pixel[2];
+			blob[i + img_h * img_w] = (float)uc_pixel[1];
+			data[i + 2 * img_h * img_w] = (float)uc_pixel[0];
+			uc_pixel += 3;
+			++i;
         }
     }
     return blob;
