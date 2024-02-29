@@ -133,28 +133,28 @@ class Predictor(object):
 
     def inference_in_batch(self, images: list[ndarray]) -> tuple[torch.Tensor, list[float]]:
         """
-        Inference with batch images.
+        Inference with batch images. This method is equivalent to `inference` but is adapted for batch inference.
         :param images: list of images, each image is in shape (height, width, channels) in BGR format.
         :return: tuple of (outputs, aspect_ratios):
             - `outputs` list of tensors, each tensor is in shape (N, 6), where N is the number of bboxes detected on the
                 corresponding image. The 6 columns are (x1, y1, x2, y2, obj_conf, class_conf, class_pred).
             - `aspect_ratios` list of aspect ratios of each image.
         """
-        aspect_ratios = []
-        processed_images = []
+        aspect_ratios: list[float] = []
+        processed_images: list[torch.Tensor] = []
         for image in images:
             aspect_ratios.append(min(self.test_size[0] / image.shape[0], self.test_size[1] / image.shape[1]))
             image, _ = self.preproc(image, None, self.test_size)
             image = torch.from_numpy(image)
             processed_images.append(image)
-        processed_images = torch.stack(processed_images)
+        images_stack = torch.stack(processed_images)
         if self.device == "gpu":
-            processed_images = processed_images.cuda()
+            images_stack = images_stack.cuda()
             if self.fp16:
-                processed_images = processed_images.half()
+                images_stack = images_stack.half()
         with torch.no_grad():
             t0 = time.time()
-            outputs = self.model(processed_images)
+            outputs = self.model(images_stack)
             outputs = postprocess(outputs, self.num_classes, self.confthre, self.nmsthre, class_agnostic=True)
             logger.info("Infer time: {:.4f}s".format(time.time() - t0))
         return outputs, aspect_ratios
