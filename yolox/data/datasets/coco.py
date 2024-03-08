@@ -101,6 +101,8 @@ class COCODataset(CacheDataset):
             y1 = np.max((0, obj["bbox"][1]))
             x2 = np.min((width, x1 + np.max((0, obj["bbox"][2]))))
             y2 = np.min((height, y1 + np.max((0, obj["bbox"][3]))))
+            if "area" not in obj:
+                obj["area"] = (x2-x1) * (y2-y1)
             if obj["area"] > 0 and x2 >= x1 and y2 >= y1:
                 obj["clean_bbox"] = [x1, y1, x2, y2]
                 objs.append(obj)
