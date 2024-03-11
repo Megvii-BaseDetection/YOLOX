@@ -3,7 +3,6 @@
 # Copyright (c) Megvii, Inc. and its affiliates.
 import copy
 import os
-# import scandir
 
 from glob import glob
 import time
@@ -156,23 +155,6 @@ class COCODataset(CacheDataset):
             interpolation=cv2.INTER_LINEAR,
         ).astype(np.uint8)
         return resized_img
-
-    # def find_file(self, filename):
-    #     for root, dirs, files in scandir.walk(self.data_dir):
-    #         if filename in files:
-    #             return os.path.join(root, filename)
-    #     return None
-    #
-    # def load_image(self, index):
-    #     file_name = self.annotations[index][3]
-    #
-    #     img_file = self.find_file(file_name)
-    #
-    #     img = cv2.imread(img_file)
-    #     assert img is not None, f"file named {img_file} not found"
-    #
-    #     return img
-
 
     def load_image(self, index):
         image_file_name = self.annotations[index][3]
