@@ -43,7 +43,7 @@ class COCODataset(CacheDataset):
         self,
         data_dir=None,
         json_file="instances_train2017.json",
-        name=None,
+        name="train2017",
         img_size=(416, 416),
         preproc=None,
         cache=False,
