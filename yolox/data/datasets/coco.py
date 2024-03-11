@@ -3,7 +3,6 @@
 # Copyright (c) Megvii, Inc. and its affiliates.
 import copy
 import os
-
 from glob import glob
 import time
 
