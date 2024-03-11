@@ -3,6 +3,8 @@
 # Copyright (c) Megvii, Inc. and its affiliates.
 import copy
 import os
+# import scandir
+
 from glob import glob
 import time
 
@@ -43,7 +45,7 @@ class COCODataset(CacheDataset):
         self,
         data_dir=None,
         json_file="instances_train2017.json",
-        name="train2017",
+        name=None,
         img_size=(416, 416),
         preproc=None,
         cache=False,
@@ -116,8 +118,6 @@ class COCODataset(CacheDataset):
             y2 = np.min((height, y1 + np.max((0, obj["bbox"][3]))))
             if "area" not in obj:
                 obj["area"] = (x2-x1) * (y2-y1)
-            if "iscrowd" not in obj:
-                obj["iscrowd"] = False
             if obj["area"] > 0 and x2 >= x1 and y2 >= y1:
                 obj["clean_bbox"] = [x1, y1, x2, y2]
                 objs.append(obj)
@@ -156,6 +156,23 @@ class COCODataset(CacheDataset):
             interpolation=cv2.INTER_LINEAR,
         ).astype(np.uint8)
         return resized_img
+
+    # def find_file(self, filename):
+    #     for root, dirs, files in scandir.walk(self.data_dir):
+    #         if filename in files:
+    #             return os.path.join(root, filename)
+    #     return None
+    #
+    # def load_image(self, index):
+    #     file_name = self.annotations[index][3]
+    #
+    #     img_file = self.find_file(file_name)
+    #
+    #     img = cv2.imread(img_file)
+    #     assert img is not None, f"file named {img_file} not found"
+    #
+    #     return img
+
 
     def load_image(self, index):
         image_file_name = self.annotations[index][3]
