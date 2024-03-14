@@ -1,5 +1,5 @@
 # syntax=docker/dockerfile:experimental
-FROM pytorch/pytorch:1.4-cuda10.1-cudnn7-devel
+FROM pytorch/pytorch:1.7.0-cuda11.0-cudnn8-devel
 ENV TZ="UTC"
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
@@ -13,12 +13,12 @@ RUN apt-get update && \
     conda install -y -c conda-forge ffmpeg && \
     apt-get clean
 
-COPY requirements.txt /workspace/
+COPY training-requirements.txt /workspace/
 ### Install application including those in Aquabyte PyPI
 RUN mkdir -p -m 0600 ~/.ssh && ssh-keyscan github.com >> ~/.ssh/known_hosts
 ENV PIP_EXTRA_INDEX_URL=http://aquabyte-repository.s3-website-us-west-1.amazonaws.com/pypi/
 ENV PIP_TRUSTED_HOST=aquabyte-repository.s3-website-us-west-1.amazonaws.com
-RUN --mount=type=ssh pip install --no-cache-dir -U pip setuptools wheel && pip install -r requirements.txt
+RUN --mount=type=ssh pip install --no-cache-dir -U pip setuptools wheel && pip install -r training-requirements.txt
 
 RUN echo '%sudo ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
 

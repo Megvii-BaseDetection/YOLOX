@@ -219,3 +219,6 @@ events.out.tfevents*
 
 # vim
 .vim
+
+# downloaded data
+data/

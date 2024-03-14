@@ -16,8 +16,9 @@ build:  ## build image
 start:  ## start containerized gpu research
 	docker run --rm \
 			--gpus 'device=0' \
-			-v $(HOME)/.aws/credentials:/root/.aws/credentials:ro \
+			-v $(HOME)/.aws/credentials:/root/.aws/credentials \
 			-v $(ROOT_DIR)/:/workspace/mnt/ \
 			-p 8888:8888 \
 			-it yolox
 
+#:ro

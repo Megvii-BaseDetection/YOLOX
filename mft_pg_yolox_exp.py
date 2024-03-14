@@ -19,7 +19,7 @@ class Exp(MyExp):
           self.width = 1.
 
         # Define yourself dataset path
-        self.data_dir = "coco_root"
+        self.data_dir = "/workspace/mnt/data"
         self.train_ann = "train.json"
         self.val_ann = "val.json"
 
