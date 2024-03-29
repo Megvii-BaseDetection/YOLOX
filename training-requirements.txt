@@ -1,5 +1,5 @@
 numpy
-torch~=1.7
+torch>=1.7 #torch version is defined in Dockerfile
 opencv_python==4.*
 scipy==1.*
 loguru
@@ -24,3 +24,5 @@ s3path
 aquabyte-lib[db,snowflake]>=0.5,<0.6
 matplotlib
 pycocotools
+albumentations
+fiftyone

@@ -16,9 +16,11 @@ build:  ## build image
 start:  ## start containerized gpu research
 	docker run --rm \
 			--gpus 'device=0' \
+			--shm-size=4096m \
 			-v $(HOME)/.aws/credentials:/root/.aws/credentials \
 			-v $(ROOT_DIR)/:/workspace/mnt/ \
-			-p 8888:8888 \
+			-v /:/outer_root \
+			-p 8887:8887 \
 			-it yolox
 
 #:ro

@@ -17,6 +17,32 @@ import numpy as np
 
 from yolox.utils import xyxy2cxcywh
 
+# try to import albumentations, if not, use opencv for data augmentation
+try:
+    import albumentations as A
+    alb_transform = A.Compose(
+    [
+        A.Flip(p=0.5),
+        A.RandomRotate90(p=0.5),
+        A.BBoxSafeRandomCrop(p=0.5),
+        A.ColorJitter(brightness=0,contrast=0,saturation=2,hue=0.2,p=0.5),
+        A.OneOf([
+            A.Blur(blur_limit=(3,20)),
+            A.Posterize(num_bits=(2,5)),
+            A.CLAHE(clip_limit=4.0, tile_grid_size=(8, 8)),
+            A.ImageCompression(quality_lower=10, quality_upper=100),
+            A.ToGray(),
+            A.ChannelShuffle(),
+            A.FancyPCA(alpha=0.1),
+        ], p=0.8),
+    ],
+    # pascal_voc is xywh format for bbox
+    bbox_params=A.BboxParams(format='pascal_voc', label_fields=['category_ids']),
+)
+
+except ImportError:
+    A = None
+
 
 def augment_hsv(img, hgain=5, sgain=30, vgain=30):
     hsv_augs = np.random.uniform(-1, 1, 3) * [hgain, sgain, vgain]  # random gains
@@ -166,11 +192,15 @@ class TrainTransform:
         self.flip_prob = flip_prob
         self.hsv_prob = hsv_prob
 
-    def __call__(self, image, targets, input_dim):
+    def __call__(self, image, targets, input_dim, use_albumentations=True):
         boxes = targets[:, :4].copy()
         labels = targets[:, 4].copy()
         if len(boxes) == 0:
             targets = np.zeros((self.max_labels, 5), dtype=np.float32)
+            if A is not None and use_albumentations:
+                # adding augmentation for empty images
+                transformed = alb_transform(image=image, bboxes=boxes, category_ids=labels)
+                image = transformed['image']
             image, r_o = preproc(image, input_dim)
             return image, targets
 
@@ -182,9 +212,17 @@ class TrainTransform:
         # bbox_o: [xyxy] to [c_x,c_y,w,h]
         boxes_o = xyxy2cxcywh(boxes_o)
 
-        if random.random() < self.hsv_prob:
-            augment_hsv(image)
-        image_t, boxes = _mirror(image, boxes, self.flip_prob)
+        if A is None or use_albumentations is False:
+            # original augmentations are just hsv and horizontal flip
+            if random.random() < self.hsv_prob:
+                augment_hsv(image)
+            image_t, boxes = _mirror(image, boxes, self.flip_prob)
+        else:
+            # use albumentations if available
+            transformed = alb_transform(image=image, bboxes=boxes, category_ids=labels)
+            image_t = transformed['image']
+            boxes = np.vstack(transformed['bboxes'])
+
         height, width, _ = image_t.shape
         image_t, r_ = preproc(image_t, input_dim)
         # boxes [xyxy] 2 [cx,cy,w,h]
