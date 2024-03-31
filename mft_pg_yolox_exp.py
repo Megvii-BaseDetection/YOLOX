@@ -32,8 +32,9 @@ class Exp(MyExp):
         self.input_size = (416, 416)
         self.test_size = (416, 416)
 
-        # self.mosaic_prob = 0.5
-        # self.enable_mixup = False
+        self.mosaic_prob = 0 # this config means tiling multiple images into one image, having this does not work with albumentations bboxes
+        self.enable_mixup = False # this config means blending multiple images into one image with different transparencies
+        self.multiscale_range = 0 # this does not resize the image as an augmentation, we will rely on albumentations BBoxSafeRandomCrop instead, since this is not safe for whole fish bbox
 
         self.exp_name = os.path.split(os.path.realpath(__file__))[1].split(".")[0]
 

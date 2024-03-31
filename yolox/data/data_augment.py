@@ -194,6 +194,10 @@ class TrainTransform:
 
     def __call__(self, image, targets, input_dim, use_albumentations=True):
         boxes = targets[:, :4].copy()
+        # clip boxes to image size
+        boxes[:, 0::2] = np.clip(boxes[:, 0::2], 0, image.shape[1])
+        boxes[:, 1::2] = np.clip(boxes[:, 1::2], 0, image.shape[0])
+
         labels = targets[:, 4].copy()
         if len(boxes) == 0:
             targets = np.zeros((self.max_labels, 5), dtype=np.float32)

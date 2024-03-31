@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:experimental
-#FROM pytorch/pytorch:1.7.0-cuda11.0-cudnn8-devel
-FROM pytorch/pytorch:2.2.1-cuda12.1-cudnn8-devel
+FROM pytorch/pytorch:1.7.0-cuda11.0-cudnn8-devel
+#FROM pytorch/pytorch:2.2.1-cuda12.1-cudnn8-devel
 ENV TZ="UTC"
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
