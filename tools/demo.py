@@ -131,10 +131,13 @@ class Predictor(object):
             self.model(x)
             self.model = model_trt
 
-    def inference_in_batch(self, images: list[ndarray]) -> tuple[torch.Tensor, list[float]]:
+    def inference_in_batch(self, images: list[ndarray], preprocess_images: bool = True) -> \
+            tuple[list[torch.Tensor], list[float]]:
         """
         Inference with batch images. This method is equivalent to `inference` but is adapted for batch inference.
         :param images: list of images, each image is in shape (height, width, channels) in BGR format.
+        :param preprocess_images: Use preprocessing on images. Default is True. If False, images should be preprocessed
+                                  before calling this method.
         :return: tuple of (outputs, aspect_ratios):
             - `outputs` list of tensors, each tensor is in shape (N, 6), where N is the number of bboxes detected on the
                 corresponding image. The 6 columns are (x1, y1, x2, y2, obj_conf, class_conf, class_pred).
@@ -144,7 +147,10 @@ class Predictor(object):
         processed_images: list[torch.Tensor] = []
         for image in images:
             aspect_ratios.append(min(self.test_size[0] / image.shape[0], self.test_size[1] / image.shape[1]))
-            image, _ = self.preproc(image, None, self.test_size)
+            if preprocess_images:
+                image, _ = self.preproc(image, None, self.test_size)
+            else:
+                image = image.transpose((2, 0, 1))
             image = torch.from_numpy(image)
             processed_images.append(image)
         images_stack = torch.stack(processed_images)
@@ -159,7 +165,23 @@ class Predictor(object):
             logger.info("Infer time: {:.4f}s".format(time.time() - t0))
         return outputs, aspect_ratios
 
-    def inference(self, img):
+    def inference(self, img: ndarray, preprocess_image: bool = True) -> tuple[torch.Tensor, dict]:
+        """
+        Inference with single image.
+        :param img: image in shape (height, width, channels) in BGR format.
+        :param preprocess_image: Use preprocessing on image. Default is True. If False, image should be preprocessed
+                                 before calling this method.
+        :return: tuple of (outputs, img_info):
+            - `outputs` tensor in shape (N, 6), where N is the number of bboxes detected on the image. The 6 columns are
+                (x1, y1, x2, y2, obj_conf, class_conf, class_pred).
+            - `img_info` dictionary containing image information:
+                - `id`: image id, always 0.
+                - `file_name`: file name of the image. None if image is not loaded from file.
+                - `height`: height of the image.
+                - `width`: width of the image.
+                - `raw_img`: raw image in BGR format.
+                - `ratio`: ratio of resizing the image.
+        """
         img_info = {"id": 0}
         if isinstance(img, str):
             img_info["file_name"] = os.path.basename(img)
@@ -174,8 +196,10 @@ class Predictor(object):
 
         ratio = min(self.test_size[0] / img.shape[0], self.test_size[1] / img.shape[1])
         img_info["ratio"] = ratio
-
-        img, _ = self.preproc(img, None, self.test_size)
+        if preprocess_image:
+            img, _ = self.preproc(img, None, self.test_size)
+        else:
+            img = img.transpose((2, 0, 1))
         img = torch.from_numpy(img).unsqueeze(0)
         img = img.float()
         if self.device == "gpu":
