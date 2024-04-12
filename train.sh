@@ -1,5 +1,5 @@
 #!/bin/bash
 # launch tensorboard
-tensorboard --logdir=YOLOX_outputs --port=6006 &
+tensorboard --logdir=/workspace/mnt/YOLOX_outputs/mft_pg_yolox_exp --host 0.0.0.0 --port 6006 &
 
 python train.py -f mft_pg_yolox_exp.py -b 16 --cache
