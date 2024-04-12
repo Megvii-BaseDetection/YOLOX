@@ -21,6 +21,8 @@ start:  ## start containerized gpu research
 			-v $(ROOT_DIR)/:/workspace/mnt/ \
 			-v /:/outer_root \
 			-p 8887:8887 \
+			-p 5151:5151 \
+			-p 6006:6006 \
 			-it yolox
 
 #:ro

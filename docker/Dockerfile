@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:experimental
-FROM pytorch/pytorch:1.7.0-cuda11.0-cudnn8-devel
-#FROM pytorch/pytorch:2.2.1-cuda12.1-cudnn8-devel
+#FROM pytorch/pytorch:1.7.0-cuda11.0-cudnn8-devel
+FROM pytorch/pytorch:2.2.1-cuda12.1-cudnn8-devel
 ENV TZ="UTC"
 RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 
@@ -9,7 +9,7 @@ RUN apt-key adv --fetch-keys https://developer.download.nvidia.com/compute/machi
 
 # Instal basic utilities
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends nano tmux git wget unzip bzip2 sudo && \
+    apt-get install -y --no-install-recommends nano tmux git wget unzip bzip2 sudo curl libcurl4 && \
     apt-get install -y ssh libsm6 libxext6 imagemagick awscli ffmpeg && \
     conda install -y -c conda-forge ffmpeg && \
     apt-get clean

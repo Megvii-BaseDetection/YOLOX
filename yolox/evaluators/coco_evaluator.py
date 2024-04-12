@@ -30,7 +30,7 @@ class COCOEvaluator:
     """
 
     def __init__(
-        self, dataloader, img_size, confthre, nmsthre, num_classes, testdev=False
+        self, dataloader, img_size, confthre, nmsthre, num_classes, testdev=False, result_file=None
     ):
         """
         Args:
@@ -47,6 +47,7 @@ class COCOEvaluator:
         self.nmsthre = nmsthre
         self.num_classes = num_classes
         self.testdev = testdev
+        self.result_file = result_file
 
     def evaluate(
         self,
@@ -199,7 +200,11 @@ class COCOEvaluator:
                 json.dump(data_dict, open("./yolox_testdev_2017.json", "w"))
                 cocoDt = cocoGt.loadRes("./yolox_testdev_2017.json")
             else:
-                _, tmp = tempfile.mkstemp()
+                if self.result_file is not None:
+                    tmp = str(self.result_file)
+                else:
+                    _, tmp = tempfile.mkstemp()
+                logger.info("writing results to {}".format(tmp))
                 json.dump(data_dict, open(tmp, "w"))
                 cocoDt = cocoGt.loadRes(tmp)
             try:

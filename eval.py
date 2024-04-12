@@ -15,7 +15,8 @@ from torch.nn.parallel import DistributedDataParallel as DDP
 from yolox.core import launch
 from yolox.exp import get_exp
 from yolox.utils import configure_nccl, fuse_model, get_local_rank, get_model_info, setup_logger
-
+from pathlib import Path
+import json
 
 def make_parser():
     parser = argparse.ArgumentParser("YOLOX Eval")
@@ -97,6 +98,12 @@ def make_parser():
         help="speed test only.",
     )
     parser.add_argument(
+        "--result_file",
+        help="The path to save the coco format inference results.",
+        default=None,
+        type=str,
+    )
+    parser.add_argument(
         "opts",
         help="Modify config options using the command-line",
         default=None,
@@ -143,7 +150,7 @@ def main(exp, args, num_gpu):
     logger.info("Model Structure:\n{}".format(str(model)))
 
     evaluator = exp.get_evaluator(args.batch_size, is_distributed, args.test, args.legacy)
-
+    evaluator.result_file = Path(args.result_file) if args.result_file else None
     torch.cuda.set_device(rank)
     model.cuda(rank)
     model.eval()
@@ -186,6 +193,20 @@ def main(exp, args, num_gpu):
     )
     logger.info("\n" + summary)
 
+    # load the validation results
+    if not args.test and args.result_file is not None:
+        val_file = Path(exp.data_dir) / "annotations" / exp.val_ann
+        with open(val_file, "r") as f:
+            val_coco_annotations = json.load(f)
+        with open(args.result_file, "r") as f:
+            val_results = json.load(f)
+        
+        # replace the annotations key with the validation annotations
+        val_coco_annotations["annotations"] = val_results
+
+        # save the validation results
+        with open(args.result_file, "w") as f:
+            json.dump(val_coco_annotations, f)
 
 if __name__ == "__main__":
     args = make_parser().parse_args()
