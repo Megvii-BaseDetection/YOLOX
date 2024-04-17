@@ -152,6 +152,7 @@ class Predictor(object):
             else:
                 image = image.transpose((2, 0, 1))
             image = torch.from_numpy(image)
+            image = image.float()
             processed_images.append(image)
         images_stack = torch.stack(processed_images)
         if self.device == "gpu":
