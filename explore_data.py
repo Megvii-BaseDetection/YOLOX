@@ -6,6 +6,7 @@ import json
 import fiftyone as fo
 import fiftyone.utils.coco as fouc
 
+from tqdm import tqdm
 
 ROOT_DIR = "/workspace/mnt/"
 TRAIN_SAVE_PATH = f"{ROOT_DIR}data/train2017/"
@@ -40,7 +41,7 @@ classes = coco_dataset.default_classes
 fouc.add_coco_labels(coco_dataset, "predictions", predictions, classes)
 
 # loop through the coco_dataset and tag each with the source_name
-for sample in coco_dataset.iter_samples():
+for sample in tqdm(coco_dataset.iter_samples(), total=len(coco_dataset)):
     # find the row in df_image_data that matches the sample's coco_id
     row = df_image_data[df_image_data["id"] == sample["coco_id"]].iloc[0]
     sample["source_name"] = row["source_name"]
