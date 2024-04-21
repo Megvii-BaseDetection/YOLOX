@@ -40,7 +40,7 @@ PLALI_QUEUE_NAMES = [
     "fish_bbox_toy_fish",
     "fish_bbox_penflix_plali_samples",
     "fish_bbox_in_air_gtsf",
-    "fish_bbox_ice_fish_farm_feedingcam",
+    "fish_bbox_highrecall_ice_fish_farm_feedingcam",
 ]
 
 # these constants are used to load the dataset used to train the previous model

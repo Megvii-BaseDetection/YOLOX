@@ -109,6 +109,13 @@ def make_parser():
         default=None,
         nargs=argparse.REMAINDER,
     )
+    parser.add_argument(
+        "--class_agnostic",
+        dest="class_agnostic",
+        default=False,
+        action="store_true",
+        help="Class agnostic nms supression",
+    )
     return parser
 
 
@@ -149,7 +156,7 @@ def main(exp, args, num_gpu):
     logger.info("Model Summary: {}".format(get_model_info(model, exp.test_size)))
     logger.info("Model Structure:\n{}".format(str(model)))
 
-    evaluator = exp.get_evaluator(args.batch_size, is_distributed, args.test, args.legacy)
+    evaluator = exp.get_evaluator(args.batch_size, is_distributed, args.test, args.legacy, class_agnostic=args.class_agnostic)
     evaluator.result_file = Path(args.result_file) if args.result_file else None
     torch.cuda.set_device(rank)
     model.cuda(rank)

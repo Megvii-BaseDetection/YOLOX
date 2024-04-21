@@ -30,7 +30,7 @@ class COCOEvaluator:
     """
 
     def __init__(
-        self, dataloader, img_size, confthre, nmsthre, num_classes, testdev=False, result_file=None
+        self, dataloader, img_size, confthre, nmsthre, num_classes, testdev=False, result_file=None, class_agnostic=False,
     ):
         """
         Args:
@@ -48,6 +48,7 @@ class COCOEvaluator:
         self.num_classes = num_classes
         self.testdev = testdev
         self.result_file = result_file
+        self.class_agnostic = class_agnostic
 
     def evaluate(
         self,
@@ -115,7 +116,7 @@ class COCOEvaluator:
                     inference_time += infer_end - start
 
                 outputs = postprocess(
-                    outputs, self.num_classes, self.confthre, self.nmsthre
+                    outputs, self.num_classes, self.confthre, self.nmsthre, class_agnostic=self.class_agnostic
                 )
                 if is_time_record:
                     nms_end = time_synchronized()

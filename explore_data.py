@@ -19,9 +19,11 @@ val_data = json.load(open(f"{ANNOTATION_SAVE_PATH}val.json"))
 df_image_data = pd.json_normalize(val_data["images"])
 
 # Load the prediction results
-results = json.load(open(f"{ANNOTATION_SAVE_PATH}inference_result.json"))
-predictions = results["annotations"]
+results_retrain = json.load(open(f"{ANNOTATION_SAVE_PATH}inference_result.json"))
+prediction_retrain = results_retrain["annotations"]
 
+results_prod = json.load(open(f"{ANNOTATION_SAVE_PATH}prod_inference_result.json"))
+prediction_prod = results_prod["annotations"]
 
 # Load COCO formatted dataset
 coco_dataset = fo.Dataset.from_dir(
@@ -38,7 +40,8 @@ print(coco_dataset.default_classes)  # ['airplane', 'apple', ...]
 
 # Add COCO predictions to `predictions` field of dataset
 classes = coco_dataset.default_classes
-fouc.add_coco_labels(coco_dataset, "predictions", predictions, classes)
+fouc.add_coco_labels(coco_dataset, "predictions_retrain", prediction_retrain, classes)
+fouc.add_coco_labels(coco_dataset, "predictions_prod", prediction_prod, classes)
 
 # loop through the coco_dataset and tag each with the source_name
 for sample in tqdm(coco_dataset.iter_samples(), total=len(coco_dataset)):
