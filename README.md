@@ -9,6 +9,24 @@ This repo is an implementation of PyTorch version YOLOX, there is also a [MegEng
 
 <img src="assets/git_fig.png" width="1000" >
 
+## Aquabyte Implementation
+Aquabyte has modified the repository such that it is possible to do inference with pytorch 1.4 instead of 1.7.
+
+### Training
+In order to replicate the training process for the latest fish detector, follow the following steps:
+- Clone this repository
+- run `make build` to build training docker
+- run `make start` to enter the training docker container and navigate to `/workspace/mnt/`
+- run `python download_datasets.py`. This script downloads the datasets from PLALI and the previous high recall detector training set, cleans them, and outputs the appropriate COCO format.
+- run `./train.sh` to start training. Training process takes < 1 day on a single H100 as it is currentlly configured
+- run `./eval.sh` to use the production confidence and NMS threshold settings to evaluate the trained model, versus the default model
+- run `python explore_data.py` to visualize the results in fifty-one.
+
+Note that the training requirements are different from the inference requirements.
+
+***
+Below are from the original document
+
 ## Updates!!
 * 【2021/08/19】 We optimize the training process with **2x** faster training and **~1%** higher performance! See [notes](docs/updates_note.md) for more details.
 * 【2021/08/05】 We release [MegEngine version YOLOX](https://github.com/MegEngine/YOLOX).
