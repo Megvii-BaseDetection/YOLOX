@@ -447,22 +447,7 @@ import json, platform, time
 
 ENV_VARS_TRUE_VALUES = {"1", "ON", "YES", "TRUE"}
 
-def is_required_library_available():
-    dotenv_availaible = importlib.util.find_spec("dotenv") is not None
-    mlflow_available = importlib.util.find_spec("mlflow") is not None
-    return dotenv_availaible and mlflow_available
-def flatten_dict(d: MutableMapping, parent_key: str = "", delimiter: str = "."):
-    """Flatten a nested dict into a single level dict."""
 
-    def _flatten_dict(d, parent_key="", delimiter="."):
-        for k, v in d.items():
-            key = str(parent_key) + delimiter + str(k) if parent_key else k
-            if v and isinstance(v, MutableMapping):
-                yield from flatten_dict(v, key, delimiter=delimiter).items()
-            else:
-                yield key, v
-
-    return dict(_flatten_dict(d, parent_key, delimiter))
 
 class MlflowLogger(object):
     """
@@ -478,7 +463,7 @@ class MlflowLogger(object):
     https://docs.wandb.ai/guides/integrations/other/yolox
     """
     def __init__(self):
-        if not is_required_library_available():
+        if not self.is_required_library_available():
             raise RuntimeError("MLflow Logging requires mlflow and python-dotenv to be installed. Run `pip install mlflow python-dotenv`." )
 
         import mlflow
@@ -491,6 +476,24 @@ class MlflowLogger(object):
         self.best_ckpt_upload_pending = False
         self._ml_flow = mlflow
 
+    def is_required_library_available(self):
+        "check if required libraries are available."
+        dotenv_availaible = importlib.util.find_spec("dotenv") is not None
+        mlflow_available = importlib.util.find_spec("mlflow") is not None
+        return dotenv_availaible and mlflow_available
+
+    def flatten_dict(self, d: MutableMapping, parent_key: str = "", delimiter: str = "."):
+        """Flatten a nested dict into a single level dict."""
+
+        def _flatten_dict(d, parent_key="", delimiter="."):
+            for k, v in d.items():
+                key = str(parent_key) + delimiter + str(k) if parent_key else k
+                if v and isinstance(v, MutableMapping):
+                    yield from self.flatten_dict(v, key, delimiter=delimiter).items()
+                else:
+                    yield key, v
+
+        return dict(_flatten_dict(d, parent_key, delimiter))
 
     def setup(self, trainer):
         """
@@ -597,8 +600,18 @@ class MlflowLogger(object):
                 self._ml_flow.set_tags(mlflow_tags)
 
     def log_params_mlflow(self, rank, params_dict, **kwargs):
+        """
+        Log hyperparameters to MLflow. MLflow's log_param() only accepts values no longer than 250 characters.
+        no overwriting of existing parameters is allowed by default from mlflow.
+
+        Input:
+            rank: int 0 if it is main thread
+            params_dict: dict of hyperparameters
+
+        """
+
         if rank ==0:
-            params_dict = flatten_dict(params_dict) if self._flatten_params else params_dict
+            params_dict = self.flatten_dict(params_dict) if self._flatten_params else params_dict
             # remove params that are too long for MLflow
             for name, value in list(params_dict.items()):
                 # internally, all values are converted to str in MLflow
@@ -623,6 +636,12 @@ class MlflowLogger(object):
     def convert_exp_todict(self, exp):
         """
         Convert the experiment object to dictionary for required parameter only
+
+        Input:
+            exp: Experiment object
+        Output:
+            exp_dict: dict of experiment parameters
+
         """
         filter_keys = ['max_epoch',  'num_classes', 'input_size', 'output_dir', 'data_dir', 'train_ann', 'val_ann', 'test_ann', 'test_conf', 'nmsthre']
         exp_dict = {k: v for k, v in exp.__dict__.items() if not k.startswith("__") and k in filter_keys}
@@ -631,11 +650,11 @@ class MlflowLogger(object):
     def on_log(self, trainer, logs,  **kwargs):
         """
         Log metrics to MLflow.
-        args: TrainingArguments
-        rank: int 0 if it is main thread
-        logs: Dict[str, float] list of metrices to publish
-        step: iteration no.
-        model: model
+
+        Input:
+            trainer: Trainer class object
+            logs: dict of metrics
+
         """
         rank = trainer.rank
         step = trainer.progress_in_iter
@@ -681,12 +700,22 @@ class MlflowLogger(object):
                 self._ml_flow.end_run()
 
     def save_log_file(self, trainer):
+        """
+        Save the training log file to mlflow artifact path
+
+        """
         log_file_path = os.path.join(trainer.file_name, "train_log.txt")
         mlflow_out_dir = f"{trainer.args.experiment_name}"
         logger.info(f"Logging logfile: {log_file_path}  in mlflow artifact path: {mlflow_out_dir}.")
         self._ml_flow.log_artifact(log_file_path, mlflow_out_dir)
 
     def save_checkpoints(self, trainer, update_best_ckpt):
+        """
+        Save the model checkpoints to mlflow artifact path
+        Input:
+            trainer: Trainer class object
+            update_best_ckpt: bool to show if best_ckpt was updated
+        """
         if trainer.rank == 0 and self._mlflow_log_artifacts :
             if update_best_ckpt:  # keep this in memory to upload model only at every upload frequency
                 self.best_ckpt_upload_pending = True
