@@ -448,7 +448,7 @@ import json, platform, time
 ENV_VARS_TRUE_VALUES = {"1", "ON", "YES", "TRUE"}
 
 def is_required_library_available():
-    dotenv_availaible = importlib.util.find_spec("python-dotenv") is not None
+    dotenv_availaible = importlib.util.find_spec("dotenv") is not None
     mlflow_available = importlib.util.find_spec("mlflow") is not None
     return dotenv_availaible and mlflow_available
 def flatten_dict(d: MutableMapping, parent_key: str = "", delimiter: str = "."):
@@ -541,10 +541,12 @@ class MlflowLogger(object):
         self._mlflow_log_model_per_n_epochs = int(os.getenv("YOLOX_MLFLOW_LOG_MODEL_PER_n_EPOCHS", 30))
         self._mlflow_log_nth_epoch_models = os.getenv("YOLOX_MLFLOW_LOG_Nth_EPOCH_MODELS", "False").upper() in ENV_VARS_TRUE_VALUES
         self.run_name = os.getenv("YOLOX_MLFLOW_RUN_NAME", None)
+        self.run_name = None if len(self.run_name.strip())==0 else self.run_name
         self._flatten_params = os.getenv("YOLOX_MLFLOW_FLATTEN_PARAMS", "FALSE").upper() in ENV_VARS_TRUE_VALUES
 
         self._nested_run = os.getenv("MLFLOW_NESTED_RUN", "FALSE").upper() in ENV_VARS_TRUE_VALUES
         self._run_id = os.getenv("MLFLOW_RUN_ID", None)
+
 
         # "synchronous" flag is only available with mlflow version >= 2.8.0
         # https://github.com/mlflow/mlflow/pull/9705
