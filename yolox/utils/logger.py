@@ -460,7 +460,6 @@ class MlflowLogger(object):
 
     For more information, please refer to:
     https://mlflow.org/docs/latest/introduction/index.html
-    https://docs.wandb.ai/guides/integrations/other/yolox
     """
     def __init__(self):
         if not self.is_required_library_available():
