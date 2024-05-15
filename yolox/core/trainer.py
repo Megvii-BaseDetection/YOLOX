@@ -16,6 +16,7 @@ from yolox.utils import (
     MeterBuffer,
     ModelEMA,
     WandbLogger,
+    MlflowLogger,
     adjust_status,
     all_reduce_norm,
     get_local_rank,
@@ -31,7 +32,6 @@ from yolox.utils import (
     setup_logger,
     synchronize
 )
-
 
 class Trainer:
     def __init__(self, exp: Exp, args):
@@ -74,7 +74,8 @@ class Trainer:
         self.before_train()
         try:
             self.train_in_epoch()
-        except Exception:
+        except Exception as e:
+            logger.error("Exception in training: ", e)
             raise
         finally:
             self.after_train()
@@ -177,6 +178,7 @@ class Trainer:
         )
         # Tensorboard and Wandb loggers
         if self.rank == 0:
+
             if self.args.logger == "tensorboard":
                 self.tblogger = SummaryWriter(os.path.join(self.file_name, "tensorboard"))
             elif self.args.logger == "wandb":
@@ -185,8 +187,11 @@ class Trainer:
                     self.exp,
                     self.evaluator.dataloader.dataset
                 )
+            elif self.args.logger == "mlflow":
+                self.mlflow_logger = MlflowLogger()
+                self.mlflow_logger.setup(trainer=self)
             else:
-                raise ValueError("logger must be either 'tensorboard' or 'wandb'")
+                raise ValueError("logger must be either 'tensorboard', 'mlflow' or 'wandb'")
 
         logger.info("Training start...")
         logger.info("\n{}".format(model))
@@ -198,6 +203,8 @@ class Trainer:
         if self.rank == 0:
             if self.args.logger == "wandb":
                 self.wandb_logger.finish()
+            if self.args.logger == "mlflow":
+                self.mlflow_logger.on_train_end(trainer=self)
 
     def before_epoch(self):
         logger.info("---> start train epoch{}".format(self.epoch + 1))
@@ -276,6 +283,12 @@ class Trainer:
                         "train/lr": self.meter["lr"].latest
                     })
                     self.wandb_logger.log_metrics(metrics, step=self.progress_in_iter)
+                if self.args.logger=='mlflow':
+                    logs = {"train/" + k: v.latest for k, v in loss_meter.items()}
+                    logs.update({
+                        "train/lr": self.meter["lr"].latest
+                    })
+                    self.mlflow_logger.on_log(self, logs)
 
             self.meter.clear_meters()
 
@@ -351,12 +364,23 @@ class Trainer:
                     "train/epoch": self.epoch + 1,
                 })
                 self.wandb_logger.log_images(predictions)
+            if self.args.logger== "mlflow":
+                logs = {
+                    "val/COCOAP50": ap50,
+                    "val/COCOAP50_95": ap50_95,
+                    "val/best_ap": round(self.best_ap, 3),
+                    "train/epoch": self.epoch + 1,
+                }
+                self.mlflow_logger.on_log(self, logs)
             logger.info("\n" + summary)
         synchronize()
 
         self.save_ckpt("last_epoch", update_best_ckpt, ap=ap50_95)
         if self.save_history_ckpt:
             self.save_ckpt(f"epoch_{self.epoch + 1}", ap=ap50_95)
+
+        if self.args.logger == "mlflow":
+            self.mlflow_logger.save_checkpoints(self, update_best_ckpt)
 
     def save_ckpt(self, ckpt_name, update_best_ckpt=False, ap=None):
         if self.rank == 0:
