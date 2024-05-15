@@ -60,7 +60,7 @@ pip install databricks-sdk
 Set the following environment variables in your `.env` file:
 ```bash
 MLFLOW_TRACKING_URI="databricks"  # set to databricks
-MLFLOW_EXPERIMENT_NAME="/Users/<user>/<experiment_name>/
+MLFLOW_EXPERIMENT_NAME="/Users/<user>/<experiment_name>/"
 DATABRICKS_HOST = "https://dbc-1234567890123456.cloud.databricks.com" # set to your server URI
 DATABRICKS_TOKEN = "dapixxxxxxxxxxxxx"
 ```
