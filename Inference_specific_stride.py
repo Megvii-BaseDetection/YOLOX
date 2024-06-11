@@ -25,7 +25,7 @@ def make_parser():
     parser.add_argument(
         "--model",
         type=str,
-        default="/home/whoami/Documents/Hanvon/yoloxs0413_320.onnx",
+        default="/home/whoami/Documents/Hanvon/yoloxs_0528.onnx",
         help="Input your onnx model.",
     )
     parser.add_argument(
@@ -37,7 +37,7 @@ def make_parser():
     parser.add_argument(
         "--input_path",
         type=str,
-        default='assets/001.jpg',
+        default='assets/frame_259.png',
         help="Path to your input image.",
     )
     parser.add_argument(
@@ -83,7 +83,7 @@ def inference(args, origin_img):
 
     ort_inputs = {session.get_inputs()[0].name: img[None, :, :, :]}
     output = session.run(None, ort_inputs)
-    print(f"output[0] shape is {output[0].shape}")
+    
     predictions = demo_postprocess(output[0], input_shape, p6=args.with_p6)[0]
 
     
@@ -91,42 +91,36 @@ def inference(args, origin_img):
 
 def image_process(args):
     origin_img = cv2.imread(args.input_path)
-    slice_size = (640, 640)
-    height, width = origin_img.shape[:2]
-    overlap = 0
-    stride = int(slice_size[0] * (1 - overlap))
+
+    slice_size = (480, 480)
+
     count = 0
     total_time = 0
-    copied_frame = copy.deepcopy(origin_img)
-    for y in range(0, height, stride):
-        for x in range(0, width, stride):
+    copied_frame2 = origin_img.copy()# copy.deepcopy(origin_img)
+    output_path = os.path.join(args.output_path, args.input_path.split("/")[-1])
+    crop_path = 'outputs_imgs/crop_003'
+    
+
+    # for y in [0, 300, 600]:
+    #     for x in [0, 360, 720, 1080, 1440]:
+
+    # for y in [0, 300, 600, 900, 1200, 1500, 1680]:
+    #     for x in [0, 360, 720, 1080, 1440, 1800, 2160, 2520, 2880, 3240, 3360]:
+    for y in [0, 300, 600]:
+        for x in [0, 360, 720, 1080, 1440]:
+
             t0 = time.time()
 
             box = (x, y)
-            
-            if x + slice_size[0] <= width and y + slice_size[1] <= height:
-                slice_img = copied_frame[y:y + slice_size[1], x:x + slice_size[0]]
-            elif x + slice_size[0] > width and y + slice_size[1] <= height:
-                slice_img = copied_frame[y:y + slice_size[1], width-slice_size[0]:width]
-                box = (width-slice_size[0], y)
-            elif x + slice_size[0] <= width and y + slice_size[1] > height:
-                slice_img = copied_frame[height-slice_size[1]:height, x:x + slice_size[0]]
-                box = (x, height-slice_size[1])
-            elif x + slice_size[0] > width and y + slice_size[1] > height:
-                slice_img = copied_frame[height-slice_size[1]:height, width-slice_size[0]:width]
-                box = (width-slice_size[0], height-slice_size[1])
-            
-            
+            print(f"box is {box}")
+            copied_frame = copied_frame2.copy()
+            slice_img = copied_frame[y:y + slice_size[1], x:x + slice_size[0]]
+
             
             pred, ratio = inference(args, slice_img)
             print("ratio is ", ratio)
             boxes = pred[:, :4]
             scores = pred[:, 4:5] * pred[:, 5:]
-
-            print(f"Boxes are {pred[:, :4].shape}")
-            print(f"scores1 are {pred[:, 4:5].shape}")
-            print(f"scores2 are {pred[:, 5:].shape}")
-            print(f"scores are ", scores.shape)
 
             boxes_xyxy = np.ones_like(boxes)
             boxes_xyxy[:, 0] = boxes[:, 0] - boxes[:, 2]/2.
@@ -144,18 +138,25 @@ def image_process(args):
                 final_boxes[:, :4] += [box[0], box[1], box[0], box[1]]
                 origin_img = vis(origin_img, final_boxes, final_scores, final_cls_inds,
                                 conf=args.score_thr, class_names=CLASSES)
-                
+
+
+            if not os.path.exists(crop_path):
+                os.makedirs(crop_path)
+            cv2.imwrite(os.path.join(crop_path, f"cropped_image_{count}.jpg"), slice_img)
+            count += 1
+
             logger.info("Infer time: {:.4f}s".format(time.time() - t0))
             total_time += time.time() - t0
 
             mkdir(args.output_path)
             output_path = os.path.join(args.output_path, args.input_path.split("/")[-1])
-            logger.info("Saving detection result in {}".format(output_path))
-            cv2.imwrite('outputs_imgs/crop_001/cropped_image_{}.jpg'.format(count), slice_img)
-            count += 1
+
+
+            
         
-        cv2.imwrite(output_path, origin_img)
-        print(f"Total used time is {total_time}s")
+        
+    cv2.imwrite(output_path, origin_img)    
+    print(f"Total used time is {total_time}s")
 
 
 def imageflow_demo(args):
