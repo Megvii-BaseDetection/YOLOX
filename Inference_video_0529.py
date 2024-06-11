@@ -120,8 +120,9 @@ def imageflow_demo(args):
         ret_val, frame = cap.read()
 
         # 定义切片参数
-        slice_size = (320, 320)
-        overlap = 0.2
+        slice_size = (int(width), int(height))
+        print("slice size is ", slice_size)
+        overlap = 0
 
         # 对图像进行切片
         stride = int(slice_size[0] * (1 - overlap))
@@ -170,6 +171,7 @@ def imageflow_demo(args):
                     
             logger.info("Infer time: {:.4f}s".format(time.time() - t0))
 
+            cv2.imshow('frame',frame)
             # 写入拼接后的图像帧
             vid_writer.write(frame)
             ch = cv2.waitKey(1)
