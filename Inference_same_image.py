@@ -37,7 +37,7 @@ def make_parser():
     parser.add_argument(
         "--input_path",
         type=str,
-        default='assets/test_frames/001.jpg',# 'outputs_imgs/crop_001/cropped_image_101.jpg',# 'assets/test_frames/001.jpg',
+        default='assets/001.jpg',
         help="Path to your input image.",
     )
     parser.add_argument(
@@ -49,7 +49,7 @@ def make_parser():
     parser.add_argument(
         "--output_path",
         type=str,
-        default='outputs_imgs/crop_002',
+        default='outputs_imgs/',
         help="Path to your output directory.",
     )
     parser.add_argument(
