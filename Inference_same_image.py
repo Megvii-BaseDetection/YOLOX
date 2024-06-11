@@ -83,7 +83,7 @@ def inference(args, origin_img):
 
     ort_inputs = {session.get_inputs()[0].name: img[None, :, :, :]}
     output = session.run(None, ort_inputs)
-    print(output[0].shape)
+    print(f"output[0] shape is {output[0].shape}")
     predictions = demo_postprocess(output[0], input_shape, p6=args.with_p6)[0]
 
     
@@ -122,6 +122,11 @@ def image_process(args):
             print("ratio is ", ratio)
             boxes = pred[:, :4]
             scores = pred[:, 4:5] * pred[:, 5:]
+
+            print(f"Boxes are {pred[:, :4].shape}")
+            print(f"scores1 are {pred[:, 4:5].shape}")
+            print(f"scores2 are {pred[:, 5:].shape}")
+            print(f"scores are ", scores.shape)
 
             boxes_xyxy = np.ones_like(boxes)
             boxes_xyxy[:, 0] = boxes[:, 0] - boxes[:, 2]/2.
