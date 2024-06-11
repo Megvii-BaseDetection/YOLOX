@@ -78,7 +78,7 @@ def inference(args, origin_img):
     input_shape = tuple(map(int, args.input_shape.split(',')))
 
     img, ratio = preprocess(origin_img, input_shape)
-    print("Ratio is ", ratio)
+
     session = onnxruntime.InferenceSession(args.model)
 
     ort_inputs = {session.get_inputs()[0].name: img[None, :, :, :]}
@@ -91,22 +91,35 @@ def inference(args, origin_img):
 
 def image_process(args):
     origin_img = cv2.imread(args.input_path)
-    slice_size = (640,640)
+    slice_size = (640, 640)
     height, width = origin_img.shape[:2]
-    stride = 256
+    overlap = 0
+    stride = int(slice_size[0] * (1 - overlap))
     count = 0
+    total_time = 0
     copied_frame = copy.deepcopy(origin_img)
     for y in range(0, height, stride):
         for x in range(0, width, stride):
-            crop_img = copied_frame[y:y + slice_size[1], x:x + slice_size[0]]
-            crop_height_actual, crop_width_actual = crop_img.shape[:2]
-            if crop_height_actual < slice_size[0] or crop_width_actual < slice_size[1]:
-                continue
             t0 = time.time()
+
+            box = (x, y)
             
-            box = (x, y, x + slice_size[0], y + slice_size[1])
-            pred, r = inference(args, crop_img)
-            print("ratio is ", r)
+            if x + slice_size[0] <= width and y + slice_size[1] <= height:
+                slice_img = copied_frame[y:y + slice_size[1], x:x + slice_size[0]]
+            elif x + slice_size[0] > width and y + slice_size[1] <= height:
+                slice_img = copied_frame[y:y + slice_size[1], width-slice_size[0]:width]
+                box = (width-slice_size[0], y)
+            elif x + slice_size[0] <= width and y + slice_size[1] > height:
+                slice_img = copied_frame[height-slice_size[1]:height, x:x + slice_size[0]]
+                box = (x, height-slice_size[1])
+            elif x + slice_size[0] > width and y + slice_size[1] > height:
+                slice_img = copied_frame[height-slice_size[1]:height, width-slice_size[0]:width]
+                box = (width-slice_size[0], height-slice_size[1])
+            
+            
+            
+            pred, ratio = inference(args, slice_img)
+            print("ratio is ", ratio)
             boxes = pred[:, :4]
             scores = pred[:, 4:5] * pred[:, 5:]
 
@@ -115,11 +128,11 @@ def image_process(args):
             boxes_xyxy[:, 1] = boxes[:, 1] - boxes[:, 3]/2.
             boxes_xyxy[:, 2] = boxes[:, 0] + boxes[:, 2]/2.
             boxes_xyxy[:, 3] = boxes[:, 1] + boxes[:, 3]/2.
-            boxes_xyxy /= r
+            boxes_xyxy /= ratio
             dets = multiclass_nms(boxes_xyxy, scores, nms_thr=0.45, score_thr=0.4)
             if dets is not None:
                 final_boxes, final_scores, final_cls_inds = dets[:, :4], dets[:, 4], dets[:, 5]
-                crop_img = vis(crop_img, final_boxes, final_scores, final_cls_inds,
+                slice_img = vis(slice_img, final_boxes, final_scores, final_cls_inds,
                                 conf=args.score_thr, class_names=CLASSES)
                 
                 # 写入原图
@@ -128,14 +141,16 @@ def image_process(args):
                                 conf=args.score_thr, class_names=CLASSES)
                 
             logger.info("Infer time: {:.4f}s".format(time.time() - t0))
-            
+            total_time += time.time() - t0
+
             mkdir(args.output_path)
             output_path = os.path.join(args.output_path, args.input_path.split("/")[-1])
             logger.info("Saving detection result in {}".format(output_path))
-            cv2.imwrite('outputs_imgs/crop_002/cropped_image_{}.jpg'.format(count), crop_img)
+            cv2.imwrite('outputs_imgs/crop_001/cropped_image_{}.jpg'.format(count), slice_img)
             count += 1
-        output_p = os.path.join(args.output_path, args.input_path.split("/")[-1])
-        cv2.imwrite(output_p, origin_img)
+        
+        cv2.imwrite(output_path, origin_img)
+        print(f"Total used time is {total_time}s")
 
 
 def imageflow_demo(args):
