@@ -37,7 +37,7 @@ def make_parser():
     parser.add_argument(
         "--input_path",
         type=str,
-        default='assets/frame_259.png',
+        default='/home/whoami/Documents/Hanvon/云台侦查/pics0607/frame_27.png',
         help="Path to your input image.",
     )
     parser.add_argument(
@@ -49,7 +49,7 @@ def make_parser():
     parser.add_argument(
         "--output_path",
         type=str,
-        default='outputs_imgs/total',
+        default='outputs_imgs/',
         help="Path to your output directory.",
     )
     parser.add_argument(
@@ -90,68 +90,67 @@ def inference(args, origin_img):
     return predictions, ratio
 
 def image_process(args):
-    folder_path = '/home/whoami/Documents/Hanvon/云台侦查/pics0607'
+    origin_img = cv2.imread(args.input_path)
 
-    for filename in os.listdir(folder_path):
-        img_path = os.path.join(folder_path, filename)
-        origin_img = cv2.imread(img_path)
+    slice_size = (480, 480)
 
-        slice_size = (480, 480)
-
-        count = 0
-        total_time = 0
-        copied_frame = origin_img.copy()
-        
-        # crop_path = 'outputs_imgs/crop_000'
-        # if not os.path.exists(crop_path):
-        #     os.makedirs(crop_path)
+    count = 0
+    total_time = 0
+    copied_frame = origin_img.copy()# copy.deepcopy(origin_img)
+    output_path = os.path.join(args.output_path, args.input_path.split("/")[-1])
+    
+    crop_path = 'outputs_imgs/crop_000'
+    if not os.path.exists(crop_path):
+        os.makedirs(crop_path)
 
 
-        # for y in [0, 300, 600, 900, 1200, 1500, 1680]:
-        #     for x in [0, 360, 720, 1080, 1440, 1800, 2160, 2520, 2880, 3240, 3360]:
-        for y in [0, 300, 600]:
-            for x in [0, 360, 720, 1080, 1440]:
+    # for y in [0, 300, 600, 900, 1200, 1500, 1680]:
+    #     for x in [0, 360, 720, 1080, 1440, 1800, 2160, 2520, 2880, 3240, 3360]:
+    for y in [0, 300, 600]:
+        for x in [0, 360, 720, 1080, 1440]:
 
-                t0 = time.time()
+            t0 = time.time()
 
-                box = (x, y)
-                print(f"box is {box}")
+            box = (x, y)
+            print(f"box is {box}")
+            
+            slice_img = copied_frame[y:y + slice_size[1], x:x + slice_size[0]].copy()
+
+            pred, ratio = inference(args, slice_img)
+            print("ratio is ", ratio)
+            boxes = pred[:, :4]
+            scores = pred[:, 4:5] * pred[:, 5:]
+
+            boxes_xyxy = np.ones_like(boxes)
+            boxes_xyxy[:, 0] = boxes[:, 0] - boxes[:, 2]/2.
+            boxes_xyxy[:, 1] = boxes[:, 1] - boxes[:, 3]/2.
+            boxes_xyxy[:, 2] = boxes[:, 0] + boxes[:, 2]/2.
+            boxes_xyxy[:, 3] = boxes[:, 1] + boxes[:, 3]/2.
+            boxes_xyxy /= ratio
+            dets = multiclass_nms(boxes_xyxy, scores, nms_thr=0.5, score_thr=0.5)
+            if dets is not None:
+                final_boxes, final_scores, final_cls_inds = dets[:, :4], dets[:, 4], dets[:, 5]
+                slice_img = vis(slice_img, final_boxes, final_scores, final_cls_inds,
+                                conf=args.score_thr, class_names=CLASSES)
                 
-                slice_img = copied_frame[y:y + slice_size[1], x:x + slice_size[0]].copy()
-
-                pred, ratio = inference(args, slice_img)
-                print("ratio is ", ratio)
-                boxes = pred[:, :4]
-                scores = pred[:, 4:5] * pred[:, 5:]
-
-                boxes_xyxy = np.ones_like(boxes)
-                boxes_xyxy[:, 0] = boxes[:, 0] - boxes[:, 2]/2.
-                boxes_xyxy[:, 1] = boxes[:, 1] - boxes[:, 3]/2.
-                boxes_xyxy[:, 2] = boxes[:, 0] + boxes[:, 2]/2.
-                boxes_xyxy[:, 3] = boxes[:, 1] + boxes[:, 3]/2.
-                boxes_xyxy /= ratio
-                dets = multiclass_nms(boxes_xyxy, scores, nms_thr=0.5, score_thr=0.5)
-                if dets is not None:
-                    final_boxes, final_scores, final_cls_inds = dets[:, :4], dets[:, 4], dets[:, 5]
-                    slice_img = vis(slice_img, final_boxes, final_scores, final_cls_inds,
-                                    conf=args.score_thr, class_names=CLASSES)
-                    
-                    # 写入原图
-                    final_boxes[:, :4] += [box[0], box[1], box[0], box[1]]
-                    origin_img = vis(origin_img, final_boxes, final_scores, final_cls_inds,
-                                    conf=args.score_thr, class_names=CLASSES)
+                # 写入原图
+                final_boxes[:, :4] += [box[0], box[1], box[0], box[1]]
+                origin_img = vis(origin_img, final_boxes, final_scores, final_cls_inds,
+                                conf=args.score_thr, class_names=CLASSES)
 
 
-                # cv2.imwrite(os.path.join(crop_path, f"cropped_image_{count}.jpg"), slice_img)
-                # count += 1
+            cv2.imwrite(os.path.join(crop_path, f"cropped_image_{count}.jpg"), slice_img)
+            count += 1
 
-                logger.info("Infer time: {:.4f}s".format(time.time() - t0))
-                total_time += time.time() - t0
+            logger.info("Infer time: {:.4f}s".format(time.time() - t0))
+            total_time += time.time() - t0
 
-                
-        output_path = os.path.join(args.output_path, filename)
-        cv2.imwrite(output_path, origin_img)    
-        print(f"Total used time is {total_time}s")
+            
+            
+
+    output_path = os.path.join(args.output_path, args.input_path.split("/")[-1])
+    cv2.imwrite(output_path, origin_img)    
+    print(f"Total used time is {total_time}s")
 
 
 def imageflow_demo(args):
