@@ -37,7 +37,7 @@ def make_parser():
     parser.add_argument(
         "--input_path",
         type=str,
-        default='assets/frame_259.png',
+        default='assets/frame_2332.png',
         help="Path to your input image.",
     )
     parser.add_argument(
@@ -96,13 +96,13 @@ def image_process(args):
 
     count = 0
     total_time = 0
-    copied_frame2 = origin_img.copy()# copy.deepcopy(origin_img)
+    copied_frame = origin_img.copy()# copy.deepcopy(origin_img)
     output_path = os.path.join(args.output_path, args.input_path.split("/")[-1])
-    crop_path = 'outputs_imgs/crop_003'
     
+    crop_path = 'outputs_imgs/crop_003'
+    if not os.path.exists(crop_path):
+                os.makedirs(crop_path)
 
-    # for y in [0, 300, 600]:
-    #     for x in [0, 360, 720, 1080, 1440]:
 
     # for y in [0, 300, 600, 900, 1200, 1500, 1680]:
     #     for x in [0, 360, 720, 1080, 1440, 1800, 2160, 2520, 2880, 3240, 3360]:
@@ -113,10 +113,9 @@ def image_process(args):
 
             box = (x, y)
             print(f"box is {box}")
-            copied_frame = copied_frame2.copy()
-            slice_img = copied_frame[y:y + slice_size[1], x:x + slice_size[0]]
-
             
+            slice_img = copied_frame[y:y + slice_size[1], x:x + slice_size[0]].copy()
+
             pred, ratio = inference(args, slice_img)
             print("ratio is ", ratio)
             boxes = pred[:, :4]
@@ -140,21 +139,16 @@ def image_process(args):
                                 conf=args.score_thr, class_names=CLASSES)
 
 
-            if not os.path.exists(crop_path):
-                os.makedirs(crop_path)
             cv2.imwrite(os.path.join(crop_path, f"cropped_image_{count}.jpg"), slice_img)
             count += 1
 
             logger.info("Infer time: {:.4f}s".format(time.time() - t0))
             total_time += time.time() - t0
 
-            mkdir(args.output_path)
-            output_path = os.path.join(args.output_path, args.input_path.split("/")[-1])
-
-
             
-        
-        
+            
+
+    output_path = os.path.join(args.output_path, args.input_path.split("/")[-1])
     cv2.imwrite(output_path, origin_img)    
     print(f"Total used time is {total_time}s")
 
