@@ -49,7 +49,7 @@ def make_parser():
     parser.add_argument(
         "--output_path",
         type=str,
-        default='outputs_imgs/total',
+        default='outputs_imgs/total0613',
         help="Path to your output directory.",
     )
     parser.add_argument(
@@ -96,21 +96,18 @@ def image_process(args):
         img_path = os.path.join(folder_path, filename)
         origin_img = cv2.imread(img_path)
 
-        slice_size = (480, 480)
+        slice_size = (640, 640)
 
         count = 0
         total_time = 0
         copied_frame = origin_img.copy()
-        
-        # crop_path = 'outputs_imgs/crop_000'
-        # if not os.path.exists(crop_path):
-        #     os.makedirs(crop_path)
 
-
+        # for y in [0, 300, 600]:
+        #     for x in [0, 360, 720, 1080, 1440]:
         # for y in [0, 300, 600, 900, 1200, 1500, 1680]:
         #     for x in [0, 360, 720, 1080, 1440, 1800, 2160, 2520, 2880, 3240, 3360]:
-        for y in [0, 300, 600]:
-            for x in [0, 360, 720, 1080, 1440]:
+        for y in [0, 440]:
+            for x in [0, 640, 1280]:
 
                 t0 = time.time()
 
@@ -141,9 +138,6 @@ def image_process(args):
                     origin_img = vis(origin_img, final_boxes, final_scores, final_cls_inds,
                                     conf=args.score_thr, class_names=CLASSES)
 
-
-                # cv2.imwrite(os.path.join(crop_path, f"cropped_image_{count}.jpg"), slice_img)
-                # count += 1
 
                 logger.info("Infer time: {:.4f}s".format(time.time() - t0))
                 total_time += time.time() - t0

@@ -92,7 +92,7 @@ def inference(args, origin_img):
 def image_process(args):
     origin_img = cv2.imread(args.input_path)
 
-    slice_size = (480, 480)
+    slice_size = (640, 640)
 
     count = 0
     total_time = 0
@@ -106,18 +106,21 @@ def image_process(args):
 
     # for y in [0, 300, 600, 900, 1200, 1500, 1680]:
     #     for x in [0, 360, 720, 1080, 1440, 1800, 2160, 2520, 2880, 3240, 3360]:
-    for y in [0, 300, 600]:
-        for x in [0, 360, 720, 1080, 1440]:
-
+    # for y in [0, 300, 600]:
+    #     for x in [0, 360, 720, 1080, 1440]:
+    for y in [0, 440]:
+        for x in [0, 640, 1280]:
             t0 = time.time()
 
             box = (x, y)
             print(f"box is {box}")
             
             slice_img = copied_frame[y:y + slice_size[1], x:x + slice_size[0]].copy()
-
+            
             pred, ratio = inference(args, slice_img)
-            print("ratio is ", ratio)
+            
+            print(f"ratio is {ratio}")
+            
             boxes = pred[:, :4]
             scores = pred[:, 4:5] * pred[:, 5:]
 
