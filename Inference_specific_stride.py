@@ -145,7 +145,8 @@ def image_process(args):
                 logger.info("Infer time: {:.4f}s".format(time.time() - t0))
                 total_time += time.time() - t0
 
-                
+        if not os.path.exists(args.output_path):
+            os.mkdir(args.output_path)
         output_path = os.path.join(args.output_path, filename)
         cv2.imwrite(output_path, origin_img)    
         print(f"Total used time is {total_time}s")
