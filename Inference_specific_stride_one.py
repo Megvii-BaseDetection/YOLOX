@@ -92,7 +92,7 @@ def inference(args, origin_img):
 def image_process(args):
     origin_img = cv2.imread(args.input_path)
 
-    slice_size = (640, 640)
+    slice_size = (1080, 1080)
 
     count = 0
     total_time = 0
@@ -108,8 +108,10 @@ def image_process(args):
     #     for x in [0, 360, 720, 1080, 1440, 1800, 2160, 2520, 2880, 3240, 3360]:
     # for y in [0, 300, 600]:
     #     for x in [0, 360, 720, 1080, 1440]:
-    for y in [0, 440]:
-        for x in [0, 640, 1280]:
+    # for y in [0, 440]:
+    #     for x in [0, 640, 1280]:
+    for y in [0]:
+        for x in [0, 840]:
             t0 = time.time()
 
             box = (x, y)

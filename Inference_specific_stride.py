@@ -37,7 +37,7 @@ def make_parser():
     parser.add_argument(
         "--input_path",
         type=str,
-        default='assets/frame_259.png',
+        default='assets/xxx.png',
         help="Path to your input image.",
     )
     parser.add_argument(
@@ -49,7 +49,7 @@ def make_parser():
     parser.add_argument(
         "--output_path",
         type=str,
-        default='outputs_imgs/total0613',
+        default='outputs_imgs/total0614',
         help="Path to your output directory.",
     )
     parser.add_argument(
@@ -96,7 +96,7 @@ def image_process(args):
         img_path = os.path.join(folder_path, filename)
         origin_img = cv2.imread(img_path)
 
-        slice_size = (640, 640)
+        slice_size = (1080, 1080)
 
         count = 0
         total_time = 0
@@ -106,8 +106,11 @@ def image_process(args):
         #     for x in [0, 360, 720, 1080, 1440]:
         # for y in [0, 300, 600, 900, 1200, 1500, 1680]:
         #     for x in [0, 360, 720, 1080, 1440, 1800, 2160, 2520, 2880, 3240, 3360]:
-        for y in [0, 440]:
-            for x in [0, 640, 1280]:
+        # for y in [0, 440]:
+        #     for x in [0, 640, 1280]:
+
+        for y in [0]:
+            for x in [0, 840]:
 
                 t0 = time.time()
 
