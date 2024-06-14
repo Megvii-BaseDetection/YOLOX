@@ -91,7 +91,7 @@ def inference(args, origin_img):
 
 def image_process(args):
     folder_path = '/home/whoami/Documents/Hanvon/云台侦查/pics0607'
-
+    t0 = time.time()
     for filename in os.listdir(folder_path):
         img_path = os.path.join(folder_path, filename)
         origin_img = cv2.imread(img_path)
@@ -108,11 +108,9 @@ def image_process(args):
         #     for x in [0, 360, 720, 1080, 1440, 1800, 2160, 2520, 2880, 3240, 3360]:
         # for y in [0, 440]:
         #     for x in [0, 640, 1280]:
-
+        t1 = time.time()
         for y in [0]:
             for x in [0, 840]:
-
-                t0 = time.time()
 
                 box = (x, y)
                 print(f"box is {box}")
@@ -142,14 +140,14 @@ def image_process(args):
                                     conf=args.score_thr, class_names=CLASSES)
 
 
-                logger.info("Infer time: {:.4f}s".format(time.time() - t0))
-                total_time += time.time() - t0
-
+        logger.info("Each picture infer time: {:.4f}s".format(time.time() - t1))
+                
         if not os.path.exists(args.output_path):
             os.mkdir(args.output_path)
         output_path = os.path.join(args.output_path, filename)
         cv2.imwrite(output_path, origin_img)    
-        print(f"Total used time is {total_time}s")
+        
+    logger.info("Total Infer time: {:.4f}s".format(time.time() - t0))
 
 
 def imageflow_demo(args):
