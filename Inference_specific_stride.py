@@ -114,12 +114,12 @@ def image_process(args):
             for x in [0, 720, 1440, 2160, 2880]:
 
                 box = (x, y)
-                print(f"box is {box}")
+                # print(f"box is {box}")
                 
                 slice_img = copied_frame[y:y + slice_size[1], x:x + slice_size[0]].copy()
 
                 pred, ratio = inference(args, slice_img)
-                print("ratio is ", ratio)
+                # print("ratio is ", ratio)
                 boxes = pred[:, :4]
                 scores = pred[:, 4:5] * pred[:, 5:]
 
@@ -129,7 +129,7 @@ def image_process(args):
                 boxes_xyxy[:, 2] = boxes[:, 0] + boxes[:, 2]/2.
                 boxes_xyxy[:, 3] = boxes[:, 1] + boxes[:, 3]/2.
                 boxes_xyxy /= ratio
-                dets = multiclass_nms(boxes_xyxy, scores, nms_thr=0.5, score_thr=0.5)
+                dets = multiclass_nms(boxes_xyxy, scores, nms_thr=0.5, score_thr=0.55)
                 if dets is not None:
                     final_boxes, final_scores, final_cls_inds = dets[:, :4], dets[:, 4], dets[:, 5]
                     slice_img = vis(slice_img, final_boxes, final_scores, final_cls_inds,
