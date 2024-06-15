@@ -120,21 +120,20 @@ def imageflow_demo(args):
         ret_val, frame = cap.read()
 
         # 定义切片参数
-        slice_size = (int(width), int(height))
-        print("slice size is ", slice_size)
+        slice_size = (1080, 1080)
+        
         overlap = 0
 
         # 对图像进行切片
+        copied_frame = frame.copy()
         stride = int(slice_size[0] * (1 - overlap))
         slices = []
-        for y in range(0, int(height), stride):
-            for x in range(0, int(width), stride):
-                box = (x, y, x + slice_size[0], y + slice_size[1])
-                slice_img = frame[y:y + slice_size[1], x:x + slice_size[0]]
-                
-                crop_height_actual, crop_width_actual = slice_img.shape[:2]
-                if crop_height_actual < slice_size[0] or crop_width_actual < slice_size[1]:
-                    continue
+        # for y in range(0, int(height), stride):
+        #     for x in range(0, int(width), stride):
+        for y in [0]:
+            for x in [0, 840]:
+                box = (x, y)
+                slice_img = copied_frame[y:y + slice_size[1], x:x + slice_size[0]].copy()
                 
                 slices.append((slice_img, box))  # 保存切片及其在原图中的位置信息
         
@@ -144,13 +143,12 @@ def imageflow_demo(args):
             results = []
             for slice_img, box in slices:
                 # slice_tensor = transform(slice_img).unsqueeze(0).cuda()
-                pred, r = inference(args, slice_img)
+                pred, ratio = inference(args, slice_img)
                 results.append((pred, box))
 
             # 合并检测结果并映射回原始图像的坐标空间
             for preds, box in results:
                 if preds is not None:
-                    # preds[:, :4] += torch.tensor([box[0], box[1], box[0], box[1]], device='cuda')  
                     
                     boxes = preds[:, :4]
                     scores = preds[:, 4:5] * preds[:, 5:]
@@ -160,7 +158,7 @@ def imageflow_demo(args):
                     boxes_xyxy[:, 1] = boxes[:, 1] - boxes[:, 3]/2.
                     boxes_xyxy[:, 2] = boxes[:, 0] + boxes[:, 2]/2.
                     boxes_xyxy[:, 3] = boxes[:, 1] + boxes[:, 3]/2.
-                    boxes_xyxy /= r
+                    boxes_xyxy /= ratio
                     boxes_xyxy[:, :4] += [box[0], box[1], box[0], box[1]] # 映射回原始图像坐标
                     
                     dets = multiclass_nms(boxes_xyxy, scores, nms_thr=0.45, score_thr=0.45)
@@ -169,7 +167,7 @@ def imageflow_demo(args):
                         frame = vis(frame, final_boxes, final_scores, final_cls_inds,
                                         conf=args.score_thr, class_names=CLASSES)
                     
-            logger.info("Infer time: {:.4f}s".format(time.time() - t0))
+            logger.info("{} costs: {:.4f}s".format(frame, time.time() - t0))
 
             cv2.imshow('frame',frame)
             # 写入拼接后的图像帧

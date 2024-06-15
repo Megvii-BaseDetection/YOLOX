@@ -49,7 +49,7 @@ def make_parser():
     parser.add_argument(
         "--output_path",
         type=str,
-        default='outputs_imgs/total0614',
+        default='outputs_imgs/total0615',
         help="Path to your output directory.",
     )
     parser.add_argument(
@@ -90,13 +90,14 @@ def inference(args, origin_img):
     return predictions, ratio
 
 def image_process(args):
-    folder_path = '/home/whoami/Documents/Hanvon/云台侦查/pics0607'
+    folder_path = '/home/whoami/Documents/Hanvon/Datasets/20230101_002049/'
     t0 = time.time()
     for filename in os.listdir(folder_path):
         img_path = os.path.join(folder_path, filename)
         origin_img = cv2.imread(img_path)
+        print(f"This is {filename}")
 
-        slice_size = (1080, 1080)
+        slice_size = (960, 960)
 
         count = 0
         total_time = 0
@@ -109,8 +110,8 @@ def image_process(args):
         # for y in [0, 440]:
         #     for x in [0, 640, 1280]:
         t1 = time.time()
-        for y in [0]:
-            for x in [0, 840]:
+        for y in [0, 600, 1200]:
+            for x in [0, 720, 1440, 2160, 2880]:
 
                 box = (x, y)
                 print(f"box is {box}")
@@ -140,7 +141,7 @@ def image_process(args):
                                     conf=args.score_thr, class_names=CLASSES)
 
 
-        logger.info("Each picture infer time: {:.4f}s".format(time.time() - t1))
+        logger.info("{} costs infer time: {:.4f}s".format(filename, time.time() - t1))
                 
         if not os.path.exists(args.output_path):
             os.mkdir(args.output_path)
