@@ -8,7 +8,8 @@ from .compat import meshgrid
 from .demo_utils import *
 from .dist import *
 from .ema import *
-from .logger import WandbLogger, setup_logger, MlflowLogger
+from .logger import WandbLogger, setup_logger
+from .mlflow_logger import MlflowLogger
 from .lr_scheduler import LRScheduler
 from .metric import *
 from .model_utils import *
