@@ -336,7 +336,7 @@ class MlflowLogger:
                     self.best_ckpt_upload_pending = False
                 if self._mlflow_log_historical_epoch_models and exp.save_history_ckpt:
                     model_file_name = f"epoch_{epoch + 1}_ckpt"
-                    mlflow_out_dir = f"{args.experiment_name}/{model_file_name}"
+                    mlflow_out_dir = f"{args.experiment_name}/hist_epochs/{model_file_name}"
                     artifact_path = os.path.join(file_name, f"{model_file_name}.pth")
                     self.mlflow_save_pyfunc_model(metadata, artifact_path, mlflow_out_dir)
 
