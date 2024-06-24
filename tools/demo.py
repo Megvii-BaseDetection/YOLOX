@@ -11,6 +11,9 @@ import cv2
 
 import torch
 
+import sys
+sys.path.append('/home/whoami/Documents/Hanvon/YOLOX')
+
 from yolox.data.data_augment import ValTransform
 from yolox.data.datasets import COCO_CLASSES
 from yolox.exp import get_exp
