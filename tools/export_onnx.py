@@ -9,6 +9,9 @@ from loguru import logger
 import torch
 from torch import nn
 
+import sys
+sys.path.append('/home/whoami/Documents/Hanvon/YOLOX')
+
 from yolox.exp import get_exp
 from yolox.models.network_blocks import SiLU
 from yolox.utils import replace_module
@@ -17,7 +20,7 @@ from yolox.utils import replace_module
 def make_parser():
     parser = argparse.ArgumentParser("YOLOX onnx deploy")
     parser.add_argument(
-        "--output-name", type=str, default="yolox.onnx", help="output name of models"
+        "--output-name", type=str, default="yolox-s.onnx", help="output name of models"
     )
     parser.add_argument(
         "--input", default="images", type=str, help="input node name of onnx model"
@@ -40,7 +43,7 @@ def make_parser():
         type=str,
         help="experiment description file",
     )
-    parser.add_argument("-expn", "--experiment-name", type=str, default=None)
+    parser.add_argument("-expn", "--experiment-name", type=str, default="yolox-s")
     parser.add_argument("-n", "--name", type=str, default=None, help="model name")
     parser.add_argument("-c", "--ckpt", default=None, type=str, help="ckpt path")
     parser.add_argument(
