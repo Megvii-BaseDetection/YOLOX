@@ -44,7 +44,7 @@ def make_parser():
         help="experiment description file",
     )
     parser.add_argument("-expn", "--experiment-name", type=str, default="yolox-s")
-    parser.add_argument("-n", "--name", type=str, default=None, help="model name")
+    parser.add_argument("-n", "--name", type=str, default="yolox-s", help="model name")
     parser.add_argument("-c", "--ckpt", default=None, type=str, help="ckpt path")
     parser.add_argument(
         "opts",

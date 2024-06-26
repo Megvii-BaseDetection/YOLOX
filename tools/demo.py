@@ -314,6 +314,11 @@ def main(exp, args):
         image_demo(predictor, vis_folder, args.path, current_time, args.save_result)
     elif args.demo == "video" or args.demo == "webcam":
         imageflow_demo(predictor, vis_folder, current_time, args)
+    
+    # print the model 
+    # Print layers of the model
+    # for name, module in model.named_children():
+    #     print(name, module)
 
 
 if __name__ == "__main__":
