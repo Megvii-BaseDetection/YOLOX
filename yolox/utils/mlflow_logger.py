@@ -1,32 +1,32 @@
 #!/usr/bin/env python3
 # Copyright (c) Megvii Inc. All rights reserved.
 # Please read docs/mlflow_integration.md for more details.
+"""
+Logging training runs with hyperparameter, datasets and trained models to MlFlow.
+Mlflow support Model Tracking, Experiment Tracking, and Model Registry.
+It can be hosted on-premises or in all the major cloud provider or with databricks also.
+Please read docs/mlflow_integration.md for more details.
 
+For changing default logging Behaviour you can change mlflow environment variables:
+    https://mlflow.org/docs/latest/python_api/mlflow.environment_variables.html
+
+For more information, please refer to:
+https://mlflow.org/docs/latest/introduction/index.html
+"""
+import importlib.metadata
+import importlib.util
 import json
 import os
 from collections.abc import MutableMapping
-import importlib.metadata
-import importlib.util
 import packaging.version
+
 from loguru import logger
 import torch
 from yolox.utils import is_main_process
-
-
 class MlflowLogger:
     """
-    Logging training runs with hyperparameter, datasets and trained models to MlFlow.
-    Mlflow support Model Tracking, Experiment Tracking, and Model Registry.
-    It can be hosted on-premises or in all the major cloud provider or with databricks also.
-    Please read docs/mlflow_integration.md for more details.
-
-    For changing default logging Behaviour you can change mlflow environment variables:
-        https://mlflow.org/docs/latest/python_api/mlflow.environment_variables.html
-
-    For more information, please refer to:
-    https://mlflow.org/docs/latest/introduction/index.html
+    Main Mlflow logging class to log hyperparameters, metrics, and models to Mlflow.
     """
-
     def __init__(self):
         if not self.is_required_library_available():
             raise RuntimeError(
@@ -55,13 +55,31 @@ class MlflowLogger:
         self._ml_flow = mlflow
 
     def is_required_library_available(self):
-        """check if required libraries are available."""
+        """
+        check if required libraries are available.
+
+        Args: None
+
+        Returns:
+            bool: True if required libraries are available, False otherwise.
+        """
         dotenv_availaible = importlib.util.find_spec("dotenv") is not None
         mlflow_available = importlib.util.find_spec("mlflow") is not None
         return dotenv_availaible and mlflow_available
 
     def flatten_dict(self, d: MutableMapping, parent_key: str = "", delimiter: str = "."):
-        """Flatten a nested dict into a single level dict."""
+        """
+        Flatten a nested dict into a single level dict.
+
+        Args:
+            d(MutableMapping): nested dictionary
+            parent_key(str): parent key
+            delimiter(str): delimiter to use
+
+        Returns:
+            flattened_dict(dict): flattened dictionary
+
+        """
 
         def _flatten_dict(d, parent_key="", delimiter="."):
             for k, v in d.items():
@@ -76,10 +94,13 @@ class MlflowLogger:
     def setup(self, args, exp):
         """
         Set up the optional MLflow integration.
-        - args:
-            training args dictionary
-        - exp:
-            Experiment related hyperparameters
+
+        Args:
+            args(dict): training args dictionary
+            exp(dict): Experiment related hyperparameters
+
+        Returns:
+            None
 
         Environment:
         - **YOLOX_MLFLOW_LOG_MODEL_ARTIFACTS** (`str`, *optional*, defaults to `False`):
@@ -198,11 +219,12 @@ class MlflowLogger:
         MLflow's log_param() only accepts values no longer than 250 characters.
         No overwriting of existing parameters is allowed by default from mlflow.
 
-        Input:
-            params_dict: dict of hyperparameters
+        Args:
+            params_dict(dict): dict of hyperparameters
 
+        Returns:
+            None
         """
-
         if is_main_process():
             params_dict = self.flatten_dict(params_dict) if self._flatten_params else params_dict
             # remove params that are too long for MLflow
@@ -234,10 +256,11 @@ class MlflowLogger:
         """
         Convert the experiment object to dictionary for required parameter only
 
-        Input:
-            exp: Experiment object
-        Output:
-            exp_dict: dict of experiment parameters
+        Args:
+            exp(dict): Experiment object
+
+        Returns:
+            exp_dict(dict): dict of experiment parameters
 
         """
         filter_keys = ['max_epoch', 'num_classes', 'input_size', 'output_dir',
@@ -251,12 +274,14 @@ class MlflowLogger:
         """
         Log metrics to MLflow.
 
-        Input:
-            args: training args dictionary
-            exp: Experiment related hyperparameters
-            step: current training step
-            logs: dictionary of logs to be logged
+        Args:
+            args(dict): training args dictionary
+            exp(dict): Experiment related hyperparameters
+            step(int): current training step
+            logs(dict): dictionary of logs to be logged
 
+        Returns:
+            None
         """
         #step = trainer.progress_in_iter
         if not self._initialized:
@@ -282,17 +307,18 @@ class MlflowLogger:
 
     def on_train_end(self, args, file_name, metadata):
         """
-        Input:
-            args: training args dictionary
-            file_name: output directory
-            metadata: model related metadata
-        mlflow logging action to take when training ends:
+        Mlflow logging action to take when training ends:
+            1. log the training log file
+            2. publish the latest best model to model_registry if it is allowed in config file
+            3. close the mlfow run
 
-        1. log the training log file
-        2. publish the latest best model to model_registry if it is allowed in config file
-        3. close the mlfow run
+        Args:
+            args(dict): training args dictionary
+            file_name(str): output directory
+            metadata(dict): model related metadata
 
-
+        Returns:
+            None
         """
         if is_main_process() and self._initialized:
             self.save_log_file(args, file_name)
@@ -307,10 +333,12 @@ class MlflowLogger:
     def save_log_file(self, args, file_name):
         """
         Save the training log file to mlflow artifact path
-        Input:
-            args: training args dictionary
-            file_name: output directory
+        Args:
+            args(dict): training args dictionary
+            file_name(str): output directory
 
+        Returns:
+            None
         """
         log_file_path = os.path.join(file_name, "train_log_crnt.txt")
         mlflow_out_dir = f"{args.experiment_name}"
@@ -321,9 +349,17 @@ class MlflowLogger:
         """
         Save the model checkpoints to mlflow artifact path
         if save_history_ckpt is enabled then
-        Input:
-            trainer: Trainer class object
-            update_best_ckpt: bool to show if best_ckpt was updated
+
+        Args:
+            args(dict): training args dictionary
+            exp(dict): Experiment related hyperparameters
+            file_name(str): output directory
+            epoch(int): current epoch
+            metadata(dict): model related metadata
+            update_best_ckpt(bool): bool to show if best_ckpt was updated
+
+        Returns:
+            None
         """
         if is_main_process() and self._mlflow_log_artifacts:
             if update_best_ckpt:
@@ -344,13 +380,16 @@ class MlflowLogger:
 
     def mlflow_save_pyfunc_model(self, metadata, artifact_path, mlflow_out_dir):
         """
-        Input:
-            metadata: model related metadata
-            artifact_path: model checkpoint path
-            mlflow_out_dir: mlflow artifact path
         This will send the given model to mlflow server if HF_MLFLOW_LOG_ARTIFACTS is true
             - optionally publish to model registry if allowed in config file
 
+        Args:
+            metadata(dict): model related metadata
+            artifact_path(str): model checkpoint path
+            mlflow_out_dir(str): mlflow artifact path
+
+        Returns:
+            None
         """
         if is_main_process() and self._initialized and self._mlflow_log_artifacts:
             logger.info(
@@ -365,8 +404,13 @@ class MlflowLogger:
                 )
 
     def __del__(self):
-        # if the previous run is not terminated correctly, the fluent API will
-        # not let you start a new run before the previous one is killed
+        """
+        if the previous run is not terminated correctly, the fluent API will
+        not let you start a new run before the previous one is killed
+
+        Args: None
+        Return: None
+        """
         if (
                 self._auto_end_run
                 and callable(getattr(self._ml_flow, "active_run", None))

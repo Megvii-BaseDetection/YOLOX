@@ -48,8 +48,6 @@ If you log runs to a local mlruns directory, run the following command in the di
 mlflow ui --port 5000
 ```
 
-
-
 ## Optional Databricks Integration
 
 ### Step-1: Install Databricks sdk
