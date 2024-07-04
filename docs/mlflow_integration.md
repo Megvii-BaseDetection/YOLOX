@@ -22,9 +22,9 @@ MLFLOW_TRACKING_URI="127.0.0.1:5000"  # set to your mlflow server URI
 MLFLOW_EXPERIMENT_NAME="/path/to/experiment"  # set to your experiment name
 MLFLOW_TAGS={"release.candidate": "DEV1", "release.version": "0.0.0"}
 # config related to logging model to mlflow as pyfunc
-YOLOX_MLFLOW_LOG_MODEL_ARTIFACTS="True" # whether to log model or not 
-YOLOX_MLFLOW_LOG_HISTORICAL_MODEL_PER_n_EPOCHS=30 # log model after every n epochs
-YOLOX_MLFLOW_LOG_HISTORICAL_EPOCH_MODELS="False" # whether to log step model along with best_model or not
+YOLOX_MLFLOW_LOG_MODEL_ARTIFACTS="True" # whether to log model (best or historical) or not 
+YOLOX_MLFLOW_LOG_MODEL_PER_n_EPOCHS=30 # try logging model only after every n epochs
+YOLOX_MLFLOW_LOG_Nth_EPOCH_MODELS="False" # whether to log step model along with best_model or not
 YOLOX_MLFLOW_RUN_NAME="" # give a custom name to your run, otherwise a random name is assign by mlflow
 YOLOX_MLFLOW_FLATTEN_PARAMS="True" # flatten any sub sub params of dict to be logged as simple key value pair
 

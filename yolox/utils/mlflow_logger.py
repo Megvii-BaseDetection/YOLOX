@@ -45,8 +45,8 @@ class MlflowLogger:
         self._tracking_uri = None
         self._experiment_name = None
         self._mlflow_log_artifacts = None
-        self._mlflow_log_historical_model_per_n_epochs = None
-        self._mlflow_log_historical_epoch_models = None
+        self._mlflow_log_model_per_n_epochs = None
+        self._mlflow_log_nth_epoch_models = None
         self.run_name = None
         self._flatten_params = None
         self._nested_run = None
@@ -88,11 +88,11 @@ class MlflowLogger:
             will copy each check-points on each save in [`TrainingArguments`]'s `output_dir` to the
             local or remote artifact storage. Using it without a remote storage will just copy the
             files to your artifact location.
-        - **YOLOX_MLFLOW_LOG_HISTORICAL_MODEL_PER_n_EPOCHS** (`int`, *optional*, defaults to 30):
+        - **YOLOX_MLFLOW_LOG_MODEL_PER_n_EPOCHS** (`int`, *optional*, defaults to 30):
             If ``YOLOX_MLFLOW_LOG_MODEL_ARTIFACTS`` is enabled then Log model checkpoints after
             every n epochs. Default is 30. ``best_ckpt.pth`` will be updated after `n` epochs if
             it has been updated during last `n`  epochs.
-        - **YOLOX_MLFLOW_LOG_HISTORICAL_EPOCH_MODELS** (`str`, *optional*, defaults to `False`):
+        - **YOLOX_MLFLOW_LOG_Nth_EPOCH_MODELS** (`str`, *optional*, defaults to `False`):
             Whether to log the ``epoch_n_ckpt.pth`` models along with best_ckpt.pth model after
              every `n` epoch as per YOLOX_MLFLOW_LOG_MODEL_PER_n_EPOCHS.
              If set to `True` or *1*, will log ``epoch_n_ckpt.pth`` along with
@@ -132,11 +132,13 @@ class MlflowLogger:
         self._experiment_name = os.getenv("MLFLOW_EXPERIMENT_NAME", None)
         self._mlflow_log_artifacts = os.getenv("YOLOX_MLFLOW_LOG_MODEL_ARTIFACTS",
                                                "False").upper() in self.ENV_VARS_TRUE_VALUES
-        self._mlflow_log_historical_epoch_models = os.getenv(
-            "YOLOX_MLFLOW_LOG_HISTORICAL_EPOCH_MODELS", "False").upper() in \
-                                                   self.ENV_VARS_TRUE_VALUES
-        self._mlflow_log_historical_model_per_n_epochs = int(os.getenv(
-            "YOLOX_MLFLOW_LOG_HISTORICAL_MODEL_PER_n_EPOCHS", 30))
+        self._mlflow_log_model_per_n_epochs = int(os.getenv(
+            "YOLOX_MLFLOW_LOG_MODEL_PER_n_EPOCHS", 30))
+
+        self._mlflow_log_nth_epoch_models = os.getenv(
+            "YOLOX_MLFLOW_LOG_Nth_EPOCH_MODELS", "False").upper() in \
+                                            self.ENV_VARS_TRUE_VALUES
+
         self.run_name = os.getenv("YOLOX_MLFLOW_RUN_NAME", None)
         self.run_name = None if len(self.run_name.strip()) == 0 else self.run_name
         self._flatten_params = os.getenv("YOLOX_MLFLOW_FLATTEN_PARAMS",
@@ -326,7 +328,7 @@ class MlflowLogger:
         if is_main_process() and self._mlflow_log_artifacts:
             if update_best_ckpt:
                 self.best_ckpt_upload_pending = True
-            if ((epoch + 1) % self._mlflow_log_historical_model_per_n_epochs) == 0:
+            if ((epoch + 1) % self._mlflow_log_model_per_n_epochs) == 0:
                 self.save_log_file(args, file_name)
                 if self.best_ckpt_upload_pending:
                     model_file_name = "best_ckpt"
@@ -334,7 +336,7 @@ class MlflowLogger:
                     artifact_path = os.path.join(file_name, f"{model_file_name}.pth")
                     self.mlflow_save_pyfunc_model(metadata, artifact_path, mlflow_out_dir)
                     self.best_ckpt_upload_pending = False
-                if self._mlflow_log_historical_epoch_models and exp.save_history_ckpt:
+                if self._mlflow_log_nth_epoch_models and exp.save_history_ckpt:
                     model_file_name = f"epoch_{epoch + 1}_ckpt"
                     mlflow_out_dir = f"{args.experiment_name}/hist_epochs/{model_file_name}"
                     artifact_path = os.path.join(file_name, f"{model_file_name}.pth")
