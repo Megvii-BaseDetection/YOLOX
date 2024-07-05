@@ -204,14 +204,15 @@ class Trainer:
             if self.args.logger == "wandb":
                 self.wandb_logger.finish()
             elif self.args.logger == "mlflow":
-                metadata={
+                metadata = {
                     "epoch": self.epoch + 1,
                     "input_size": self.input_size,
                     'start_ckpt': self.args.ckpt,
                     'exp_file': self.args.exp_file,
                     "best_ap": float(self.best_ap)
                 }
-                self.mlflow_logger.on_train_end(self.args, file_name=self.file_name, metadata=metadata)
+                self.mlflow_logger.on_train_end(self.args, file_name=self.file_name,
+                                                metadata=metadata)
 
     def before_epoch(self):
         logger.info("---> start train epoch{}".format(self.epoch + 1))

@@ -98,11 +98,8 @@ def setup_logger(save_dir, distributed_rank=0, filename="log.txt", mode="a"):
 
     logger.remove()
     save_file = os.path.join(save_dir, filename)
-    crnt_log_save_file = os.path.join(save_dir, 'train_log_crnt.txt')
     if mode == "o" and os.path.exists(save_file):
         os.remove(save_file)
-    if os.path.exists(crnt_log_save_file):
-        os.remove(crnt_log_save_file)
     # only keep logger in rank0 process
     if distributed_rank == 0:
         logger.add(
@@ -112,7 +109,6 @@ def setup_logger(save_dir, distributed_rank=0, filename="log.txt", mode="a"):
             enqueue=True,
         )
         logger.add(save_file)
-        logger.add(crnt_log_save_file)
 
     # redirect stdout/stderr to loguru
     redirect_sys_output("INFO")

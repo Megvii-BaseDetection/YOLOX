@@ -23,6 +23,8 @@ import packaging.version
 from loguru import logger
 import torch
 from yolox.utils import is_main_process
+
+
 class MlflowLogger:
     """
     Main Mlflow logging class to log hyperparameters, metrics, and models to Mlflow.
@@ -156,10 +158,8 @@ class MlflowLogger:
         self._mlflow_log_model_per_n_epochs = int(os.getenv(
             "YOLOX_MLFLOW_LOG_MODEL_PER_n_EPOCHS", 30))
 
-        self._mlflow_log_nth_epoch_models = os.getenv(
-            "YOLOX_MLFLOW_LOG_Nth_EPOCH_MODELS", "False").upper() in \
-                                            self.ENV_VARS_TRUE_VALUES
-
+        self._mlflow_log_nth_epoch_models = os.getenv("YOLOX_MLFLOW_LOG_Nth_EPOCH_MODELS",
+                                                      "False").upper() in self.ENV_VARS_TRUE_VALUES
         self.run_name = os.getenv("YOLOX_MLFLOW_RUN_NAME", None)
         self.run_name = None if len(self.run_name.strip()) == 0 else self.run_name
         self._flatten_params = os.getenv("YOLOX_MLFLOW_FLATTEN_PARAMS",
@@ -283,7 +283,7 @@ class MlflowLogger:
         Returns:
             None
         """
-        #step = trainer.progress_in_iter
+        # step = trainer.progress_in_iter
         if not self._initialized:
             self.setup(args, exp)
         if is_main_process():  # master thread only
@@ -340,7 +340,7 @@ class MlflowLogger:
         Returns:
             None
         """
-        log_file_path = os.path.join(file_name, "train_log_crnt.txt")
+        log_file_path = os.path.join(file_name, "train_log.txt")
         mlflow_out_dir = f"{args.experiment_name}"
         logger.info(f"Logging logfile: {log_file_path} in mlflow artifact path: {mlflow_out_dir}.")
         self._ml_flow.log_artifact(log_file_path, mlflow_out_dir)
