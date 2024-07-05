@@ -37,7 +37,7 @@ def make_parser():
     parser.add_argument(
         "--input_path",
         type=str,
-        default='assets/test_frames/001.jpg', # 'outputs_imgs/crop_001/cropped_image_67.jpg'
+        default='assets/001.jpg', # 'outputs_imgs/crop_001/cropped_image_67.jpg'
         help="Path to your input image.",
     )# 'assets/test_frames/001.jpg' # 'outputs_imgs/crop_002/cropped_image_37.jpg'
     parser.add_argument(

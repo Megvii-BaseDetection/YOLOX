@@ -25,7 +25,7 @@ def make_parser():
     parser.add_argument(
         "--model",
         type=str,
-        default="/home/whoami/Documents/Hanvon/yoloxs0413_320.onnx",
+        default="/home/whoami/Documents/Hanvon/yolox_s.onnx",
         help="Input your onnx model.",
     )
     parser.add_argument(
@@ -62,7 +62,7 @@ def make_parser():
     parser.add_argument(
         "--input_shape",
         type=str,
-        default="320,320",
+        default="640,640",
         help="Specify an input shape for inference.",
     )
     parser.add_argument(
@@ -74,7 +74,7 @@ def make_parser():
 
 
 def inference(args, origin_img):
-    t0 = time.time()
+    
     input_shape = tuple(map(int, args.input_shape.split(',')))
 
     img, ratio = preprocess(origin_img, input_shape)
@@ -82,8 +82,11 @@ def inference(args, origin_img):
     session = onnxruntime.InferenceSession(args.model)
 
     ort_inputs = {session.get_inputs()[0].name: img[None, :, :, :]}
+
+    t0 = time.time()
     output = session.run(None, ort_inputs)
-    print(f"output[0] shape is {output[0].shape}")
+    logger.info("Infer time: {:.4f}s".format(time.time() - t0))
+
     predictions = demo_postprocess(output[0], input_shape, p6=args.with_p6)[0]
 
     
@@ -91,7 +94,7 @@ def inference(args, origin_img):
 
 def image_process(args):
     origin_img = cv2.imread(args.input_path)
-    slice_size = (640, 640)
+    slice_size = (3840, 2160)
     height, width = origin_img.shape[:2]
     overlap = 0
     stride = int(slice_size[0] * (1 - overlap))
@@ -123,10 +126,10 @@ def image_process(args):
             boxes = pred[:, :4]
             scores = pred[:, 4:5] * pred[:, 5:]
 
-            print(f"Boxes are {pred[:, :4].shape}")
-            print(f"scores1 are {pred[:, 4:5].shape}")
-            print(f"scores2 are {pred[:, 5:].shape}")
-            print(f"scores are ", scores.shape)
+            # print(f"Boxes are {pred[:, :4].shape}")
+            # print(f"scores1 are {pred[:, 4:5].shape}")
+            # print(f"scores2 are {pred[:, 5:].shape}")
+            # print(f"scores are ", scores.shape)
 
             boxes_xyxy = np.ones_like(boxes)
             boxes_xyxy[:, 0] = boxes[:, 0] - boxes[:, 2]/2.
