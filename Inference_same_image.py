@@ -16,6 +16,12 @@ from PIL import Image
 import copy
 np.set_printoptions(threshold=np.inf)
 
+# ❯ python Inference_same_image.py
+# 2024-07-05 10:40:41.962 | INFO     | __main__:inference:88 - Infer time: 0.0643s
+# ratio is  0.16666666666666666
+# 2024-07-05 10:40:41.968 | INFO     | __main__:image_process:151 - Infer time: 0.1445s
+# 2024-07-05 10:40:41.968 | INFO     | __main__:image_process:156 - Saving detection result in outputs_imgs/001.jpg
+
 CLASSES = (
     'people','car'
 )
