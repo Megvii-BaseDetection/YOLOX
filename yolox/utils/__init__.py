@@ -9,8 +9,8 @@ from .demo_utils import *
 from .dist import *
 from .ema import *
 from .logger import WandbLogger, setup_logger
-from .mlflow_logger import MlflowLogger
 from .lr_scheduler import LRScheduler
+from .mlflow_logger import MlflowLogger
 from .metric import *
 from .model_utils import *
 from .setup_env import *

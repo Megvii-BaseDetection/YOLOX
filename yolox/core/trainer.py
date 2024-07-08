@@ -14,9 +14,9 @@ from yolox.data import DataPrefetcher
 from yolox.exp import Exp
 from yolox.utils import (
     MeterBuffer,
+    MlflowLogger,
     ModelEMA,
     WandbLogger,
-    MlflowLogger,
     adjust_status,
     all_reduce_norm,
     get_local_rank,
