@@ -13,18 +13,18 @@ For changing default logging Behaviour you can change mlflow environment variabl
 For more information, please refer to:
 https://mlflow.org/docs/latest/introduction/index.html
 """
-from loguru import logger
-
-import torch
-
-from yolox.utils import is_main_process
-
 import importlib.metadata
 import importlib.util
 import json
 import os
 import packaging.version
 from collections.abc import MutableMapping
+from loguru import logger
+
+import torch
+
+from yolox.utils import is_main_process
+
 
 
 class MlflowLogger:
