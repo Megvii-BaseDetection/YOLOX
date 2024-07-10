@@ -17,8 +17,8 @@ import importlib.metadata
 import importlib.util
 import json
 import os
-import packaging.version
 from collections.abc import MutableMapping
+import packaging.version
 from loguru import logger
 
 import torch
