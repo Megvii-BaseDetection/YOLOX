@@ -26,7 +26,6 @@ import torch
 from yolox.utils import is_main_process
 
 
-
 class MlflowLogger:
     """
     Main Mlflow logging class to log hyperparameters, metrics, and models to Mlflow.
