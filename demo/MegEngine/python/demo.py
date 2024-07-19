@@ -128,9 +128,9 @@ class Predictor(object):
         img = F.expand_dims(mge.tensor(img), 0)
 
         t0 = time.time()
-        outputs = self.model(img)
+        outputs = self.model(img, verbose=False)
         outputs = postprocess(outputs, self.num_classes, self.confthre, self.nmsthre)
-        logger.info("Infer time: {:.4f}s".format(time.time() - t0))
+        # logger.info("Infer time: {:.4f}s".format(time.time() - t0))
         return outputs, img_info
 
     def visual(self, output, img_info, cls_conf=0.35):
