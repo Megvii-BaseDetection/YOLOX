@@ -2,6 +2,7 @@
 # Copyright (c) Megvii Inc. All rights reserved.
 
 import os
+from loguru import logger
 import random
 
 import torch
@@ -9,6 +10,7 @@ import torch.distributed as dist
 import torch.nn as nn
 
 from .base_exp import BaseExp
+from ..utils import freeze_module
 
 __all__ = ["Exp", "check_exp_value"]
 
@@ -110,6 +112,8 @@ class Exp(BaseExp):
         self.test_conf = 0.01
         # nms threshold
         self.nmsthre = 0.65
+        # freeze model backbone weights
+        self.freeze_backbone = False
 
     def get_model(self):
         from yolox.models import YOLOX, YOLOPAFPN, YOLOXHead
@@ -130,6 +134,9 @@ class Exp(BaseExp):
         self.model.apply(init_yolo)
         self.model.head.initialize_biases(1e-2)
         self.model.train()
+        if self.freeze_backbone:
+            freeze_module(self.model.backbone.backbone)
+            logger.info("Frozen model backbone.")
         return self.model
 
     def get_dataset(self, cache: bool = False, cache_type: str = "ram"):
