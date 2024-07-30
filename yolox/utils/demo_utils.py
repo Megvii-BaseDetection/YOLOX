@@ -123,6 +123,18 @@ def multiclass_nms_class_agnostic(boxes, scores, nms_thr, score_thr):
     cls_scores = scores[np.arange(len(cls_inds)), cls_inds]
 
     valid_score_mask = cls_scores > score_thr
+    for i in range(2100):
+        if valid_score_mask[i] == True:
+            if cls_inds[i] == 1 and cls_scores[i] < 0.75:
+                valid_score_mask[i] = False
+            if cls_inds[i] == 1 and cls_scores[i] > 0.75:
+                if boxes[i][2] - boxes[i][0] > 300 or boxes[i][3] - boxes[i][1] > 300:
+                    valid_score_mask[i] = False
+                if boxes[i][2] - boxes[i][0] < 125 or boxes[i][3] - boxes[i][1] < 80:
+                    valid_score_mask[i] = False
+        else:
+            continue
+
     if valid_score_mask.sum() == 0:
         return None
     valid_scores = cls_scores[valid_score_mask]

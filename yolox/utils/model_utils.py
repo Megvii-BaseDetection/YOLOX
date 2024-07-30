@@ -29,6 +29,11 @@ def get_model_info(model: nn.Module, tsize: Sequence[int]) -> str:
     flops /= 1e9
     flops *= tsize[0] * tsize[1] / stride / stride * 2  # Gflops
     info = "Params: {:.2f}M, Gflops: {:.2f}".format(params, flops)
+
+    # # print stat
+    # from torchstat import stat
+    # stat(model, (3, 640, 640))
+
     return info
 
 
