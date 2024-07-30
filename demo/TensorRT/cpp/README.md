@@ -46,3 +46,13 @@ or
 ./yolox <path/to/your/engine_file> -i <path/to/image>
 ```
 
+NOTE: for `trtexec` users, modify `INPUT_BLOB_NAME` and `OUTPUT_BLOB_NAME` as the following code.
+```
+const char* INPUT_BLOB_NAME = "images";
+const char* OUTPUT_BLOB_NAME = "output";
+```
+
+Here is the command to convert the small onnx model to tensorrt engine file:
+```
+trtexec --onnx=yolox_s.onnx --saveEngine=yolox_s.trt
+```
