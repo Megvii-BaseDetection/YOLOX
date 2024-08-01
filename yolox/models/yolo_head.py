@@ -451,6 +451,29 @@ class YOLOXHead(nn.Module):
             y_shifts,
         )
 
+        # NOTE: Fix `selected index k out of range`
+        npa: int = fg_mask.sum().item()  # number of positive anchors
+        if npa == 0:
+            gt_matched_classes = torch.zeros(0, device=fg_mask.device).long()
+            pred_ious_this_matching = torch.rand(0, device=fg_mask.device)
+            matched_gt_inds = gt_matched_classes
+            num_fg = npa
+
+            if mode == "cpu":
+                gt_matched_classes = gt_matched_classes.cuda()
+                fg_mask = fg_mask.cuda()
+                pred_ious_this_matching = pred_ious_this_matching.cuda()
+                matched_gt_inds = matched_gt_inds.cuda()
+                num_fg = num_fg.cuda()
+
+            return (
+                gt_matched_classes,
+                fg_mask,
+                pred_ious_this_matching,
+                matched_gt_inds,
+                num_fg,
+            )
+
         bboxes_preds_per_image = bboxes_preds_per_image[fg_mask]
         cls_preds_ = cls_preds[batch_idx][fg_mask]
         obj_preds_ = obj_preds[batch_idx][fg_mask]
