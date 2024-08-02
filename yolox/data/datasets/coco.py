@@ -145,6 +145,10 @@ class COCODataset(CacheDataset):
 
         img_file = os.path.join(self.data_dir, self.name, file_name)
 
+        if not os.path.isfile(img_file):
+            # Hierarchical folder structure case
+            img_file = os.path.join(self.data_dir, file_name)
+
         img = cv2.imread(img_file)
         assert img is not None, f"file named {img_file} not found"
 
