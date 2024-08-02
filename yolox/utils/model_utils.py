@@ -56,6 +56,7 @@ def fuse_conv_and_bn(conv: nn.Conv2d, bn: nn.BatchNorm2d) -> nn.Conv2d:
         )
         .requires_grad_(False)
         .to(conv.weight.device)
+        .to(conv.weight.dtype)
     )
 
     # prepare filters
@@ -65,7 +66,7 @@ def fuse_conv_and_bn(conv: nn.Conv2d, bn: nn.BatchNorm2d) -> nn.Conv2d:
 
     # prepare spatial bias
     b_conv = (
-        torch.zeros(conv.weight.size(0), device=conv.weight.device)
+        conv.weight.new_zeros(conv.weight.size(0))
         if conv.bias is None
         else conv.bias
     )
