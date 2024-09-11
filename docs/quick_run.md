@@ -7,8 +7,9 @@ Step1. Install YOLOX.
 ```shell
 git clone git@github.com:Megvii-BaseDetection/YOLOX.git
 cd YOLOX
-pip3 install -U pip && pip3 install -r requirements.txt
-pip3 install -v -e .  # or  python3 setup.py develop
+pip3 install -U pip setuptools
+pip3 install torch torchvision torchaudio
+pip3 install --no-build-isolation -v -e .  # or  python3 setup.py develop
 ```
 Step2. Install [pycocotools](https://github.com/cocodataset/cocoapi).
 
