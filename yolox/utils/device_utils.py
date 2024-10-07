@@ -128,3 +128,20 @@ if xb:
     
     xb.ProcessGroupXla.make_send_channel_id = make_send_channel_id_impl
     xb.ProcessGroupXla.make_recv_channel_id = make_recv_channel_id_impl
+
+def parse_dtype(dtype: str):
+    d, t = dtype.rsplit(".", 1)
+
+    assert d in ['torch', 'torch.cuda', 'torch.xla']
+    assert t in [ 'FloatTensor', 'HalfTensor', 'BFloat16Tensor']
+
+    if t == "FloatTensor":
+        dtype = torch.float32
+    elif t == "HalfTensor":
+        dtype = torch.float16
+    elif t == "BFloat16Tensor":
+        dtype = torch.bfloat16
+
+    device = torch.device("cpu") if d == "torch" else get_current_device()
+   
+    return device, dtype

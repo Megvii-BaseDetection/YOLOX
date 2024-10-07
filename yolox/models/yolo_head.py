@@ -10,7 +10,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 from yolox.utils import bboxes_iou, cxcywh2xyxy, meshgrid, visualize_assign
-from yolox.utils.device_utils import get_current_device, get_current_device_type
+from yolox.utils.device_utils import get_current_device, get_current_device_type, parse_dtype
 
 from .losses import IOUloss
 from .network_blocks import BaseConv, DWConv
@@ -214,6 +214,7 @@ class YOLOXHead(nn.Module):
                 return outputs
 
     def get_output_and_grid(self, output, k, stride, dtype):
+        device, dtype = parse_dtype(dtype)
         grid = self.grids[k]
 
         batch_size = output.shape[0]
@@ -221,7 +222,7 @@ class YOLOXHead(nn.Module):
         hsize, wsize = output.shape[-2:]
         if grid.shape[2:4] != output.shape[2:4]:
             yv, xv = meshgrid([torch.arange(hsize), torch.arange(wsize)])
-            grid = torch.stack((xv, yv), 2).view(1, 1, hsize, wsize, 2).type(dtype)
+            grid = torch.stack((xv, yv), 2).view(1, 1, hsize, wsize, 2).type(dtype).to(device=device)
             self.grids[k] = grid
 
         output = output.view(batch_size, 1, n_ch, hsize, wsize)
@@ -234,6 +235,8 @@ class YOLOXHead(nn.Module):
         return output, grid
 
     def decode_outputs(self, outputs, dtype):
+        device, dtype = parse_dtype(dtype)
+
         grids = []
         strides = []
         for (hsize, wsize), stride in zip(self.hw, self.strides):
@@ -243,9 +246,9 @@ class YOLOXHead(nn.Module):
             shape = grid.shape[:2]
             strides.append(torch.full((*shape, 1), stride))
 
-        grids = torch.cat(grids, dim=1).type(dtype)
-        strides = torch.cat(strides, dim=1).type(dtype)
-
+        grids = torch.cat(grids, dim=1).type(dtype).to(device=device)
+        strides = torch.cat(strides, dim=1).type(dtype).to(device=device)
+        
         outputs = torch.cat([
             (outputs[..., 0:2] + grids) * strides,
             torch.exp(outputs[..., 2:4]) * strides,

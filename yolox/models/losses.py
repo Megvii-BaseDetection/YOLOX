@@ -5,6 +5,8 @@
 import torch
 import torch.nn as nn
 
+from yolox.utils.device_utils import parse_dtype
+
 
 class IOUloss(nn.Module):
     def __init__(self, reduction="none", loss_type="iou"):
@@ -27,7 +29,8 @@ class IOUloss(nn.Module):
         area_p = torch.prod(pred[:, 2:], 1)
         area_g = torch.prod(target[:, 2:], 1)
 
-        en = (tl < br).type(tl.type()).prod(dim=1)
+        device, dtype = parse_dtype(tl.type())
+        en = (tl < br).type(dtype).to(device=device).prod(dim=1)
         area_i = torch.prod(br - tl, 1) * en
         area_u = area_p + area_g - area_i
         iou = (area_i) / (area_u + 1e-16)

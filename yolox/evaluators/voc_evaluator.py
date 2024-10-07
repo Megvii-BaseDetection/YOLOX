@@ -83,7 +83,7 @@ class VOCEvaluator:
 
         for cur_iter, (imgs, _, info_imgs, ids) in enumerate(progress_bar(self.dataloader)):
             with torch.no_grad():
-                imgs = imgs.type(tensor_type)
+                imgs = imgs.type(tensor_type).to(device=get_current_device())
 
                 # skip the last iters since batchsize might be not enough for batch inference
                 is_time_record = cur_iter < len(self.dataloader) - 1
@@ -108,7 +108,8 @@ class VOCEvaluator:
             data_list.update(self.convert_to_voc_format(outputs, info_imgs, ids))
 
         statistics = torch.tensor([inference_time, nms_time, n_samples], 
-                                  dtype=torch.float, device=get_current_device())
+                                  dtype=torch.float32, 
+                                  device=get_current_device())
         if distributed:
             data_list = gather(data_list, dst=0)
             data_list = ChainMap(*data_list)
