@@ -20,9 +20,9 @@ import numpy as np
 
 import torch
 from torch import distributed as dist
+from yolox.utils.device_utils import get_current_device, get_local_device_count
 
 __all__ = [
-    "get_num_devices",
     "wait_for_the_master",
     "is_main_process",
     "synchronize",
@@ -34,19 +34,6 @@ __all__ = [
     "gather",
     "all_gather",
 ]
-
-_LOCAL_PROCESS_GROUP = None
-
-
-def get_num_devices():
-    gpu_list = os.getenv('CUDA_VISIBLE_DEVICES', None)
-    if gpu_list is not None:
-        return len(gpu_list.split(','))
-    else:
-        devices_list_info = os.popen("nvidia-smi -L")
-        devices_list_info = devices_list_info.read().strip().split("\n")
-        return len(devices_list_info)
-
 
 @contextmanager
 def wait_for_the_master(local_rank: int = None):
@@ -105,16 +92,9 @@ def get_rank() -> int:
 def get_local_rank() -> int:
     """
     Returns:
-        The rank of the current process within the local (per-machine) process group.
+        The rank of the current process within the local machine
     """
-    if _LOCAL_PROCESS_GROUP is None:
-        return get_rank()
-
-    if not dist.is_available():
-        return 0
-    if not dist.is_initialized():
-        return 0
-    return dist.get_rank(group=_LOCAL_PROCESS_GROUP)
+    return int(os.getenv("LOCAL_RANK", 0))
 
 
 def get_local_size() -> int:
@@ -122,34 +102,15 @@ def get_local_size() -> int:
     Returns:
         The size of the per-machine process group, i.e. the number of processes per machine.
     """
-    if not dist.is_available():
-        return 1
-    if not dist.is_initialized():
-        return 1
-    return dist.get_world_size(group=_LOCAL_PROCESS_GROUP)
+    return get_local_device_count()
 
 
 def is_main_process() -> bool:
     return get_rank() == 0
 
 
-@functools.lru_cache()
-def _get_global_gloo_group():
-    """
-    Return a process group based on gloo backend, containing all the ranks
-    The result is cached.
-    """
-    if dist.get_backend() == "nccl":
-        return dist.new_group(backend="gloo")
-    else:
-        return dist.group.WORLD
-
-
-def _serialize_to_tensor(data, group):
-    backend = dist.get_backend(group)
-    assert backend in ["gloo", "nccl"]
-    device = torch.device("cpu" if backend == "gloo" else "cuda")
-
+def _serialize_to_tensor(data):
+    device = get_current_device()
     buffer = pickle.dumps(data)
     if len(buffer) > 1024 ** 3:
         logger.warning(
@@ -162,13 +123,13 @@ def _serialize_to_tensor(data, group):
     return tensor
 
 
-def _pad_to_largest_tensor(tensor, group):
+def _pad_to_largest_tensor(tensor):
     """
     Returns:
         list[int]: size of the tensor, on each rank
         Tensor: padded tensor that has the max size
     """
-    world_size = dist.get_world_size(group=group)
+    world_size = dist.get_world_size()
     assert (
         world_size >= 1
     ), "comm.gather/all_gather must be called from ranks within the given group!"
@@ -177,7 +138,7 @@ def _pad_to_largest_tensor(tensor, group):
         torch.zeros([1], dtype=torch.int64, device=tensor.device)
         for _ in range(world_size)
     ]
-    dist.all_gather(size_list, local_size, group=group)
+    dist.all_gather(size_list, local_size)
     size_list = [int(size.item()) for size in size_list]
 
     max_size = max(size_list)
@@ -192,7 +153,7 @@ def _pad_to_largest_tensor(tensor, group):
     return size_list, tensor
 
 
-def all_gather(data, group=None):
+def all_gather(data):
     """
     Run all_gather on arbitrary picklable data (not necessarily tensors).
 
@@ -203,16 +164,12 @@ def all_gather(data, group=None):
     Returns:
         list[data]: list of data gathered from each rank
     """
-    if get_world_size() == 1:
-        return [data]
-    if group is None:
-        group = _get_global_gloo_group()
-    if dist.get_world_size(group) == 1:
+    if dist.get_world_size() == 1:
         return [data]
 
-    tensor = _serialize_to_tensor(data, group)
+    tensor = _serialize_to_tensor(data)
 
-    size_list, tensor = _pad_to_largest_tensor(tensor, group)
+    size_list, tensor = _pad_to_largest_tensor(tensor)
     max_size = max(size_list)
 
     # receiving Tensor from all ranks
@@ -220,7 +177,7 @@ def all_gather(data, group=None):
         torch.empty((max_size,), dtype=torch.uint8, device=tensor.device)
         for _ in size_list
     ]
-    dist.all_gather(tensor_list, tensor, group=group)
+    dist.all_gather(tensor_list, tensor)
 
     data_list = []
     for size, tensor in zip(size_list, tensor_list):
@@ -230,7 +187,7 @@ def all_gather(data, group=None):
     return data_list
 
 
-def gather(data, dst=0, group=None):
+def gather(data, dst=0):
     """
     Run gather on arbitrary picklable data (not necessarily tensors).
 
@@ -244,16 +201,12 @@ def gather(data, dst=0, group=None):
         list[data]: on dst, a list of data gathered from each rank. Otherwise,
             an empty list.
     """
-    if get_world_size() == 1:
+    if dist.get_world_size() == 1:
         return [data]
-    if group is None:
-        group = _get_global_gloo_group()
-    if dist.get_world_size(group=group) == 1:
-        return [data]
-    rank = dist.get_rank(group=group)
+    rank = dist.get_rank()
 
-    tensor = _serialize_to_tensor(data, group)
-    size_list, tensor = _pad_to_largest_tensor(tensor, group)
+    tensor = _serialize_to_tensor(data)
+    size_list, tensor = _pad_to_largest_tensor(tensor)
 
     # receiving Tensor from all ranks
     if rank == dst:
@@ -262,7 +215,7 @@ def gather(data, dst=0, group=None):
             torch.empty((max_size,), dtype=torch.uint8, device=tensor.device)
             for _ in size_list
         ]
-        dist.gather(tensor, tensor_list, dst=dst, group=group)
+        dist.gather(tensor, tensor_list, dst=dst)
 
         data_list = []
         for size, tensor in zip(size_list, tensor_list):
@@ -270,7 +223,7 @@ def gather(data, dst=0, group=None):
             data_list.append(pickle.loads(buffer))
         return data_list
     else:
-        dist.gather(tensor, [], dst=dst, group=group)
+        dist.gather(tensor, [], dst=dst)
         return []
 
 

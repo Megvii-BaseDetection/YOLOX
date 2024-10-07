@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding:utf-8 -*-
 
+from yolox.utils.device_utils import get_current_device
 import torch
 from torch import nn
 from torch.hub import load_state_dict_from_url
@@ -50,8 +51,7 @@ def create_yolox_model(name: str, pretrained: bool = True, num_classes: int = 80
     from yolox.exp import get_exp, Exp
 
     if device is None:
-        device = "cuda:0" if torch.cuda.is_available() else "cpu"
-    device = torch.device(device)
+        device = get_current_device()
 
     assert name in _CKPT_FULL_PATH or name == "yolox_custom", \
         f"user should use one of value in {_CKPT_FULL_PATH.keys()} or \"yolox_custom\""
@@ -75,7 +75,7 @@ def create_yolox_model(name: str, pretrained: bool = True, num_classes: int = 80
                 ckpt = ckpt["model"]
             yolox_model.load_state_dict(ckpt)
 
-    yolox_model.to(device)
+    yolox_model.to(device=device)
     return yolox_model
 
 

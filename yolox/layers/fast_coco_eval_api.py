@@ -11,6 +11,12 @@ import time
 import numpy as np
 from pycocotools.cocoeval import COCOeval
 
+try:
+    import torch
+    assert torch.cuda.is_available()
+except AssertionError as e:
+    raise ImportError()
+
 from .jit_ops import FastCOCOEvalOp
 
 

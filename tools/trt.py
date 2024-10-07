@@ -7,8 +7,10 @@ import os
 import shutil
 from loguru import logger
 
-import tensorrt as trt
 import torch
+import tensorrt as trt
+from yolox.utils.device_utils import get_current_device
+
 from torch2trt import torch2trt
 
 from yolox.exp import get_exp
@@ -56,9 +58,9 @@ def main():
     model.load_state_dict(ckpt["model"])
     logger.info("loaded checkpoint done.")
     model.eval()
-    model.cuda()
+    model.to(device=get_current_device())
     model.head.decode_in_inference = False
-    x = torch.ones(1, 3, exp.test_size[0], exp.test_size[1]).cuda()
+    x = torch.ones(1, 3, exp.test_size[0], exp.test_size[1]).to(device=get_current_device())
     model_trt = torch2trt(
         model,
         [x],

@@ -5,11 +5,10 @@
 import pickle
 from collections import OrderedDict
 
+from yolox.utils.device_utils import get_current_device
 import torch
 from torch import distributed as dist
 from torch import nn
-
-from .dist import _get_global_gloo_group, get_world_size
 
 ASYNC_NORM = (
     nn.BatchNorm1d,
@@ -38,7 +37,8 @@ def get_async_norm_states(module):
     return async_norm_states
 
 
-def pyobj2tensor(pyobj, device="cuda"):
+def pyobj2tensor(pyobj):
+    device = get_current_device()
     """serialize picklable python object to tensor"""
     storage = torch.ByteStorage.from_buffer(pickle.dumps(pyobj))
     return torch.ByteTensor(storage).to(device=device)
@@ -65,12 +65,8 @@ def all_reduce(py_dict, op="sum", group=None):
         py_dict (dict): dict to apply all reduce op.
         op (str): operator, could be "sum" or "mean".
     """
-    world_size = get_world_size()
+    world_size = dist.get_world_size(group)
     if world_size == 1:
-        return py_dict
-    if group is None:
-        group = _get_global_gloo_group()
-    if dist.get_world_size(group) == 1:
         return py_dict
 
     # all reduce logic across different devices.

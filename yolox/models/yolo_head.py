@@ -10,6 +10,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 from yolox.utils import bboxes_iou, cxcywh2xyxy, meshgrid, visualize_assign
+from yolox.utils.device_utils import get_current_device, get_current_device_type
 
 from .losses import IOUloss
 from .network_blocks import BaseConv, DWConv
@@ -320,6 +321,9 @@ class YOLOXHead(nn.Module):
                         obj_preds,
                     )
                 except RuntimeError as e:
+                    if not torch.cuda.is_avalaible():
+                        raise e
+                    
                     # TODO: the string might change, consider a better way
                     if "CUDA out of memory. " not in str(e):
                         raise  # RuntimeError might not caused by CUDA OOM
@@ -350,7 +354,8 @@ class YOLOXHead(nn.Module):
                         "cpu",
                     )
 
-                torch.cuda.empty_cache()
+                if torch.cuda.is_available():
+                    torch.cuda.empty_cache()
                 num_fg += num_fg_img
 
                 cls_target = F.one_hot(
@@ -471,7 +476,7 @@ class YOLOXHead(nn.Module):
         if mode == "cpu":
             cls_preds_, obj_preds_ = cls_preds_.cpu(), obj_preds_.cpu()
 
-        with torch.cuda.amp.autocast(enabled=False):
+        with torch.autocast(get_current_device_type(), enabled=False):
             cls_preds_ = (
                 cls_preds_.float().sigmoid_() * obj_preds_.float().sigmoid_()
             ).sqrt()
@@ -497,10 +502,11 @@ class YOLOXHead(nn.Module):
         del pair_wise_cls_loss, cost, pair_wise_ious, pair_wise_ious_loss
 
         if mode == "cpu":
-            gt_matched_classes = gt_matched_classes.cuda()
-            fg_mask = fg_mask.cuda()
-            pred_ious_this_matching = pred_ious_this_matching.cuda()
-            matched_gt_inds = matched_gt_inds.cuda()
+            device = get_current_device()
+            gt_matched_classes = gt_matched_classes.to(device=device)
+            fg_mask = fg_mask.to(device=device)
+            pred_ious_this_matching = pred_ious_this_matching.to(device=device)
+            matched_gt_inds = matched_gt_inds.to(device=device)
 
         return (
             gt_matched_classes,

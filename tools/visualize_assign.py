@@ -8,6 +8,7 @@ import time
 import warnings
 from loguru import logger
 
+from yolox.utils.device_utils import get_current_device_type
 import torch
 import torch.backends.cudnn as cudnn
 
@@ -35,7 +36,7 @@ class AssignVisualizer(Trainer):
         inps, targets = self.exp.preprocess(inps, targets, self.input_size)
         data_end_time = time.time()
 
-        with torch.cuda.amp.autocast(enabled=self.amp_training):
+        with torch.autocast(get_current_device_type(), enabled=self.amp_training):
             path_prefix = os.path.join(self.vis_dir, f"assign_vis_{self.batch_cnt}_")
             self.model.visualize(inps, targets, path_prefix)
 
