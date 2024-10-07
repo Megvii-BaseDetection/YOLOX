@@ -110,6 +110,7 @@ if __name__ == "__main__":
         args.experiment_name = exp.exp_name
 
     if args.cache is not None:
+        logger.info(f"Dataset cache: {args.cache}; loading dataset before launch")
         exp.dataset = exp.get_dataset(cache=True, cache_type=args.cache)
 
     launch(main,args=(exp, args))
