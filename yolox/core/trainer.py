@@ -115,6 +115,8 @@ class Trainer:
         self.scaler.scale(loss).backward()
         self.scaler.step(self.optimizer)
         self.scaler.update()
+        if xm:
+            xm.mark_step()
 
         if self.use_model_ema:
             self.ema_model.update(self.model)

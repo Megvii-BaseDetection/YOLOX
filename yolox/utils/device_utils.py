@@ -1,5 +1,7 @@
 import os
 import random
+import warnings
+
 from typing import Union
 import torch
 
@@ -7,11 +9,18 @@ try:
     import torch_xla.core.xla_model as xm
     import torch_xla.runtime as xr
     import torch_xla.distributed.xla_backend as xb
+
+    compiler_cache_path = os.getenv("XLA_CACHE_DIR", "./cache")
+    os.makedirs(compiler_cache_path, exist_ok=True)
+    try:
+        xr.initialize_cache(compiler_cache_path, readonly=False)
+    except AttributeError as e:
+        warnings.warn(f"can not set XLA cache dir: {e}")
+    
 except ImportError:
     xm = None
     xr = None
     xb = None
-
 
 def get_xla_model():
     return xm

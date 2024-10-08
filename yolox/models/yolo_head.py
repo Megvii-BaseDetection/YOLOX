@@ -10,11 +10,12 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 from yolox.utils import bboxes_iou, cxcywh2xyxy, meshgrid, visualize_assign
-from yolox.utils.device_utils import get_current_device, get_current_device_type, parse_dtype
+from yolox.utils.device_utils import get_current_device, get_current_device_type, get_xla_model, parse_dtype
 
 from .losses import IOUloss
 from .network_blocks import BaseConv, DWConv
 
+xm = get_xla_model()
 
 class YOLOXHead(nn.Module):
     def __init__(
