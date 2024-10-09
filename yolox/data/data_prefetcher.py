@@ -3,8 +3,6 @@
 # Copyright (c) Megvii, Inc. and its affiliates.
 
 import torch
-from yolox.utils.device_utils import get_current_device
-
 
 class DataPrefetcher:
     """
@@ -17,7 +15,6 @@ class DataPrefetcher:
     def __init__(self, loader):
         self.loader = iter(loader)
 
-        self.device = get_current_device()
         if torch.cuda.is_available():
             self.stream = torch.cuda.Stream()
             self.input_cuda = self._input_cuda_for_image
@@ -37,8 +34,8 @@ class DataPrefetcher:
                 self.input_cuda()
                 self.next_target = self.next_target.cuda(non_blocking=True)
         else:
-            self.next_input = self.next_input.to(device=self.device)
-            self.next_target = self.next_target.to(device=self.device)
+            self.next_input = self.next_input
+            self.next_target = self.next_target
 
     def next(self):
         if torch.cuda.is_available():

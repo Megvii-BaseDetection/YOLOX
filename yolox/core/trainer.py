@@ -86,44 +86,50 @@ class Trainer:
 
     def train_in_epoch(self):
         for self.epoch in range(self.start_epoch, self.max_epoch):
-            logger.info(f"Start Epoch: {self.epoch+1}")
+            logger.debug(f"Start Epoch: {self.epoch+1}")
             self.before_epoch()
             self.train_in_iter()
             self.after_epoch()
 
     def train_in_iter(self):
         for self.iter in range(self.max_iter):
-            logger.info(f"Start Iter: {self.iter+1}")
+            logger.debug(f"Start Iter: {self.iter+1}")
             self.before_iter()
             self.train_one_iter()
             self.after_iter()
 
     def train_one_iter(self):
+        
         iter_start_time = time.time()
-
+        logger.debug(f"iter start: {time.time()}")
         inps, targets = self.prefetcher.next()
         inps = inps.to(self.data_type)
         targets = targets.to(self.data_type)
         targets.requires_grad = False
         inps, targets = self.exp.preprocess(inps, targets, self.input_size)
         data_end_time = time.time()
+        logger.debug(f"input ready: {data_end_time}")
+        
+        if xm:
+            inps = inps.to(device=self.device)
+            targets = targets.to(device=self.device)
+            logger.debug(f"input shape: {inps.shape}")
 
-        logger.info(f"start forward: {data_end_time}")
+        logger.debug(f"forward: {time.time()}")
         with torch.autocast(get_current_device_type(), enabled=self.amp_training):
             outputs = self.model(inps, targets)
 
         loss = outputs["total_loss"]
         self.optimizer.zero_grad()
         scaled_loss = self.scaler.scale(loss)
-        logger.info(f"start backward: {time.time()}")
+        logger.debug(f"backward: {time.time()}")
         scaled_loss.backward()
         self.scaler.step(self.optimizer)
+        self.scaler.update()
         if xm:
             xm.mark_step()
-        logger.info(f"step complete: {time.time()}")
-
-        self.scaler.update()
-       
+        logger.debug(f"optimizer step: {time.time()}")
+        
         if self.use_model_ema:
             self.ema_model.update(self.model)
 
@@ -138,6 +144,11 @@ class Trainer:
             lr=lr,
             **outputs,
         )
+        if xm:
+            xm.mark_step()
+        logger.debug(f"iter end: {time.time()}")
+
+      
 
     def before_train(self):
         logger.info("args: {}".format(self.args))
@@ -316,7 +327,7 @@ class Trainer:
             self.meter.clear_meters()
 
         # random resizing
-        if (self.progress_in_iter + 1) % 10 == 0:
+        if (self.progress_in_iter + 1) % self.exp.random_size_interval == 0:
             self.input_size = self.exp.random_resize(
                 self.train_loader, self.epoch, self.rank, self.is_distributed
             )

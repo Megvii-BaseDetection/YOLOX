@@ -33,7 +33,7 @@ class IOUloss(nn.Module):
         area_g = torch.prod(target[:, 2:], 1)
 
         device, dtype = parse_dtype(tl.type())
-        en = (tl < br).type(dtype).to(device=device).prod(dim=1)
+        en = (tl < br).to(device=device, dtype=dtype).prod(dim=1)
         area_i = torch.prod(br - tl, 1) * en
         area_u = area_p + area_g - area_i
         iou = (area_i) / (area_u + 1e-16)

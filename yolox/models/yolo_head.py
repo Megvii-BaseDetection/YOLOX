@@ -225,7 +225,7 @@ class YOLOXHead(nn.Module):
         hsize, wsize = output.shape[-2:]
         if grid.shape[2:4] != output.shape[2:4]:
             yv, xv = meshgrid([torch.arange(hsize), torch.arange(wsize)])
-            grid = torch.stack((xv, yv), 2).view(1, 1, hsize, wsize, 2).type(dtype).to(device=device)
+            grid = torch.stack((xv, yv), 2).view(1, 1, hsize, wsize, 2).to(device=device, dtype=dtype)
             self.grids[k] = grid
 
         output = output.view(batch_size, 1, n_ch, hsize, wsize)
@@ -249,8 +249,8 @@ class YOLOXHead(nn.Module):
             shape = grid.shape[:2]
             strides.append(torch.full((*shape, 1), stride))
 
-        grids = torch.cat(grids, dim=1).type(dtype).to(device=device)
-        strides = torch.cat(strides, dim=1).type(dtype).to(device=device)
+        grids = torch.cat(grids, dim=1).to(device=device, dtype=dtype)
+        strides = torch.cat(strides, dim=1).to(device=device, dtype=dtype)
         
         outputs = torch.cat([
             (outputs[..., 0:2] + grids) * strides,
@@ -269,8 +269,6 @@ class YOLOXHead(nn.Module):
         origin_preds,
         dtype,
     ):
-        logger.info(f"start get_losses: {time.time()}")
-
         if xm:
             xm.mark_step()
 
@@ -428,8 +426,6 @@ class YOLOXHead(nn.Module):
 
         reg_weight = 5.0
         loss = reg_weight * loss_iou + loss_obj + loss_cls + loss_l1
-
-        logger.info(f"end get_losses: {time.time()}")
 
         return (
             loss,

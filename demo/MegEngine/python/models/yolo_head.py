@@ -164,7 +164,7 @@ class YOLOXHead(M.Module):
         hsize, wsize = output.shape[-2:]
         if grid.shape[2:4] != output.shape[2:4]:
             yv, xv = meshgrid([F.arange(hsize), F.arange(wsize)])
-            grid = F.stack((xv, yv), 2).reshape(1, 1, hsize, wsize, 2).type(dtype).to(device=device)
+            grid = F.stack((xv, yv), 2).reshape(1, 1, hsize, wsize, 2).to(device=device, dtype=dtype)
             self.grids[k] = grid
 
         output = output.view(batch_size, self.n_anchors, n_ch, hsize, wsize)
