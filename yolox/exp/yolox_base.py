@@ -227,7 +227,7 @@ class Exp(BaseExp):
 
     def random_resize(self, data_loader, epoch, rank, is_distributed):
 
-        device = "cpu" if xm else get_current_device()
+        device = get_current_device()
         tensor = torch.LongTensor(2).to(device=device)
 
         if rank == 0:
