@@ -4,7 +4,7 @@
 
 import megengine.functional as F
 import megengine.module as M
-from yolox.utils.device_utils import get_current_device, parse_dtype
+from yolox.utils.device_utils import parse_dtype
 
 from .network_blocks import BaseConv, DWConv
 

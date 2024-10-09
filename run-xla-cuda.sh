@@ -1,3 +1,6 @@
-export OMP_NUM_THREADS=16 
 export YOLOX_DATADIR=/datasets
-torchrun --standalone --nproc_per_node=8 /app/tools/train.py -b 64 -n yolox-s 1>run-xla-cuda.out 2>&1 &
+export XLA_IR_DEBUG=0
+export XLA_HLO_DEBUG=0
+export PT_XLA_DEBUG=1
+export PT_XLA_DEBUG_FILE=./pt_xla_debug.txt
+torchrun --standalone --nproc_per_node=8 tools/train.py -b 64 -n yolox-s

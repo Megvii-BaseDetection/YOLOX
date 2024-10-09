@@ -2,11 +2,14 @@
 # -*- encoding: utf-8 -*-
 # Copyright (c) Megvii Inc. All rights reserved.
 
+import time
+from loguru import logger
 import torch
 import torch.nn as nn
 
-from yolox.utils.device_utils import parse_dtype
+from yolox.utils.device_utils import get_xla_model, parse_dtype
 
+xm = get_xla_model()
 
 class IOUloss(nn.Module):
     def __init__(self, reduction="none", loss_type="iou"):
@@ -14,8 +17,8 @@ class IOUloss(nn.Module):
         self.reduction = reduction
         self.loss_type = loss_type
 
-    def forward(self, pred, target):
-        assert pred.shape[0] == target.shape[0]
+    def forward(self, pred, target):      
+        assert pred.shape[0] == target.shape[0], f"pred shape: {pred.shape} target shape: {target.shape}"
 
         pred = pred.view(-1, 4)
         target = target.view(-1, 4)

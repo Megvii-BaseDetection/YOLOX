@@ -47,12 +47,6 @@ def make_parser():
         help="please input your experiment description file",
     )
     parser.add_argument("-c", "--ckpt", default=None, type=str, help="ckpt for eval")
-    parser.add_argument(
-        "--device",
-        default="cpu",
-        type=str,
-        help="device to run our model, can either be cpu or gpu",
-    )
     parser.add_argument("--conf", default=0.3, type=float, help="test conf")
     parser.add_argument("--nms", default=0.3, type=float, help="test nms threshold")
     parser.add_argument("--tsize", default=None, type=int, help="test img size")
@@ -106,7 +100,6 @@ class Predictor(object):
         cls_names=COCO_CLASSES,
         trt_file=None,
         decoder=None,
-        device="cpu",
         fp16=False,
         legacy=False,
     ):
@@ -117,7 +110,6 @@ class Predictor(object):
         self.confthre = exp.test_conf
         self.nmsthre = exp.nmsthre
         self.test_size = exp.test_size
-        self.device = device
         self.fp16 = fp16
         self.preproc = ValTransform(legacy=legacy)
         if trt_file is not None:
@@ -254,9 +246,6 @@ def main(exp, args):
         vis_folder = os.path.join(file_name, "vis_res")
         os.makedirs(vis_folder, exist_ok=True)
 
-    if args.trt:
-        args.device = "gpu"
-
     logger.info("Args: {}".format(args))
 
     if args.conf is not None:
@@ -305,7 +294,7 @@ def main(exp, args):
 
     predictor = Predictor(
         model, exp, COCO_CLASSES, trt_file, decoder,
-        args.device, args.fp16, args.legacy,
+        args.fp16, args.legacy,
     )
     current_time = time.localtime()
     if args.demo == "image":

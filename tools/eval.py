@@ -98,6 +98,8 @@ def make_parser():
 
 @logger.catch
 def main(exp, args):
+    assert (not args.trt or torch.cuda.is_available()), "--trt requires CUDA"
+
     if args.seed is not None:
         set_manual_seed(args.seed)
         if torch.cuda.is_available():
@@ -154,6 +156,7 @@ def main(exp, args):
 
     if is_distributed:
         if xm:
+            xm.mark_step()
             model = DDP(model, gradient_as_bucket_view=True)
         else:
             model = DDP(model)

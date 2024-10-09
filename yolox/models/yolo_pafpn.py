@@ -5,9 +5,12 @@
 import torch
 import torch.nn as nn
 
+from yolox.utils.device_utils import get_xla_model
+
 from .darknet import CSPDarknet
 from .network_blocks import BaseConv, CSPLayer, DWConv
 
+xm = get_xla_model()
 
 class YOLOPAFPN(nn.Module):
     """
@@ -90,6 +93,9 @@ class YOLOPAFPN(nn.Module):
         """
 
         #  backbone
+        if xm:
+            xm.mark_step()
+
         out_features = self.backbone(input)
         features = [out_features[f] for f in self.in_features]
         [x2, x1, x0] = features
@@ -113,4 +119,8 @@ class YOLOPAFPN(nn.Module):
         pan_out0 = self.C3_n4(p_out0)  # 1024->1024/32
 
         outputs = (pan_out2, pan_out1, pan_out0)
+
+        if xm:
+            xm.mark_step()
+
         return outputs

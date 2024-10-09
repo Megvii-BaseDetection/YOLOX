@@ -7,6 +7,7 @@ import warnings
 from loguru import logger
 
 import torch
+
 from yolox.core import launch
 from yolox.exp import Exp, check_exp_value, get_exp
 from yolox.utils import configure_module, configure_nccl, configure_omp
@@ -79,6 +80,9 @@ def make_parser():
 
 @logger.catch
 def main(exp: Exp, args):
+
+    assert (not args.occupy or torch.cuda.is_available()), "--occupy requires CUDA"
+
     if exp.seed is not None:
         set_manual_seed(exp.seed)
         if torch.cuda.is_available():
