@@ -20,7 +20,7 @@ import numpy as np
 
 import torch
 from torch import distributed as dist
-from yolox.utils.device_utils import get_current_device, get_local_device_count
+from yolox.utils.device_utils import get_current_device, get_local_device_count, get_xla_model
 
 __all__ = [
     "wait_for_the_master",
@@ -34,6 +34,8 @@ __all__ = [
     "gather",
     "all_gather",
 ]
+
+xm = get_xla_model()
 
 @contextmanager
 def wait_for_the_master(local_rank: int = None):
@@ -209,22 +211,34 @@ def gather(data, dst=0):
     size_list, tensor = _pad_to_largest_tensor(tensor)
 
     # receiving Tensor from all ranks
-    if rank == dst:
-        max_size = max(size_list)
-        tensor_list = [
-            torch.empty((max_size,), dtype=torch.uint8, device=tensor.device)
-            for _ in size_list
-        ]
-        dist.gather(tensor, tensor_list, dst=dst)
-
-        data_list = []
-        for size, tensor in zip(size_list, tensor_list):
-            buffer = tensor.cpu().numpy().tobytes()[:size]
-            data_list.append(pickle.loads(buffer))
-        return data_list
+    if xm:
+        groups = [ [r for r in range(dist.get_world_size())]  ]
+        tensor_list = list(xm.all_gather(tensor, groups=groups).split(tensor.size()[0]))
+        if rank == dst:
+            data_list = []
+            for size, tensor in zip(size_list, tensor_list):
+                buffer = tensor.cpu().numpy().tobytes()[:size]
+                data_list.append(pickle.loads(buffer))
+            return data_list
+        else:
+            return []
     else:
-        dist.gather(tensor, [], dst=dst)
-        return []
+        if rank == dst:
+            max_size = max(size_list)
+            tensor_list = [
+                torch.empty((max_size,), dtype=torch.uint8, device=tensor.device)
+                for _ in size_list
+            ]
+            dist.gather(tensor, tensor_list, dst=dst)
+
+            data_list = []
+            for size, tensor in zip(size_list, tensor_list):
+                buffer = tensor.cpu().numpy().tobytes()[:size]
+                data_list.append(pickle.loads(buffer))
+            return data_list
+        else:
+            dist.gather(tensor, [], dst=dst)
+            return []
 
 
 def shared_random_seed():
