@@ -196,9 +196,10 @@ class COCOEvaluator:
         if distributed:
             # different process/device might have different speed,
             # to make sure the process will not be stucked, sync func is used here.
-            synchronize()
-            data_list = gather(data_list, dst=0)
-            output_data = gather(output_data, dst=0)
+            group = _get_global_gloo_group()
+            synchronize(group=group)
+            data_list = gather(data_list, dst=0, group=group)
+            output_data = gather(output_data, dst=0, group=group)
             data_list = list(itertools.chain(*data_list))
             output_data = dict(ChainMap(*output_data))
             if xm:

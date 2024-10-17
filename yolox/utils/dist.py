@@ -62,7 +62,7 @@ def wait_for_the_master(local_rank: int = None):
             barrier()
 
 
-def synchronize():
+def synchronize(group=None):
     """
     Helper function to synchronize (barrier) among all processes when using distributed training
     """
@@ -70,11 +70,11 @@ def synchronize():
         return
     if not dist.is_initialized():
         return
-    world_size = dist.get_world_size()
+    world_size = dist.get_world_size(group=group)
     if world_size == 1:
         return
     
-    barrier()
+    barrier(group=group)
 
 
 def get_world_size() -> int:
@@ -270,11 +270,8 @@ def time_synchronized():
     return time.time()
 
 
-def barrier():
-    if xm:
-        xm.rendezvous('barrier')
-    else:
-        dist.barrier()
+def barrier(group=None):
+    dist.barrier(group=group)
 
 def init_distributed(world_size: int, rank: int):
 

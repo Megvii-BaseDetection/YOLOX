@@ -47,7 +47,16 @@ class Trainer:
         # training related attr
         self.max_epoch = exp.max_epoch
         self.amp_training = args.fp16
-        self.scaler = torch.GradScaler(get_current_device_type(), enabled=args.fp16)
+        if hasattr(torch, "GradScaler"):
+            self.scaler = torch.GradScaler(get_current_device_type(), enabled=args.fp16)
+        elif xm:
+            from torch_xla.amp import GradScaler
+            self.scaler = GradScaler(enabled=args.fp16)
+        elif torch.cuda.is_available():
+            self.scaler = torch.cuda.amp.GradScaler(enabled=args.fp16)
+        else:
+            self.scaler = torch.cpu.amp.GradScaler(enabled=args.fp16)
+
         self.is_distributed = get_world_size() > 1
         self.rank = get_rank()
         self.local_rank = get_local_rank()
