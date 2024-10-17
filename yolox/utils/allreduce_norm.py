@@ -10,6 +10,8 @@ import torch
 from torch import distributed as dist
 from torch import nn
 
+from yolox.utils.dist import _get_global_gloo_group, get_world_size
+
 ASYNC_NORM = (
     nn.BatchNorm1d,
     nn.BatchNorm2d,
@@ -65,8 +67,12 @@ def all_reduce(py_dict, op="sum", group=None):
         py_dict (dict): dict to apply all reduce op.
         op (str): operator, could be "sum" or "mean".
     """
-    world_size = dist.get_world_size(group)
+    world_size = get_world_size()
     if world_size == 1:
+        return py_dict
+    if group is None:
+        group = _get_global_gloo_group()
+    if dist.get_world_size(group) == 1:
         return py_dict
 
     # all reduce logic across different devices.
@@ -79,7 +85,7 @@ def all_reduce(py_dict, op="sum", group=None):
     tensor_numels = [py_dict[k].numel() for k in py_key]
 
     flatten_tensor = torch.cat([py_dict[k].flatten() for k in py_key])
-    dist.all_reduce(flatten_tensor, op=_get_reduce_op(op))
+    dist.all_reduce(flatten_tensor, op=_get_reduce_op(op), group=group)
     if op == "mean":
         flatten_tensor /= world_size
 

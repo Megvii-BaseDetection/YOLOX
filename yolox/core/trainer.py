@@ -86,14 +86,12 @@ class Trainer:
 
     def train_in_epoch(self):
         for self.epoch in range(self.start_epoch, self.max_epoch):
-            logger.debug(f"Start Epoch: {self.epoch+1}")
             self.before_epoch()
             self.train_in_iter()
             self.after_epoch()
 
     def train_in_iter(self):
         for self.iter in range(self.max_iter):
-            logger.debug(f"Start Iter: {self.iter+1}")
             self.before_iter()
             self.train_one_iter()
             self.after_iter()
@@ -409,6 +407,7 @@ class Trainer:
             logger.info("\n" + summary)
         synchronize()
 
+        logger.info(f"Save checkpoints start: {time.time()}")
         self.save_ckpt("last_epoch", update_best_ckpt, ap=ap50_95)
         if self.save_history_ckpt:
             self.save_ckpt(f"epoch_{self.epoch + 1}", ap=ap50_95)
@@ -423,6 +422,8 @@ class Trainer:
                 }
             self.mlflow_logger.save_checkpoints(self.args, self.exp, self.file_name, self.epoch,
                                                 metadata, update_best_ckpt)
+
+        logger.info(f"Save checkpoints end: {time.time()}")
 
     def save_ckpt(self, ckpt_name, update_best_ckpt=False, ap=None):
         if self.rank == 0:

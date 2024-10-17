@@ -113,7 +113,10 @@ class VOCEvaluator:
         if distributed:
             data_list = gather(data_list, dst=0)
             data_list = ChainMap(*data_list)
-            torch.distributed.reduce(statistics, dst=0)
+            if xm:
+                torch.distributed.all_reduce(statistics)
+            else:
+                torch.distributed.reduce(statistics, dst=0)
 
         eval_results = self.evaluate_prediction(data_list, statistics)
         synchronize()

@@ -20,7 +20,7 @@ import numpy as np
 
 import torch
 from torch import distributed as dist
-from yolox.utils.device_utils import get_current_device, get_local_device_count, get_xla_model
+from yolox.utils.device_utils import get_current_device, get_distributed_backend, get_distributed_init_method, get_local_device_count, get_xla_model, xm
 
 __all__ = [
     "wait_for_the_master",
@@ -35,6 +35,7 @@ __all__ = [
     "all_gather",
 ]
 
+__DEFAULT_GLOO_GROUP = None
 xm = get_xla_model()
 
 @contextmanager
@@ -50,7 +51,7 @@ def wait_for_the_master(local_rank: int = None):
         local_rank = get_local_rank()
 
     if local_rank > 0:
-        dist.barrier()
+        barrier()
     yield
     if local_rank == 0:
         if not dist.is_available():
@@ -58,7 +59,7 @@ def wait_for_the_master(local_rank: int = None):
         if not dist.is_initialized():
             return
         else:
-            dist.barrier()
+            barrier()
 
 
 def synchronize():
@@ -72,7 +73,8 @@ def synchronize():
     world_size = dist.get_world_size()
     if world_size == 1:
         return
-    dist.barrier()
+    
+    barrier()
 
 
 def get_world_size() -> int:
@@ -110,9 +112,20 @@ def get_local_size() -> int:
 def is_main_process() -> bool:
     return get_rank() == 0
 
+def _get_global_gloo_group():
+    """
+    Return a process group based on gloo backend, containing all the ranks
+    The result is cached.
+    """
+    global __DEFAULT_GLOO_GROUP
+    assert __DEFAULT_GLOO_GROUP is not None, "Gloo group is not initialized"
+    return __DEFAULT_GLOO_GROUP
+    
+def _serialize_to_tensor(data, group):
+    backend = dist.get_backend(group)
+    device = torch.device("cpu") if backend == "gloo" else get_current_device()
 
-def _serialize_to_tensor(data):
-    device = get_current_device()
+    logger.debug(f"Device: {device}")
     buffer = pickle.dumps(data)
     if len(buffer) > 1024 ** 3:
         logger.warning(
@@ -125,13 +138,13 @@ def _serialize_to_tensor(data):
     return tensor
 
 
-def _pad_to_largest_tensor(tensor):
+def _pad_to_largest_tensor(tensor, group):
     """
     Returns:
         list[int]: size of the tensor, on each rank
         Tensor: padded tensor that has the max size
     """
-    world_size = dist.get_world_size()
+    world_size = dist.get_world_size(group=group)
     assert (
         world_size >= 1
     ), "comm.gather/all_gather must be called from ranks within the given group!"
@@ -140,7 +153,7 @@ def _pad_to_largest_tensor(tensor):
         torch.zeros([1], dtype=torch.int64, device=tensor.device)
         for _ in range(world_size)
     ]
-    dist.all_gather(size_list, local_size)
+    dist.all_gather(size_list, local_size, group=group)
     size_list = [int(size.item()) for size in size_list]
 
     max_size = max(size_list)
@@ -155,7 +168,7 @@ def _pad_to_largest_tensor(tensor):
     return size_list, tensor
 
 
-def all_gather(data):
+def all_gather(data, group=None):
     """
     Run all_gather on arbitrary picklable data (not necessarily tensors).
 
@@ -166,12 +179,16 @@ def all_gather(data):
     Returns:
         list[data]: list of data gathered from each rank
     """
-    if dist.get_world_size() == 1:
+    if get_world_size() == 1:
+        return [data]
+    if group is None:
+        group = _get_global_gloo_group()
+    if dist.get_world_size(group) == 1:
         return [data]
 
-    tensor = _serialize_to_tensor(data)
+    tensor = _serialize_to_tensor(data, group)
 
-    size_list, tensor = _pad_to_largest_tensor(tensor)
+    size_list, tensor = _pad_to_largest_tensor(tensor, group)
     max_size = max(size_list)
 
     # receiving Tensor from all ranks
@@ -179,7 +196,7 @@ def all_gather(data):
         torch.empty((max_size,), dtype=torch.uint8, device=tensor.device)
         for _ in size_list
     ]
-    dist.all_gather(tensor_list, tensor)
+    dist.all_gather(tensor_list, tensor, group=group)
 
     data_list = []
     for size, tensor in zip(size_list, tensor_list):
@@ -189,7 +206,7 @@ def all_gather(data):
     return data_list
 
 
-def gather(data, dst=0):
+def gather(data, dst=0, group=None):
     """
     Run gather on arbitrary picklable data (not necessarily tensors).
 
@@ -203,42 +220,34 @@ def gather(data, dst=0):
         list[data]: on dst, a list of data gathered from each rank. Otherwise,
             an empty list.
     """
-    if dist.get_world_size() == 1:
+    if get_world_size() == 1:
         return [data]
-    rank = dist.get_rank()
+    if dist.get_world_size(group=group) == 1:
+        return [data]
+    if group is None:
+        group = _get_global_gloo_group()
+    rank = dist.get_rank(group=group)
 
-    tensor = _serialize_to_tensor(data)
-    size_list, tensor = _pad_to_largest_tensor(tensor)
+    tensor = _serialize_to_tensor(data, group)
+    size_list, tensor = _pad_to_largest_tensor(tensor, group)
 
     # receiving Tensor from all ranks
-    if xm:
-        groups = [ [r for r in range(dist.get_world_size())]  ]
-        tensor_list = list(xm.all_gather(tensor, groups=groups).split(tensor.size()[0]))
-        if rank == dst:
-            data_list = []
-            for size, tensor in zip(size_list, tensor_list):
-                buffer = tensor.cpu().numpy().tobytes()[:size]
-                data_list.append(pickle.loads(buffer))
-            return data_list
-        else:
-            return []
-    else:
-        if rank == dst:
-            max_size = max(size_list)
-            tensor_list = [
-                torch.empty((max_size,), dtype=torch.uint8, device=tensor.device)
-                for _ in size_list
-            ]
-            dist.gather(tensor, tensor_list, dst=dst)
+    if rank == dst:
+        max_size = max(size_list)
+        tensor_list = [
+            torch.empty((max_size,), dtype=torch.uint8, device=tensor.device)
+            for _ in size_list
+        ]
+        dist.gather(tensor, tensor_list, dst=dst, group=group)
 
-            data_list = []
-            for size, tensor in zip(size_list, tensor_list):
-                buffer = tensor.cpu().numpy().tobytes()[:size]
-                data_list.append(pickle.loads(buffer))
-            return data_list
-        else:
-            dist.gather(tensor, [], dst=dst)
-            return []
+        data_list = []
+        for size, tensor in zip(size_list, tensor_list):
+            buffer = tensor.cpu().numpy().tobytes()[:size]
+            data_list.append(pickle.loads(buffer))
+        return data_list
+    else:
+        dist.gather(tensor, [], dst=dst, group=group)
+        return []
 
 
 def shared_random_seed():
@@ -259,3 +268,33 @@ def time_synchronized():
     if torch.cuda.is_available():
         torch.cuda.synchronize()
     return time.time()
+
+
+def barrier():
+    if xm:
+        xm.rendezvous('barrier')
+    else:
+        dist.barrier()
+
+def init_distributed(world_size: int, rank: int):
+
+    if not dist.is_initialized():
+        init_method = get_distributed_init_method()
+        backend = get_distributed_backend()  
+
+        dist.init_process_group(backend=backend, 
+                                    world_size=world_size, 
+                                    rank=rank, 
+                                    init_method=init_method)
+        
+        global __DEFAULT_GLOO_GROUP
+        if __DEFAULT_GLOO_GROUP is None:
+            __DEFAULT_GLOO_GROUP = dist.new_group(backend="gloo")
+
+def deinit_distributed():
+    if dist.is_initialized():
+        dist.destroy_process_group()
+        global __DEFAULT_GLOO_GROUP
+        if __DEFAULT_GLOO_GROUP is not None:
+            dist.destroy_process_group(group=__DEFAULT_GLOO_GROUP)
+            __DEFAULT_GLOO_GROUP = None

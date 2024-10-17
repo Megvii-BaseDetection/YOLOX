@@ -7,8 +7,8 @@
 
 import os
 
-from yolox.utils.device_utils import get_distributed_backend, get_distributed_init_method
-import torch.distributed as dist
+from yolox.utils.dist import barrier, deinit_distributed, init_distributed
+
 
 __all__ = ["launch"]
 
@@ -25,18 +25,12 @@ def launch(
     world_size = int(os.getenv("WORLD_SIZE", 1))
     rank = int(os.getenv("RANK", 0))
     if world_size > 1:
-        init_method = get_distributed_init_method()
-        backend = get_distributed_backend()  
+        init_distributed(world_size=world_size, rank=rank)
 
-        dist.init_process_group(backend=backend, 
-                                world_size=world_size, 
-                                rank=rank, 
-                                init_method=init_method)
-
-        dist.barrier()
+        barrier()
         main_func(*args)
-        dist.barrier()
+        barrier()
         
-        dist.destroy_process_group()
+        deinit_distributed()
     else:
         main_func(*args)

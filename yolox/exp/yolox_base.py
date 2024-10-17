@@ -9,6 +9,8 @@ import torch
 import torch.distributed as dist
 import torch.nn as nn
 
+from yolox.utils.dist import barrier, synchronize
+
 from .base_exp import BaseExp
 
 __all__ = ["Exp", "check_exp_value"]
@@ -242,7 +244,7 @@ class Exp(BaseExp):
             tensor[1] = size[1]
 
         if is_distributed:
-            dist.barrier()
+            barrier()
             dist.broadcast(tensor, 0)
 
         input_size = (tensor[0].item(), tensor[1].item())
