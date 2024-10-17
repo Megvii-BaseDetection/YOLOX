@@ -1,7 +1,7 @@
 export YOLOX_DATADIR=/datasets
 export OMP_NUM_THREADS=16
 export LOGURU_LEVEL="INFO"
-export NEURON_CC_FLAGS="--cache_dir=/cache --model-type=cnn-training"
+export NEURON_CC_FLAGS="--cache_dir=/cache --model-type=cnn-training --retry_failed_compilation"
 #export XLA_IR_DEBUG=1
 #export XLA_HLO_DEBUG=1
 #export PT_XLA_DEBUG=1

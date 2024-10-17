@@ -290,8 +290,12 @@ def init_distributed(world_size: int, rank: int):
 
 def deinit_distributed():
     if dist.is_initialized():
-        dist.destroy_process_group()
         global __DEFAULT_GLOO_GROUP
-        if __DEFAULT_GLOO_GROUP is not None:
-            dist.destroy_process_group(group=__DEFAULT_GLOO_GROUP)
-            __DEFAULT_GLOO_GROUP = None
+        try:
+            if __DEFAULT_GLOO_GROUP is not None:
+                dist.destroy_process_group(group=__DEFAULT_GLOO_GROUP)
+        except Exception as e:
+            logger.warning(f"Error: {e}")
+        finally:
+            dist.destroy_process_group()
+       
