@@ -271,6 +271,13 @@ class YOLOXHead(nn.Module):
     ):
         if xm:
             xm.mark_step()
+            outputs = outputs.cpu()
+            labels = labels.cpu()
+            x_shifts = [ t.cpu() for t in x_shifts]
+            y_shifts = [ t.cpu() for t in y_shifts]
+            expanded_strides = [ t.cpu() for t in expanded_strides]
+            if self.use_l1:
+                origin_preds = [ t.cpu() for t in origin_preds]
 
         bbox_preds = outputs[:, :, :4]  # [batch, n_anchors_all, 4]
         obj_preds = outputs[:, :, 4:5]  # [batch, n_anchors_all, 1]
@@ -295,17 +302,6 @@ class YOLOXHead(nn.Module):
         num_fg = 0.0
         num_gts = 0.0
         
-        if xm:
-            xm.mark_step()
-            nlabel = nlabel.cpu()
-            labels = labels.cpu()
-            bbox_preds = bbox_preds.cpu()
-            obj_preds = obj_preds.cpu()
-            cls_preds = cls_preds.cpu()
-            expanded_strides = expanded_strides.cpu()
-            x_shifts = x_shifts.cpu()
-            y_shifts = y_shifts.cpu()
-
         for batch_idx in range(outputs.shape[0]):
             num_gt = int(nlabel[batch_idx])
             num_gts += num_gt

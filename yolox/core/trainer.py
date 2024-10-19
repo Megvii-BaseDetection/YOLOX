@@ -127,6 +127,8 @@ class Trainer:
             outputs = self.model(inps, targets)
 
         loss = outputs["total_loss"]
+        if xm:
+            loss = loss.to(device=self.device)
         self.optimizer.zero_grad()
         scaled_loss = self.scaler.scale(loss)
         logger.debug(f"backward: {time.time()}")
