@@ -11,10 +11,12 @@ from loguru import logger
 import torch
 import torch.backends.cudnn as cudnn
 
+import sys
+sys.path.append('/home/whoami/Documents/Hanvon/YOLOX')
 from yolox.exp import Exp, get_exp
 from yolox.core import Trainer
 from yolox.utils import configure_module, configure_omp
-from yolox.tools.train import make_parser
+from tools.train import make_parser
 
 
 class AssignVisualizer(Trainer):

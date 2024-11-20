@@ -25,7 +25,7 @@ Please visit [Openvino Homepage](https://docs.openvinotoolkit.org/latest/get_sta
 **Option1. Set up the environment tempororally. You need to run this command everytime you start a new shell window.**
 
 ```shell
-source /opt/intel/openvino_2021/bin/setupvars.sh
+source /opt/intel/openvino_2022/setupvars.sh
 ```
 
 **Option2. Set up the environment permenantly.**
@@ -38,7 +38,7 @@ vim ~/.bashrc
 *Step2.* Add the following line into your file:
 
 ```shell
-source /opt/intel/openvino_2021/bin/setupvars.sh
+source /opt/intel/openvino_2022/setupvars.sh
 ```
 
 *Step3.* Save and exit the file, then run:
