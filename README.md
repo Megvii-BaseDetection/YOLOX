@@ -18,12 +18,6 @@ This repo is an implementation of PyTorch version YOLOX, there is also a [MegEng
 * 【2021/07/26】 We now support [MegEngine](https://github.com/Megvii-BaseDetection/YOLOX/tree/main/demo/MegEngine) deployment.
 * 【2021/07/20】 We have released our technical report on [Arxiv](https://arxiv.org/abs/2107.08430).
 
-## Coming soon
-- [ ] YOLOX-P6 and larger model.
-- [ ] Objects365 pretrain.
-- [ ] Transformer modules.
-- [ ] More features in need.
-
 ## Benchmark
 
 #### Standard Models.
@@ -245,9 +239,9 @@ If you use YOLOX in your research, please cite our work by using the following B
 }
 ```
 ## In memory of Dr. Jian Sun
-Without the guidance of [Dr. Jian Sun](http://www.jiansun.org/), YOLOX would not have been released and open sourced to the community.
-The passing away of Dr. Jian is a huge loss to the Computer Vision field. We add this section here to express our remembrance and condolences to our captain Dr. Jian.
-It is hoped that every AI practitioner in the world will stick to the concept of "continuous innovation to expand cognitive boundaries, and extraordinary technology to achieve product value" and move forward all the way.
+Without the guidance of [Dr. Jian Sun](https://scholar.google.com/citations?user=ALVSZAYAAAAJ), YOLOX would not have been released and open sourced to the community.
+The passing away of Dr. Sun is a huge loss to the Computer Vision field. We add this section here to express our remembrance and condolences to our captain Dr. Sun.
+It is hoped that every AI practitioner in the world will stick to the belief of "continuous innovation to expand cognitive boundaries, and extraordinary technology to achieve product value" and move forward all the way.
 
 <div align="center"><img src="assets/sunjian.png" width="200"></div>
 没有孙剑博士的指导，YOLOX也不会问世并开源给社区使用。
