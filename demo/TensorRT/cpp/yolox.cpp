@@ -50,8 +50,8 @@ cv::Mat static_resize(cv::Mat& img) {
 struct Object
 {
     cv::Rect_<float> rect;
-    int label;
-    float prob;
+    int label{};
+    float prob{};
 };
 
 struct GridAndStride
@@ -61,9 +61,10 @@ struct GridAndStride
     int stride;
 };
 
-static void generate_grids_and_stride(std::vector<int>& strides, std::vector<GridAndStride>& grid_strides)
+static std::vector<GridAndStride> generate_grids_and_stride(std::vector<int>& strides_)
 {
-    for (auto stride : strides)
+    std::vector<GridAndStride> grid_and_strides{};
+    for (auto stride : strides_)
     {
         int num_grid_y = INPUT_H / stride;
         int num_grid_x = INPUT_W / stride;
@@ -71,10 +72,11 @@ static void generate_grids_and_stride(std::vector<int>& strides, std::vector<Gri
         {
             for (int g0 = 0; g0 < num_grid_x; g0++)
             {
-                grid_strides.push_back((GridAndStride){g0, g1, stride});
+                grid_and_strides.push_back((GridAndStride){g0, g1, stride});
             }
         }
     }
+    return grid_and_strides;
 }
 
 static inline float intersection_area(const Object& a, const Object& b)
@@ -165,28 +167,22 @@ static void nms_sorted_bboxes(const std::vector<Object>& faceobjects, std::vecto
 
 static void generate_yolox_proposals(std::vector<GridAndStride> grid_strides, float* feat_blob, float prob_threshold, std::vector<Object>& objects)
 {
-
-    const int num_anchors = grid_strides.size();
-
+    auto num_anchors = grid_strides.size();
     for (int anchor_idx = 0; anchor_idx < num_anchors; anchor_idx++)
     {
-        const int grid0 = grid_strides[anchor_idx].grid0;
-        const int grid1 = grid_strides[anchor_idx].grid1;
-        const int stride = grid_strides[anchor_idx].stride;
-
         const int basic_pos = anchor_idx * (NUM_CLASSES + 5);
-
-        // yolox/models/yolo_head.py decode logic
-        float x_center = (feat_blob[basic_pos+0] + grid0) * stride;
-        float y_center = (feat_blob[basic_pos+1] + grid1) * stride;
-        float w = exp(feat_blob[basic_pos+2]) * stride;
-        float h = exp(feat_blob[basic_pos+3]) * stride;
-        float x0 = x_center - w * 0.5f;
-        float y0 = y_center - h * 0.5f;
-
         float box_objectness = feat_blob[basic_pos+4];
         for (int class_idx = 0; class_idx < NUM_CLASSES; class_idx++)
         {
+            auto grid0 = (float)grid_strides[anchor_idx].grid0;
+            auto grid1 = (float)grid_strides[anchor_idx].grid1;
+            auto stride = (float)grid_strides[anchor_idx].stride;
+            float x_center = (feat_blob[basic_pos+0] + grid0) * stride;
+            float y_center = (feat_blob[basic_pos+1] + grid1) * stride;
+            float w = exp(feat_blob[basic_pos+2]) * stride;
+            float h = exp(feat_blob[basic_pos+3]) * stride;
+            float x0 = x_center - w * 0.5f;
+            float y0 = y_center - h * 0.5f;
             float box_cls_score = feat_blob[basic_pos + 5 + class_idx];
             float box_prob = box_objectness * box_cls_score;
             if (box_prob > prob_threshold)
@@ -228,10 +224,9 @@ float* blobFromImage(cv::Mat& img){
 
 
 static void decode_outputs(float* prob, std::vector<Object>& objects, float scale, const int img_w, const int img_h) {
+        static std::vector<int> strides{8, 16, 32};
+        static std::vector<GridAndStride> grid_strides = generate_grids_and_stride(strides);
         std::vector<Object> proposals;
-        std::vector<int> strides = {8, 16, 32};
-        std::vector<GridAndStride> grid_strides;
-        generate_grids_and_stride(strides, grid_strides);
         generate_yolox_proposals(grid_strides, prob,  BBOX_CONF_THRESH, proposals);
         std::cout << "num of boxes before nms: " << proposals.size() << std::endl;
 
@@ -241,7 +236,7 @@ static void decode_outputs(float* prob, std::vector<Object>& objects, float scal
         nms_sorted_bboxes(proposals, picked, NMS_THRESH);
 
 
-        int count = picked.size();
+        size_t count = picked.size();
 
         std::cout << "num of boxes: " << count << std::endl;
 
@@ -397,11 +392,8 @@ static void draw_objects(const cv::Mat& bgr, const std::vector<Object>& objects,
 
         int x = obj.rect.x;
         int y = obj.rect.y + 1;
-        //int y = obj.rect.y - label_size.height - baseLine;
         if (y > image.rows)
             y = image.rows;
-        //if (x + label_size.width > image.cols)
-            //x = image.cols - label_size.width;
 
         cv::rectangle(image, cv::Rect(cv::Point(x, y), cv::Size(label_size.width, label_size.height + baseLine)),
                       txt_bk_color, -1);
