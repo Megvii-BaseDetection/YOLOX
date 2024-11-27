@@ -88,7 +88,7 @@ def main():
     logger.info("loading checkpoint done.")
     dummy_input = torch.randn(args.batch_size, 3, exp.test_size[0], exp.test_size[1])
 
-    torch.onnx._export(
+    torch.onnx.export(
         model,
         dummy_input,
         args.output_name,
