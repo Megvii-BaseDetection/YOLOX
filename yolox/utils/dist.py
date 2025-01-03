@@ -125,7 +125,6 @@ def _serialize_to_tensor(data, group):
     backend = dist.get_backend(group)
     device = torch.device("cpu") if backend == "gloo" else get_current_device()
 
-    logger.debug(f"Device: {device}")
     buffer = pickle.dumps(data)
     if len(buffer) > 1024 ** 3:
         logger.warning(
@@ -187,8 +186,9 @@ def all_gather(data, group=None):
         return [data]
 
     tensor = _serialize_to_tensor(data, group)
-
+    synchronize(group=group)
     size_list, tensor = _pad_to_largest_tensor(tensor, group)
+    synchronize(group=group)
     max_size = max(size_list)
 
     # receiving Tensor from all ranks
@@ -229,7 +229,9 @@ def gather(data, dst=0, group=None):
     rank = dist.get_rank(group=group)
 
     tensor = _serialize_to_tensor(data, group)
+    synchronize(group=group)
     size_list, tensor = _pad_to_largest_tensor(tensor, group)
+    synchronize(group=group)
 
     # receiving Tensor from all ranks
     if rank == dst:

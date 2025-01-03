@@ -1,4 +1,5 @@
 export YOLOX_DATADIR=/datasets
+export YOLOX_OUPUT_DIR="./YOLOX_neuron_outputs"
 export OMP_NUM_THREADS=16
 export LOGURU_LEVEL="INFO"
 export NEURON_CC_FLAGS="--cache_dir=/cache --model-type=cnn-training"

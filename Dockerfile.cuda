@@ -1,4 +1,4 @@
-FROM public.ecr.aws/neuron/pytorch-training-neuronx:2.5.1-neuronx-py310-sdk2.21.0-ubuntu22.04
+FROM nvcr.io/nvidia/pytorch:24.09-py3
 
 ENV DEBIAN_FRONTEND=noninteractive
 ENV DEBCONF_NONINTERACTIVE_SEEN=true
@@ -9,11 +9,10 @@ ENV PYTHONDONTWRITEBYTECODE=1
 # Turns off buffering for easier container logging
 ENV PYTHONUNBUFFERED=1
 
-ENV PJRT_DEVICE=NEURON
-
-RUN apt-get update && apt-get -y install python3-opencv
 COPY . /yolox-x
+RUN pip3 install --upgrade pip
 RUN pip3 install -v -e /yolox-x
+RUN pip3 install opencv-python==4.8.0.74
 WORKDIR /app
 
 # During debugging, this entry point will be overridden. For more information, please refer to https://aka.ms/vscode-docker-python-debug
