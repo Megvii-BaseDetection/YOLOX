@@ -17,6 +17,27 @@ from yolox.exp import Exp, check_exp_value, get_exp
 from yolox.utils import configure_module, configure_nccl, configure_omp, get_num_devices
 
 
+class TrainConfigs:
+    def __init__(self, yaml_args):
+        self.experiment_name = yaml_args.get("experiment_name", None)
+        self.name = yaml_args.get("name", None)
+        self.exp_file = yaml_args.get("exp_file", None)
+        self.batch_size = yaml_args.get("batch_size", 64)
+        self.devices = yaml_args.get("devices", None)
+        self.resume = yaml_args.get("resume", False)
+        self.ckpt = yaml_args.get("ckpt", None)
+        self.start_epoch = yaml_args.get("start_epoch", None)
+        self.fp16 = yaml_args.get("fp16", False)
+        self.num_machines = yaml_args.get("num_machines", 1)
+        self.machine_rank = yaml_args.get("machine_rank", 0)
+        self.cache = yaml_args.get("cache", "ram")
+        self.occupy = yaml_args.get("occupy", False)
+        self.logger = yaml_args.get(logger, "tensorboard")
+        self.opts = yaml_args.get("logger", False)
+        self.dist_backend = yaml_args.get("dist_backend", "nccl")
+        self.dist_url = yaml_args.get("dist_url", None)
+
+
 @logger.catch
 def main(exp: Exp, args):
     if exp.seed is not None:
@@ -45,14 +66,12 @@ if __name__ == "__main__":
 
     with open(script_dir / "train.yaml", "r") as f:
         args = yaml.safe_load(f)
+    args = TrainConfigs(args)
     
     exp = get_exp(args.exp_file, args.name)
     exp.merge(args.opts)
     
     check_exp_value(exp)
-
-    if not args.experiment_name:
-        args.experiment_name = exp.exp_name
 
     num_gpu = get_num_devices() if args.devices is None else args.devices
     assert num_gpu <= get_num_devices()

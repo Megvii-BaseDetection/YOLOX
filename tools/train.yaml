@@ -1,8 +1,8 @@
 experiment_name: null
 name: null
-exp_file: null
+exp_file: "exps/example/custom/yolox_s.py"
 
-batch-size: 64
+batch_size: 64
 
 devices: null
 
@@ -21,5 +21,5 @@ logger: "tensorboard"
 
 opts: False
 
-dist-backend: nccl
-dist-url: null
+dist_backend: nccl
+dist_url: null
