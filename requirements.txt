@@ -11,3 +11,4 @@ psutil
 tensorboard
 pycocotools
 onnx
+PyYAML

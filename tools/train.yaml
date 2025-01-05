@@ -1,0 +1,25 @@
+experiment_name: null
+name: null
+exp_file: null
+
+batch-size: 64
+
+devices: null
+
+resume: False
+ckpt: null
+start_epoch: null
+
+fp16: False
+
+num_machines: 1
+machine_rank: 0
+
+cache: "ram"
+occupy: False
+logger: "tensorboard"
+
+opts: False
+
+dist-backend: nccl
+dist-url: null
