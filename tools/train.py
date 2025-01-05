@@ -32,8 +32,8 @@ class TrainConfigs:
         self.machine_rank = yaml_args.get("machine_rank", 0)
         self.cache = yaml_args.get("cache", "ram")
         self.occupy = yaml_args.get("occupy", False)
-        self.logger = yaml_args.get(logger, "tensorboard")
-        self.opts = yaml_args.get("logger", False)
+        self.logger = yaml_args.get("logger", "tensorboard")
+        self.opts = yaml_args.get("opts", [])
         self.dist_backend = yaml_args.get("dist_backend", "nccl")
         self.dist_url = yaml_args.get("dist_url", None)
 

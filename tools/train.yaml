@@ -19,7 +19,7 @@ cache: "ram"
 occupy: False
 logger: "tensorboard"
 
-opts: False
+opts: []
 
 dist_backend: nccl
 dist_url: null
