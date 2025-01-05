@@ -1,8 +1,8 @@
-experiment_name: null
-name: null
+experiment_name: "coco2017"
+name: "coco2017"
 exp_file: "exps/example/custom/yolox_s.py"
 
-batch_size: 64
+batch_size: 16
 
 devices: null
 

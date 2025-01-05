@@ -20,9 +20,9 @@ from yolox.utils import configure_module, configure_nccl, configure_omp, get_num
 class TrainConfigs:
     def __init__(self, yaml_args):
         self.experiment_name = yaml_args.get("experiment_name", None)
-        self.name = yaml_args.get("name", None)
+        self.name = yaml_args.get("name", self.experiment_name)
         self.exp_file = yaml_args.get("exp_file", None)
-        self.batch_size = yaml_args.get("batch_size", 64)
+        self.batch_size = yaml_args.get("batch_size", 16)
         self.devices = yaml_args.get("devices", None)
         self.resume = yaml_args.get("resume", False)
         self.ckpt = yaml_args.get("ckpt", None)
