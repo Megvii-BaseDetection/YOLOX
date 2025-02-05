@@ -142,6 +142,7 @@ class CacheDataset(Dataset, metaclass=ABCMeta):
         cache_type (str): the type of cache,
             "ram" : Caching imgs to ram for fast training.
             "disk": Caching imgs to disk for fast training.
+        use_home_cache_dir (bool): whether to use the home directory for disk cache, if not the data_dir is used.
     """
 
     def __init__(
@@ -153,13 +154,18 @@ class CacheDataset(Dataset, metaclass=ABCMeta):
         path_filename=None,
         cache=False,
         cache_type="ram",
+        use_home_cache_dir=False,
     ):
         super().__init__(input_dimension)
         self.cache = cache
         self.cache_type = cache_type
 
         if self.cache and self.cache_type == "disk":
-            self.cache_dir = os.path.join(data_dir, cache_dir_name)
+            if use_home_cache_dir:
+                self.cache_dir = os.path.join(os.path.expanduser("~"), 'yolox_cache', cache_dir_name)
+                os.makedirs(self.cache_dir, exist_ok=True)
+            else:
+                self.cache_dir = os.path.join(data_dir, cache_dir_name)
             self.path_filename = path_filename
 
         if self.cache and self.cache_type == "ram":
@@ -176,6 +182,9 @@ class CacheDataset(Dataset, metaclass=ABCMeta):
     def __del__(self):
         if self.cache and self.cache_type == "ram":
             del self.imgs
+        if self.cache and self.cache_type == "disk":
+            import shutil
+            shutil.rmtree(self.cache_dir)
 
     @abstractmethod
     def read_img(self, index):
@@ -215,8 +224,8 @@ class CacheDataset(Dataset, metaclass=ABCMeta):
                     f"there is no guarantee that the remaining memory space is sufficient"
                 )
 
-        if self.cache and self.imgs is None:
-            if self.cache_type == 'ram':
+        if self.cache:
+            if self.cache_type == 'ram' and self.imgs is None:
                 self.imgs = [None] * num_imgs
                 logger.info("You are using cached images in RAM to accelerate training!")
             else:   # 'disk'
