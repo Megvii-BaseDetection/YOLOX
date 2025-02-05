@@ -163,7 +163,6 @@ class CacheDataset(Dataset, metaclass=ABCMeta):
         if self.cache and self.cache_type == "disk":
             if use_home_cache_dir:
                 self.cache_dir = os.path.join(os.path.expanduser("~"), 'yolox_cache', cache_dir_name)
-                os.makedirs(self.cache_dir, exist_ok=True)
             else:
                 self.cache_dir = os.path.join(data_dir, cache_dir_name)
             self.path_filename = path_filename
@@ -230,7 +229,7 @@ class CacheDataset(Dataset, metaclass=ABCMeta):
                 logger.info("You are using cached images in RAM to accelerate training!")
             else:   # 'disk'
                 if not os.path.exists(self.cache_dir):
-                    os.mkdir(self.cache_dir)
+                    os.makedirs(self.cache_dir)
                     logger.warning(
                         f"\n*******************************************************************\n"
                         f"You are using cached images in DISK to accelerate training.\n"
