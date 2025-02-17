@@ -48,6 +48,7 @@ class COCODataset(CacheDataset):
         preproc=None,
         cache=False,
         cache_type="ram",
+        use_home_cache_dir=True,
     ):
         """
         COCO dataset initialization. Annotation data are read into memory by COCO API.
@@ -57,6 +58,7 @@ class COCODataset(CacheDataset):
             name (str): COCO data name (e.g. 'train2017' or 'val2017')
             img_size (int): target image size after pre-processing
             preproc: data augmentation strategy
+            use_home_cache_dir (bool): whether to use the home directory for disk cache, if not the data_dir is used.
         """
         if data_dir is None:
             data_dir = os.path.join(get_yolox_datadir(), "COCO")
@@ -84,7 +86,8 @@ class COCODataset(CacheDataset):
             cache_dir_name=f"cache_{name}",
             path_filename=path_filename,
             cache=cache,
-            cache_type=cache_type
+            cache_type=cache_type,
+            use_home_cache_dir=use_home_cache_dir,
         )
 
     def __len__(self):

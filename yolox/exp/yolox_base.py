@@ -139,7 +139,8 @@ class Exp(BaseExp):
             logger.info("Frozen model backbone.")
         return self.model
 
-    def get_dataset(self, cache: bool = False, cache_type: str = "ram"):
+    def get_dataset(self, cache: bool = False, cache_type: str = "ram",
+                    use_home_cache_dir: bool = True):
         """
         Get dataset according to cache and cache_type parameters.
         Args:
@@ -147,6 +148,7 @@ class Exp(BaseExp):
             cache_type (str, optional): Defaults to "ram".
                 "ram" : Caching imgs to ram for fast training.
                 "disk": Caching imgs to disk for fast training.
+            use_home_cache_dir (bool, optional): Whether to use home cache dir, if False, cache_dir will be in data_dir.
         """
         from yolox.data import COCODataset, TrainTransform
 
@@ -161,6 +163,7 @@ class Exp(BaseExp):
             ),
             cache=cache,
             cache_type=cache_type,
+            use_home_cache_dir=use_home_cache_dir,
         )
 
     def get_data_loader(self, batch_size, is_distributed, no_aug=False, cache_img: str = None):

@@ -138,6 +138,8 @@ class Trainer:
         logger.info("args: {}".format(self.args))
         logger.info("exp value:\n{}".format(self.exp))
 
+        #  log_mlflow.logger_init(self.exp.exp_name) TODO: DSVA-15382
+
         # model related init
         torch.cuda.set_device(self.local_rank)
         model = self.exp.get_model()
@@ -196,6 +198,8 @@ class Trainer:
             else:
                 raise ValueError("logger must be either 'tensorboard' or 'wandb'")
 
+        #  log_mlflow.log_params_and_model(self.exp, self.args, self.optimizer, self.model) TODO: DSVA-15382
+
         logger.info("Training start...")
         logger.info("\n{}".format(model))
 
@@ -206,6 +210,7 @@ class Trainer:
         if self.rank == 0:
             if self.args.logger == "wandb":
                 self.wandb_logger.finish()
+        #  log_mlflow.log_best_map_end_run(self.best_ap) TODO: DSVA-15382
 
     def before_epoch(self):
         logger.info("---> start train epoch{}".format(self.epoch + 1))
@@ -225,6 +230,7 @@ class Trainer:
     def after_epoch(self):
         self.save_ckpt(ckpt_name="latest")
 
+        #  log_mlflow.log_metrics(self.epoch_meter, self.epoch) TODO: DSVA-15382
         self.epoch_meter.clear_meters()
 
         if (self.epoch + 1) % self.exp.eval_interval == 0:
@@ -367,6 +373,8 @@ class Trainer:
         self.save_ckpt("last_epoch", update_best_ckpt, ap=ap50_95)
         if self.save_history_ckpt:
             self.save_ckpt(f"epoch_{self.epoch + 1}", ap=ap50_95)
+
+        #  log_mlflow.log_valid_metrics(ap50_95, per_class_AP, per_class_AR, self.epoch) TODO: DSVA-15382
 
     def save_ckpt(self, ckpt_name, update_best_ckpt=False, ap=None):
         if self.rank == 0:
