@@ -84,14 +84,14 @@ class Trainer:
     def train_in_epoch(self, update_callback):
         for self.epoch in range(self.start_epoch, self.max_epoch):
             self.before_epoch()
-            self.train_in_iter()
+            self.train_in_iter(update_callback)
             self.after_epoch(update_callback)
 
-    def train_in_iter(self):
+    def train_in_iter(self, update_callback):
         for self.iter in range(self.max_iter):
             self.before_iter()
             self.train_one_iter()
-            self.after_iter()
+            self.after_iter(update_callback)
 
     def train_one_iter(self):
         iter_start_time = time.time()
@@ -240,7 +240,7 @@ class Trainer:
     def before_iter(self):
         pass
 
-    def after_iter(self):
+    def after_iter(self, update_callback):
         """
         `after_iter` contains two parts of logic:
             * log information
@@ -257,6 +257,8 @@ class Trainer:
                 self.epoch + 1, self.max_epoch, self.iter + 1, self.max_iter
             )
             loss_meter = self.meter.get_filtered_meter("loss")
+            loss = {k: v.latest for k, v in loss_meter.items()}
+            update_callback(self.epoch + 1, loss)
             loss_str = ", ".join(
                 ["{}: {:.1f}".format(k, v.latest) for k, v in loss_meter.items()]
             )
@@ -370,8 +372,7 @@ class Trainer:
             logger.info("\n" + summary)
         synchronize()
         if update_callback is not None:
-            losses = {k: v.latest for k, v in self.meter.get_filtered_meter("loss").items()}
-            update_callback(losses, ap50_95, self.epoch + 1)
+            update_callback(self.epoch + 1, map=ap50_95)
         self.save_ckpt("last_epoch", update_best_ckpt, ap=ap50_95)
         if self.save_history_ckpt:
             self.save_ckpt(f"epoch_{self.epoch + 1}", ap=ap50_95)
