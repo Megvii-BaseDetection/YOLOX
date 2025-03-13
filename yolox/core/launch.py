@@ -45,6 +45,7 @@ def launch(
     dist_url=None,
     args=(),
     timeout=DEFAULT_TIMEOUT,
+    update_callback = None,
 ):
     """
     Args:
@@ -95,7 +96,7 @@ def launch(
             start_method=start_method,
         )
     else:
-        main_func(*args)
+        main_func(update_callback, *args)
 
 
 def _distributed_worker(

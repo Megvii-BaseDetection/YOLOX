@@ -100,7 +100,7 @@ def make_parser():
 
 
 @logger.catch
-def main(exp: Exp, args):
+def main(update_callback, exp: Exp, args):
     if exp.seed is not None:
         random.seed(exp.seed)
         torch.manual_seed(exp.seed)
@@ -117,7 +117,7 @@ def main(exp: Exp, args):
     cudnn.benchmark = True
 
     trainer = exp.get_trainer(args)
-    trainer.train()
+    trainer.train(update_callback)
 
 
 if __name__ == "__main__":

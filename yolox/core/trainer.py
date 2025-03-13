@@ -72,26 +72,26 @@ class Trainer:
             mode="a",
         )
 
-    def train(self):
+    def train(self, update_callback):
         self.before_train()
         try:
-            self.train_in_epoch()
+            self.train_in_epoch(update_callback)
         except Exception:
             raise
         finally:
             self.after_train()
 
-    def train_in_epoch(self):
+    def train_in_epoch(self, update_callback):
         for self.epoch in range(self.start_epoch, self.max_epoch):
             self.before_epoch()
-            self.train_in_iter()
-            self.after_epoch()
+            self.train_in_iter(update_callback)
+            self.after_epoch(update_callback)
 
-    def train_in_iter(self):
+    def train_in_iter(self, update_callback):
         for self.iter in range(self.max_iter):
             self.before_iter()
             self.train_one_iter()
-            self.after_iter()
+            self.after_iter(update_callback)
 
     def train_one_iter(self):
         iter_start_time = time.time()
@@ -227,7 +227,7 @@ class Trainer:
             if not self.no_aug:
                 self.save_ckpt(ckpt_name="last_mosaic_epoch")
 
-    def after_epoch(self):
+    def after_epoch(self, update_callback):
         self.save_ckpt(ckpt_name="latest")
 
         #  log_mlflow.log_metrics(self.epoch_meter, self.epoch) TODO: DSVA-15382
@@ -235,12 +235,12 @@ class Trainer:
 
         if (self.epoch + 1) % self.exp.eval_interval == 0:
             all_reduce_norm(self.model)
-            self.evaluate_and_save_model()
+            self.evaluate_and_save_model(update_callback)
 
     def before_iter(self):
         pass
 
-    def after_iter(self):
+    def after_iter(self, update_callback):
         """
         `after_iter` contains two parts of logic:
             * log information
@@ -257,6 +257,8 @@ class Trainer:
                 self.epoch + 1, self.max_epoch, self.iter + 1, self.max_iter
             )
             loss_meter = self.meter.get_filtered_meter("loss")
+            loss = {k: v.latest for k, v in loss_meter.items()}
+            update_callback(self.epoch + 1, loss)
             loss_str = ", ".join(
                 ["{}: {:.1f}".format(k, v.latest) for k, v in loss_meter.items()]
             )
@@ -340,7 +342,7 @@ class Trainer:
 
         return model
 
-    def evaluate_and_save_model(self):
+    def evaluate_and_save_model(self, update_callback):
         if self.use_model_ema:
             evalmodel = self.ema_model.ema
         else:
@@ -369,7 +371,8 @@ class Trainer:
                 self.wandb_logger.log_images(predictions)
             logger.info("\n" + summary)
         synchronize()
-
+        if update_callback is not None:
+            update_callback(self.epoch + 1, map=ap50_95)
         self.save_ckpt("last_epoch", update_best_ckpt, ap=ap50_95)
         if self.save_history_ckpt:
             self.save_ckpt(f"epoch_{self.epoch + 1}", ap=ap50_95)
