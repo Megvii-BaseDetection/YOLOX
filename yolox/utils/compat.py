@@ -1,6 +1,3 @@
-#!/usr/bin/env python3
-# -*- coding:utf-8 -*-
-
 import torch
 
 _TORCH_VER = [int(x) for x in torch.__version__.split(".")[:2]]

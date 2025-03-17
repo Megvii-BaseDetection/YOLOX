@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 # Copyright (c) Megvii Inc. All rights reserved.
 
 import os
@@ -109,7 +108,7 @@ class Exp(BaseExp):
         self.nmsthre = 0.65
 
     def get_model(self):
-        from yolox.models import YOLOX, YOLOPAFPN, YOLOXHead
+        from yolox.models import Yolox, YoloPafpn, YoloxHead
 
         def init_yolo(M):
             for m in M.modules():
@@ -119,9 +118,9 @@ class Exp(BaseExp):
 
         if getattr(self, "model", None) is None:
             in_channels = [256, 512, 1024]
-            backbone = YOLOPAFPN(self.depth, self.width, in_channels=in_channels, act=self.act)
-            head = YOLOXHead(self.num_classes, self.width, in_channels=in_channels, act=self.act)
-            self.model = YOLOX(backbone, head)
+            backbone = YoloPafpn(self.depth, self.width, in_channels=in_channels, act=self.act)
+            head = YoloxHead(self.num_classes, self.width, in_channels=in_channels, act=self.act)
+            self.model = Yolox(backbone, head)
 
         self.model.apply(init_yolo)
         self.model.head.initialize_biases(1e-2)
@@ -137,9 +136,9 @@ class Exp(BaseExp):
                 "ram" : Caching imgs to ram for fast training.
                 "disk": Caching imgs to disk for fast training.
         """
-        from yolox.data import COCODataset, TrainTransform
+        from yolox.data import CocoDataset, TrainTransform
 
-        return COCODataset(
+        return CocoDataset(
             data_dir=self.data_dir,
             json_file=self.train_ann,
             img_size=self.input_size,
@@ -297,11 +296,11 @@ class Exp(BaseExp):
         return scheduler
 
     def get_eval_dataset(self, **kwargs):
-        from yolox.data import COCODataset, ValTransform
+        from yolox.data import CocoDataset, ValTransform
         testdev = kwargs.get("testdev", False)
         legacy = kwargs.get("legacy", False)
 
-        return COCODataset(
+        return CocoDataset(
             data_dir=self.data_dir,
             json_file=self.val_ann if not testdev else self.test_ann,
             name="val2017" if not testdev else "test2017",
@@ -331,9 +330,9 @@ class Exp(BaseExp):
         return val_loader
 
     def get_evaluator(self, batch_size, is_distributed, testdev=False, legacy=False):
-        from yolox.evaluators import COCOEvaluator
+        from yolox.evaluators import CocoEvaluator
 
-        return COCOEvaluator(
+        return CocoEvaluator(
             dataloader=self.get_eval_loader(batch_size, is_distributed,
                                             testdev=testdev, legacy=legacy),
             img_size=self.test_size,

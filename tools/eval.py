@@ -1,10 +1,9 @@
-#!/usr/bin/env python3
-# -*- coding:utf-8 -*-
 # Copyright (c) Megvii, Inc. and its affiliates.
 
 import argparse
 import os
 import random
+import sys
 import warnings
 from loguru import logger
 
@@ -25,7 +24,7 @@ from yolox.utils import (
 
 
 def make_parser():
-    parser = argparse.ArgumentParser("YOLOX Eval")
+    parser = argparse.ArgumentParser("yolox eval")
     parser.add_argument("-expn", "--experiment-name", type=str, default=None)
     parser.add_argument("-n", "--name", type=str, default=None, help="model name")
 
@@ -113,7 +112,7 @@ def make_parser():
 
 
 @logger.catch
-def main(exp, args, num_gpu):
+def eval(exp, args, num_gpu):
     if args.seed is not None:
         random.seed(args.seed)
         torch.manual_seed(args.seed)
@@ -196,9 +195,9 @@ def main(exp, args, num_gpu):
     logger.info("\n" + summary)
 
 
-if __name__ == "__main__":
+def main(argv: list[str]) -> None:
     configure_module()
-    args = make_parser().parse_args()
+    args = make_parser().parse_args(argv)
     exp = get_exp(args.exp_file, args.name)
     exp.merge(args.opts)
 
@@ -218,3 +217,6 @@ if __name__ == "__main__":
         dist_url=dist_url,
         args=(exp, args, num_gpu),
     )
+
+if __name__ == "__main__":
+    main(sys.argv[1:])

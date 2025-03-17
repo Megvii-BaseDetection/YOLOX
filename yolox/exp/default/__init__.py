@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-# -*- coding:utf-8 -*-
 # Copyright (c) Megvii Inc. All rights reserved.
 
 # This file is used for package installation and find default exp file

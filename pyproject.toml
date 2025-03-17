@@ -1,0 +1,93 @@
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[project]
+name = "yolox"
+version = "0.4.0"
+description = "YOLOX fork"
+license = "Apache-2.0"
+readme = "README.md"
+requires-python = ">=3.9,<4.0"
+authors = [
+    { name = "Pixeltable, Inc.", email = "contact@pixeltable.com>" },
+]
+dependencies = [
+    "numpy (==1.26.4)",
+    "torch (==2.2.2)",
+    "opencv-python (==4.10.0.84)",
+    "loguru (==0.7.2)",
+    "tqdm (==4.67.1)",
+    "torchvision (==0.17.2)",
+    "thop (==0.1.1.post2209072238)",
+    "ninja (==1.11.1.1)",
+    "tabulate (==0.9.0)",
+    "psutil (==5.9.7)",
+    "tensorboard (==2.18.0)",
+    "pycocotools (==2.0.7)",
+    "onnx (==1.17.0)",
+    "onnx-simplifier (==0.4.36)",
+]
+
+[project.scripts]
+yolox = "tools:main"
+
+[tool.poetry.plugins."mkdocstrings.python.templates"]
+extension-name = "tool.doc_plugins.mkdocstrings:get_templates_path"
+
+[tool.poetry]
+exclude = [
+    ".pytype",
+    ".pytest_cache",
+    "tests",
+    "docs",
+    "tool",
+]
+requires-poetry = ">=2.0"
+
+[tool.poetry.group.dev]
+optional = true
+
+[tool.poetry.group.dev.dependencies]
+# pytest-related
+pytest = "^7.2.1"
+pytest-xdist = { extras = ["psutil"], version = "^3.3.1" }
+pytest-rerunfailures = "^14.0.0"
+ruff = "^0.9.7"
+
+[tool.isort]
+force_single_line = false
+line_length = 120
+multi_line_output = 3  # For ruff compatibility
+split_on_trailing_comma = false
+
+[tool.mypy]
+allow_redefinition = true
+disable_error_code = "no-any-unimported, no-any-return"
+disallow_any_unimported = true
+check_untyped_defs = true
+follow_imports = "silent"
+plugins = "pydantic.mypy, tool/mypy_plugin.py"
+show_error_codes = true
+strict_optional = false
+warn_return_any = true
+warn_unused_ignores = true
+
+[tool.ruff]
+exclude = ["*.ipynb"]  # For now, exclude notebooks
+line-length = 120
+
+[tool.ruff.lint]
+select = ["F", "E", "W", "C", "I", "N", "B", "A", "ICN", "PYI", "SIM", "TD002", "PL", "RUF"]
+ignore = ["PLC0415", "PLR0904", "PLR0912", "PLR0913", "PLR0914", "PLR0915", "PLR2004"]
+preview = true
+
+[tool.ruff.lint.isort]
+combine-as-imports = true
+known-first-party = ["pixeltable"]
+split-on-trailing-comma = false
+
+[tool.ruff.format]
+line-ending = "lf"
+quote-style = "single"
+skip-magic-trailing-comma = true

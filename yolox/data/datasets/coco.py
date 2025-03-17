@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-# -*- coding:utf-8 -*-
 # Copyright (c) Megvii, Inc. and its affiliates.
 import copy
 import os
@@ -31,7 +29,7 @@ def remove_useless_info(coco):
                 anno.pop("segmentation", None)
 
 
-class COCODataset(CacheDataset):
+class CocoDataset(CacheDataset):
     """
     COCO dataset class.
     """

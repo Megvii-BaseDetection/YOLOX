@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-# -*- encoding: utf-8 -*-
 # Copyright (c) Megvii Inc. All rights reserved.
 
 import torch
@@ -9,9 +7,9 @@ from .darknet import Darknet
 from .network_blocks import BaseConv
 
 
-class YOLOFPN(nn.Module):
+class YoloFpn(nn.Module):
     """
-    YOLOFPN module. Darknet 53 is the default backbone of this model.
+    YoloFpn module. Darknet 53 is the default backbone of this model.
     """
 
     def __init__(

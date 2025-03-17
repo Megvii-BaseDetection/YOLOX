@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-# -*- coding:utf-8 -*-
 # Copyright (c) Megvii, Inc. and its affiliates.
 
 import sys
@@ -16,7 +14,7 @@ import torch
 from yolox.utils import gather, is_main_process, postprocess, synchronize, time_synchronized
 
 
-class VOCEvaluator:
+class VocEvaluator:
     """
     VOC AP Evaluation class.
     """

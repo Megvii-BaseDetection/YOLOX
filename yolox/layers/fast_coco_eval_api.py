@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-# -*- coding:utf-8 -*-
 # This file comes from
 # https://github.com/facebookresearch/detectron2/blob/master/detectron2/evaluation/fast_eval_api.py
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
@@ -11,17 +9,17 @@ import time
 import numpy as np
 from pycocotools.cocoeval import COCOeval
 
-from .jit_ops import FastCOCOEvalOp
+from .jit_ops import FastCocoEvalOp
 
 
-class COCOeval_opt(COCOeval):
+class CocoEvalOpt(COCOeval):
     """
     This is a slightly modified version of the original COCO API, where the functions evaluateImg()
     and accumulate() are implemented in C++ to speedup evaluation
     """
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.module = FastCOCOEvalOp().load()
+        self.module = FastCocoEvalOp().load()
 
     def evaluate(self):
         """

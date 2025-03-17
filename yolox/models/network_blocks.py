@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-# -*- encoding: utf-8 -*-
 # Copyright (c) Megvii Inc. All rights reserved.
 
 import torch
@@ -144,7 +142,7 @@ class SPPBottleneck(nn.Module):
         return x
 
 
-class CSPLayer(nn.Module):
+class CspLayer(nn.Module):
     """C3 in yolov5, CSP Bottleneck with 3 convolutions"""
 
     def __init__(

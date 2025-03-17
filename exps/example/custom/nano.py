@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-# -*- coding:utf-8 -*-
 # Copyright (c) Megvii, Inc. and its affiliates.
 
 import os
@@ -36,12 +34,12 @@ class Exp(MyExp):
                     m.eps = 1e-3
                     m.momentum = 0.03
         if "model" not in self.__dict__:
-            from yolox.models import YOLOX, YOLOPAFPN, YOLOXHead
+            from yolox.models import Yolox, YoloPafpn, YoloxHead
             in_channels = [256, 512, 1024]
             # NANO model use depthwise = True, which is main difference.
-            backbone = YOLOPAFPN(self.depth, self.width, in_channels=in_channels, depthwise=True)
-            head = YOLOXHead(self.num_classes, self.width, in_channels=in_channels, depthwise=True)
-            self.model = YOLOX(backbone, head)
+            backbone = YoloPafpn(self.depth, self.width, in_channels=in_channels, depthwise=True)
+            head = YoloxHead(self.num_classes, self.width, in_channels=in_channels, depthwise=True)
+            self.model = Yolox(backbone, head)
 
         self.model.apply(init_yolo)
         self.model.head.initialize_biases(1e-2)

@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-# -*- coding:utf-8 -*-
 # This file mainly comes from
 # https://github.com/facebookresearch/detectron2/blob/master/detectron2/utils/comm.py
 # Copyright (c) Facebook, Inc. and its affiliates.

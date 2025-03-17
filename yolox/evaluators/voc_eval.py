@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 # Code are based on
 # https://github.com/rbgirshick/py-faster-rcnn/blob/master/lib/datasets/voc_eval.py
 # Copyright (c) Bharath Hariharan.

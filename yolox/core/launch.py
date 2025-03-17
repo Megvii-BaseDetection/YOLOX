@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-# -*- coding:utf-8 -*-
 # Code are based on
 # https://github.com/facebookresearch/detectron2/blob/master/detectron2/engine/launch.py
 # Copyright (c) Facebook, Inc. and its affiliates.

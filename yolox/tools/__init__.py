@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 # Copyright (c) Megvii Inc. All rights reserved.
 
 # This file is used for package installation. Script of train/eval/export will be available.

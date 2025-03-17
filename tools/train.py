@@ -1,9 +1,8 @@
-#!/usr/bin/env python3
-# -*- coding:utf-8 -*-
 # Copyright (c) Megvii, Inc. and its affiliates.
 
 import argparse
 import random
+import sys
 import warnings
 from loguru import logger
 
@@ -16,7 +15,7 @@ from yolox.utils import configure_module, configure_nccl, configure_omp, get_num
 
 
 def make_parser():
-    parser = argparse.ArgumentParser("YOLOX train parser")
+    parser = argparse.ArgumentParser("yolox train")
     parser.add_argument("-expn", "--experiment-name", type=str, default=None)
     parser.add_argument("-n", "--name", type=str, default=None, help="model name")
 
@@ -98,7 +97,7 @@ def make_parser():
 
 
 @logger.catch
-def main(exp: Exp, args):
+def train(exp: Exp, args):
     if exp.seed is not None:
         random.seed(exp.seed)
         torch.manual_seed(exp.seed)
@@ -118,9 +117,9 @@ def main(exp: Exp, args):
     trainer.train()
 
 
-if __name__ == "__main__":
+def main(argv: list[str]) -> None:
     configure_module()
-    args = make_parser().parse_args()
+    args = make_parser().parse_args(argv)
     exp = get_exp(args.exp_file, args.name)
     exp.merge(args.opts)
     check_exp_value(exp)
@@ -136,7 +135,7 @@ if __name__ == "__main__":
 
     dist_url = "auto" if args.dist_url is None else args.dist_url
     launch(
-        main,
+        train,
         num_gpu,
         args.num_machines,
         args.machine_rank,
@@ -144,3 +143,7 @@ if __name__ == "__main__":
         dist_url=dist_url,
         args=(exp, args),
     )
+
+
+if __name__ == "__main__":
+    main(sys.argv[1:])

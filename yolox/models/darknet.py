@@ -1,10 +1,8 @@
-#!/usr/bin/env python
-# -*- encoding: utf-8 -*-
 # Copyright (c) Megvii Inc. All rights reserved.
 
 from torch import nn
 
-from .network_blocks import BaseConv, CSPLayer, DWConv, Focus, ResLayer, SPPBottleneck
+from .network_blocks import BaseConv, CspLayer, DWConv, Focus, ResLayer, SPPBottleneck
 
 
 class Darknet(nn.Module):
@@ -94,7 +92,7 @@ class Darknet(nn.Module):
         return {k: v for k, v in outputs.items() if k in self.out_features}
 
 
-class CSPDarknet(nn.Module):
+class CspDarknet(nn.Module):
     def __init__(
         self,
         dep_mul,
@@ -117,7 +115,7 @@ class CSPDarknet(nn.Module):
         # dark2
         self.dark2 = nn.Sequential(
             Conv(base_channels, base_channels * 2, 3, 2, act=act),
-            CSPLayer(
+            CspLayer(
                 base_channels * 2,
                 base_channels * 2,
                 n=base_depth,
@@ -129,7 +127,7 @@ class CSPDarknet(nn.Module):
         # dark3
         self.dark3 = nn.Sequential(
             Conv(base_channels * 2, base_channels * 4, 3, 2, act=act),
-            CSPLayer(
+            CspLayer(
                 base_channels * 4,
                 base_channels * 4,
                 n=base_depth * 3,
@@ -141,7 +139,7 @@ class CSPDarknet(nn.Module):
         # dark4
         self.dark4 = nn.Sequential(
             Conv(base_channels * 4, base_channels * 8, 3, 2, act=act),
-            CSPLayer(
+            CspLayer(
                 base_channels * 8,
                 base_channels * 8,
                 n=base_depth * 3,
@@ -154,7 +152,7 @@ class CSPDarknet(nn.Module):
         self.dark5 = nn.Sequential(
             Conv(base_channels * 8, base_channels * 16, 3, 2, act=act),
             SPPBottleneck(base_channels * 16, base_channels * 16, activation=act),
-            CSPLayer(
+            CspLayer(
                 base_channels * 16,
                 base_channels * 16,
                 n=base_depth,

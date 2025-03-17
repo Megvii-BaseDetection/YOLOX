@@ -1,4 +1,3 @@
-# encoding: utf-8
 import os
 
 from yolox.data import get_yolox_datadir
@@ -22,9 +21,9 @@ class Exp(MyExp):
         self.exp_name = os.path.split(os.path.realpath(__file__))[1].split(".")[0]
 
     def get_dataset(self, cache: bool, cache_type: str = "ram"):
-        from yolox.data import VOCDetection, TrainTransform
+        from yolox.data import VocDetection, TrainTransform
 
-        return VOCDetection(
+        return VocDetection(
             data_dir=os.path.join(get_yolox_datadir(), "VOCdevkit"),
             image_sets=[('2007', 'trainval'), ('2012', 'trainval')],
             img_size=self.input_size,
@@ -37,10 +36,10 @@ class Exp(MyExp):
         )
 
     def get_eval_dataset(self, **kwargs):
-        from yolox.data import VOCDetection, ValTransform
+        from yolox.data import VocDetection, ValTransform
         legacy = kwargs.get("legacy", False)
 
-        return VOCDetection(
+        return VocDetection(
             data_dir=os.path.join(get_yolox_datadir(), "VOCdevkit"),
             image_sets=[('2007', 'test')],
             img_size=self.test_size,
@@ -48,9 +47,9 @@ class Exp(MyExp):
         )
 
     def get_evaluator(self, batch_size, is_distributed, testdev=False, legacy=False):
-        from yolox.evaluators import VOCEvaluator
+        from yolox.evaluators import VocEvaluator
 
-        return VOCEvaluator(
+        return VocEvaluator(
             dataloader=self.get_eval_loader(batch_size, is_distributed,
                                             testdev=testdev, legacy=legacy),
             img_size=self.test_size,

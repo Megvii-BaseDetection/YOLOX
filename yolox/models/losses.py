@@ -1,14 +1,12 @@
-#!/usr/bin/env python
-# -*- encoding: utf-8 -*-
 # Copyright (c) Megvii Inc. All rights reserved.
 
 import torch
 import torch.nn as nn
 
 
-class IOUloss(nn.Module):
+class IouLoss(nn.Module):
     def __init__(self, reduction="none", loss_type="iou"):
-        super(IOUloss, self).__init__()
+        super(IouLoss, self).__init__()
         self.reduction = reduction
         self.loss_type = loss_type
 

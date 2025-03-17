@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # Copyright (c) Megvii, Inc. and its affiliates. All Rights Reserved
 
 import re
@@ -49,8 +48,8 @@ def get_ext_modules():
     if sys.platform != "win32":  # pre-compile ops on linux
         assert TORCH_AVAILABLE, "torch is required for pre-compiling ops, please install it first."
         # if any other op is added, please also add it here
-        from yolox.layers import FastCOCOEvalOp
-        ext_module.append(FastCOCOEvalOp().build_op())
+        from yolox.layers import FastCocoEvalOp
+        ext_module.append(FastCocoEvalOp().build_op())
     return ext_module
 
 

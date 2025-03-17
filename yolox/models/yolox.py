@@ -1,26 +1,32 @@
-#!/usr/bin/env python
-# -*- encoding: utf-8 -*-
 # Copyright (c) Megvii Inc. All rights reserved.
 
+import os
+import urllib.request
+from pathlib import Path
+from typing import Optional, Union
+
+import torch
 import torch.nn as nn
 
-from .yolo_head import YOLOXHead
-from .yolo_pafpn import YOLOPAFPN
+from yolox import exp
+from .yolo_head import YoloxHead
+from .yolo_pafpn import YoloPafpn
 
+HOME = Path(os.environ.get('YOLOX_HOME', str(Path.home() / '.cache' / 'yolox')))
 
-class YOLOX(nn.Module):
+class Yolox(nn.Module):
     """
     YOLOX model module. The module list is defined by create_yolov3_modules function.
     The network returns loss values from three YOLO layers during training
     and detection results during test.
     """
 
-    def __init__(self, backbone=None, head=None):
+    def __init__(self, backbone: Optional[YoloPafpn] = None, head: Optional[YoloxHead] = None):
         super().__init__()
         if backbone is None:
-            backbone = YOLOPAFPN()
+            backbone = YoloPafpn()
         if head is None:
-            head = YOLOXHead(80)
+            head = YoloxHead(80)
 
         self.backbone = backbone
         self.head = head
@@ -50,3 +56,35 @@ class YOLOX(nn.Module):
     def visualize(self, x, targets, save_prefix="assign_vis_"):
         fpn_outs = self.backbone(x)
         self.head.visualize_assign_result(fpn_outs, targets, x, save_prefix)
+
+    @classmethod
+    def from_pretrained(
+        cls,
+        pretrained_model_name_or_path: Union[str, os.PathLike],
+        experiment: Optional[exp.Exp] = None,
+        device: str = 'cpu',
+    ) -> 'Yolox':
+        path = str(pretrained_model_name_or_path)
+        if os.path.isfile(path):
+            assert experiment is not None
+        else:
+            path = cls.__cached_pretrained_model(path)
+            experiment = exp.get_exp(exp_name=pretrained_model_name_or_path)
+        model = experiment.get_model().to(device)
+        model.eval()
+        model.head.training = False
+        model.training = False
+        weights = torch.load(path, map_location=torch.device(device))
+        model.load_state_dict(weights['model'])
+        return model
+
+    @classmethod
+    def __cached_pretrained_model(cls, model_id: str) -> str:
+        weights_dir = HOME / 'weights'
+        weights_dir.mkdir(exist_ok=True, parents=True)
+        weights_file = weights_dir / f'{model_id}.pth'
+        if not weights_file.exists():
+            weights_url = f'https://github.com/Megvii-BaseDetection/YOLOX/releases/download/0.1.1rc0/{model_id}.pth'
+            urllib.request.urlretrieve(weights_url, f'{weights_file}.tmp')
+            os.rename(f'{weights_file}.tmp', weights_file)
+        return str(weights_file)

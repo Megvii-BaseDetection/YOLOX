@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 # Copyright (c) Megvii Inc. All rights reserved.
 
 from .allreduce_norm import *

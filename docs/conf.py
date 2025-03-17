@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Code are based on
 # https://github.com/facebookresearch/detectron2/blob/master/docs/conf.py
 # Copyright (c) Facebook, Inc. and its affiliates.
