@@ -165,9 +165,10 @@ class Predictor(object):
         with torch.no_grad():
             t0 = time.time()
             outputs = self.model(images_stack)
-            post_processed_outputs = postprocess(outputs, self.num_classes, self.confthre, self.nmsthre,
+            post_processed_outputs = postprocess(deepcopy(outputs), self.num_classes, self.confthre, self.nmsthre,
                                                  class_agnostic=True)
-            post_processed_raw_outputs = postprocess(outputs, self.num_classes, 0.01, self.nmsthre, class_agnostic=True)
+            post_processed_raw_outputs = postprocess(deepcopy(outputs), self.num_classes, 0.01, self.nmsthre,
+                                                     class_agnostic=True)
             # logger.info("Infer time: {:.4f}s".format(time.time() - t0))
         return post_processed_outputs, aspect_ratios, post_processed_raw_outputs
 
