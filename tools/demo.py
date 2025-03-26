@@ -132,19 +132,15 @@ class Predictor(object):
             self.model = model_trt
 
     def inference_in_batch(self, images: list[ndarray], preprocess_images: bool = True) -> \
-            tuple[list[torch.Tensor], list[float], list[torch.Tensor]]:
+            tuple[torch.Tensor, list[float]]:
         """
         Inference with batch images. This method is equivalent to `inference` but is adapted for batch inference.
         :param images: list of images, each image is in shape (height, width, channels) in BGR format.
         :param preprocess_images: Use preprocessing on images. Default is True. If False, images should be preprocessed
                                   before calling this method.
-        :return: tuple of (post_processed_outputs, aspect_ratios, post_processed_raw_outputs):
-            - `post_processed_outputs` list of tensors, each tensor is in shape (N, 6), where N is the number of bboxes
-              detected on the corresponding image. The 6 columns are (x1, y1, x2, y2, obj_conf, class_conf, class_pred).
+        :return: tuple of (outputs, aspect_ratios):
+            - `outputs` raw tensor output from the model.
             - `aspect_ratios` list of aspect ratios of each image.
-            - `post_processed_raw_outputs` list of tensors, each tensor is in shape (N, 6), where N is the number of
-               bboxes detected on the corresponding image. The 6 columns are (x1, y1, x2, y2, obj_conf, class_conf,
-               class_pred). This output is raw output of the model filtered by confidence threshold equal to 0.01.
         """
         aspect_ratios: list[float] = []
         processed_images: list[torch.Tensor] = []
@@ -165,12 +161,8 @@ class Predictor(object):
         with torch.no_grad():
             t0 = time.time()
             outputs = self.model(images_stack)
-            post_processed_outputs = postprocess(deepcopy(outputs), self.num_classes, self.confthre, self.nmsthre,
-                                                 class_agnostic=True)
-            post_processed_raw_outputs = postprocess(deepcopy(outputs), self.num_classes, 0.01, self.nmsthre,
-                                                     class_agnostic=True)
             # logger.info("Infer time: {:.4f}s".format(time.time() - t0))
-        return post_processed_outputs, aspect_ratios, post_processed_raw_outputs
+        return outputs, aspect_ratios
 
     def inference(self, img: ndarray, preprocess_image: bool = True) -> tuple[torch.Tensor, dict]:
         """

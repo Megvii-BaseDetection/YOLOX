@@ -29,7 +29,14 @@ def filter_box(output, scale_range):
     return output[keep]
 
 
-def postprocess(prediction, num_classes, conf_thre=0.7, nms_thre=0.45, class_agnostic=False):
+def postprocess(prediction: torch.Tensor, num_classes: int, conf_thre: float = 0.7, nms_thre: float = 0.45,
+                class_agnostic: bool = False) -> list[torch.Tensor]:
+    """
+    Postprocess for YOLOX. It includes NMS and score threshold filter.
+    :param prediction: YoloX model prediction tensor.
+    :return: list of tensors, each tensor is in shape (N, 6), where N is the number of bboxes
+             detected on the corresponding image. The 6 columns are (x1, y1, x2, y2, obj_conf, class_conf, class_pred).
+    """
     box_corner = prediction.new(prediction.shape)
     box_corner[:, :, 0] = prediction[:, :, 0] - prediction[:, :, 2] / 2
     box_corner[:, :, 1] = prediction[:, :, 1] - prediction[:, :, 3] / 2
