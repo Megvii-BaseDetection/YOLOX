@@ -132,15 +132,14 @@ class Predictor(object):
             self.model = model_trt
 
     def inference_in_batch(self, images: list[ndarray], preprocess_images: bool = True) -> \
-            tuple[list[torch.Tensor], list[float]]:
+            tuple[torch.Tensor, list[float]]:
         """
         Inference with batch images. This method is equivalent to `inference` but is adapted for batch inference.
         :param images: list of images, each image is in shape (height, width, channels) in BGR format.
         :param preprocess_images: Use preprocessing on images. Default is True. If False, images should be preprocessed
                                   before calling this method.
         :return: tuple of (outputs, aspect_ratios):
-            - `outputs` list of tensors, each tensor is in shape (N, 6), where N is the number of bboxes detected on the
-                corresponding image. The 6 columns are (x1, y1, x2, y2, obj_conf, class_conf, class_pred).
+            - `outputs` raw tensor output from the model.
             - `aspect_ratios` list of aspect ratios of each image.
         """
         aspect_ratios: list[float] = []
@@ -162,7 +161,6 @@ class Predictor(object):
         with torch.no_grad():
             t0 = time.time()
             outputs = self.model(images_stack)
-            outputs = postprocess(outputs, self.num_classes, self.confthre, self.nmsthre, class_agnostic=True)
             # logger.info("Infer time: {:.4f}s".format(time.time() - t0))
         return outputs, aspect_ratios
 
