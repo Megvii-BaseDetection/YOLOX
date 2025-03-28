@@ -18,7 +18,7 @@ IMAGE_EXT = [".jpg", ".jpeg", ".webp", ".bmp", ".png"]
 
 
 def make_parser():
-    parser = argparse.ArgumentParser("YOLOX Demo!")
+    parser = argparse.ArgumentParser("yolox demo")
     parser.add_argument(
         "demo", default="image", help="demo type, eg. image, video and webcam"
     )

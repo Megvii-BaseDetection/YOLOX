@@ -4,20 +4,22 @@ import argparse
 import random
 import sys
 import warnings
-from loguru import logger
 
 import torch
-import torch.backends.cudnn as cudnn
+from loguru import logger
+from torch.backends import cudnn
 
+from yolox.config import YoloxConfig
 from yolox.core import launch
-from yolox.exp import Exp, check_exp_value, get_exp
 from yolox.utils import configure_module, configure_nccl, configure_omp, get_num_devices
+
+from .utils import parse_model_config_opts, resolve_config
 
 
 def make_parser():
     parser = argparse.ArgumentParser("yolox train")
-    parser.add_argument("-expn", "--experiment-name", type=str, default=None)
-    parser.add_argument("-n", "--name", type=str, default=None, help="model name")
+    parser.add_argument("-c", "--config", type=str, help="A builtin config such as yolox_s, or a custom Python class given as {module}:{classname} such as yolox.config:YoloxS")
+    parser.add_argument("-n", "--name", type=str, default=None, help="Model name; defaults to the model name specified in config")
 
     # distributed
     parser.add_argument(
@@ -34,16 +36,9 @@ def make_parser():
         "-d", "--devices", default=None, type=int, help="device for training"
     )
     parser.add_argument(
-        "-f",
-        "--exp_file",
-        default=None,
-        type=str,
-        help="plz input your experiment description file",
-    )
-    parser.add_argument(
         "--resume", default=False, action="store_true", help="resume training"
     )
-    parser.add_argument("-c", "--ckpt", default=None, type=str, help="checkpoint file")
+    parser.add_argument("--ckpt", default=None, type=str, help="checkpoint file")
     parser.add_argument(
         "-e",
         "--start_epoch",
@@ -88,19 +83,20 @@ def make_parser():
         default="tensorboard"
     )
     parser.add_argument(
-        "opts",
-        help="Modify config options using the command-line",
-        default=None,
-        nargs=argparse.REMAINDER,
+        "-D",
+        type=str,
+        metavar="OPT=VALUE",
+        help="Override model configuration option with custom value (example: -D num_classes=71)",
+        action="append",
     )
     return parser
 
 
-@logger.catch
-def train(exp: Exp, args):
-    if exp.seed is not None:
-        random.seed(exp.seed)
-        torch.manual_seed(exp.seed)
+def train(config: YoloxConfig, args):
+    if config.seed is not None:
+        assert isinstance(config.seed, int)
+        random.seed(config.seed)
+        torch.manual_seed(config.seed)
         cudnn.deterministic = True
         warnings.warn(
             "You have chosen to seed training. This will turn on the CUDNN deterministic setting, "
@@ -113,25 +109,27 @@ def train(exp: Exp, args):
     configure_omp()
     cudnn.benchmark = True
 
-    trainer = exp.get_trainer(args)
+    trainer = config.get_trainer(args)
     trainer.train()
 
 
 def main(argv: list[str]) -> None:
     configure_module()
     args = make_parser().parse_args(argv)
-    exp = get_exp(args.exp_file, args.name)
-    exp.merge(args.opts)
-    check_exp_value(exp)
+    if args.config is None:
+        raise AttributeError("Please specify a model configuration.")
+    config = resolve_config(args.config)
+    config.update(parse_model_config_opts(args.D))
+    config.validate()
 
-    if not args.experiment_name:
-        args.experiment_name = exp.exp_name
+    if not args.name:
+        args.name = config.name
 
     num_gpu = get_num_devices() if args.devices is None else args.devices
     assert num_gpu <= get_num_devices()
 
     if args.cache is not None:
-        exp.dataset = exp.get_dataset(cache=True, cache_type=args.cache)
+        config.dataset = config.get_dataset(cache=True, cache_type=args.cache)
 
     dist_url = "auto" if args.dist_url is None else args.dist_url
     launch(
@@ -141,7 +139,7 @@ def main(argv: list[str]) -> None:
         args.machine_rank,
         backend=args.dist_backend,
         dist_url=dist_url,
-        args=(exp, args),
+        args=(config, args),
     )
 
 

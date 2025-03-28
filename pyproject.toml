@@ -5,12 +5,28 @@ build-backend = "poetry.core.masonry.api"
 [project]
 name = "yolox"
 version = "0.4.0"
-description = "YOLOX fork"
+description = "Lightweight, open-source, high-performance Yolo implementation"
 license = "Apache-2.0"
 readme = "README.md"
 requires-python = ">=3.9,<4.0"
 authors = [
     { name = "Pixeltable, Inc.", email = "contact@pixeltable.com>" },
+    { name = "megvii basedet team" }
+]
+classifiers = [
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: Apache Software License",
+    "Operating System :: MacOS",
+    "Operating System :: Microsoft :: Windows",
+    "Operating System :: POSIX :: Linux",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Software Development :: Libraries :: Python Modules",
 ]
 dependencies = [
     "numpy (==1.26.4)",
@@ -29,8 +45,11 @@ dependencies = [
     "onnx-simplifier (==0.4.36)",
 ]
 
+[project.urls]
+repository = "https://github.com/pixeltable/pixeltable-yolox"
+
 [project.scripts]
-yolox = "tools:main"
+yolox = "yolox.cli:main"
 
 [tool.poetry.plugins."mkdocstrings.python.templates"]
 extension-name = "tool.doc_plugins.mkdocstrings:get_templates_path"
@@ -54,6 +73,7 @@ pytest = "^7.2.1"
 pytest-xdist = { extras = ["psutil"], version = "^3.3.1" }
 pytest-rerunfailures = "^14.0.0"
 ruff = "^0.9.7"
+mypy = "^1.15.0"
 
 [tool.isort]
 force_single_line = false
@@ -67,7 +87,6 @@ disable_error_code = "no-any-unimported, no-any-return"
 disallow_any_unimported = true
 check_untyped_defs = true
 follow_imports = "silent"
-plugins = "pydantic.mypy, tool/mypy_plugin.py"
 show_error_codes = true
 strict_optional = false
 warn_return_any = true

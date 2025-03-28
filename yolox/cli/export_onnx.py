@@ -13,7 +13,7 @@ from yolox.utils import replace_module
 
 
 def make_parser():
-    parser = argparse.ArgumentParser("YOLOX onnx deploy")
+    parser = argparse.ArgumentParser("yolox onnx-deploy")
     parser.add_argument(
         "--output-name", type=str, default="yolox.onnx", help="output name of models"
     )

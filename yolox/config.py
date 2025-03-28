@@ -1,114 +1,163 @@
 # Copyright (c) Megvii Inc. All rights reserved.
 
-import os
+from __future__ import annotations
+
+import ast
 import random
+from dataclasses import dataclass
+from typing import Any, Literal, Optional
 
 import torch
 import torch.distributed as dist
 import torch.nn as nn
 
-from .base_exp import BaseExp
-
-__all__ = ["Exp", "check_exp_value"]
+from yolox.data.datasets import Dataset
 
 
-class Exp(BaseExp):
-    def __init__(self):
-        super().__init__()
+@dataclass
+class YoloxConfig:
+    name: str
 
-        # ---------------- model config ---------------- #
-        # detect classes number of model
-        self.num_classes = 80
-        # factor of model depth
-        self.depth = 1.00
-        # factor of model width
-        self.width = 1.00
-        # activation name. For example, if using "relu", then "silu" will be replaced to "relu".
-        self.act = "silu"
+    # ---------------- model config ---------------- #
+    # detect classes number of model
+    num_classes: int = 80
+    # factor of model depth
+    depth: float = 1.00
+    # factor of model width
+    width: float = 1.00
+    # depthwise model
+    depthwise: bool = False
+    # activation name. For example, if using "relu", then "silu" will be replaced to "relu".
+    act: Literal["silu", "relu", "lrelu"] = "silu"
 
-        # ---------------- dataloader config ---------------- #
-        # set worker to 4 for shorter dataloader init time
-        # If your training process cost many memory, reduce this value.
-        self.data_num_workers = 4
-        self.input_size = (640, 640)  # (height, width)
-        # Actual multiscale ranges: [640 - 5 * 32, 640 + 5 * 32].
-        # To disable multiscale training, set the value to 0.
-        self.multiscale_range = 5
-        # You can uncomment this line to specify a multiscale range
-        # self.random_size = (14, 26)
-        # dir of dataset images, if data_dir is None, this project will use `datasets` dir
-        self.data_dir = None
-        # name of annotation file for training
-        self.train_ann = "instances_train2017.json"
-        # name of annotation file for evaluation
-        self.val_ann = "instances_val2017.json"
-        # name of annotation file for testing
-        self.test_ann = "instances_test2017.json"
+    seed: Optional[Any] = None
+    output_dir: str = "./out"
+    print_interval: int = 100
+    eval_interval: int = 10
 
-        # --------------- transform config ----------------- #
-        # prob of applying mosaic aug
-        self.mosaic_prob = 1.0
-        # prob of applying mixup aug
-        self.mixup_prob = 1.0
-        # prob of applying hsv aug
-        self.hsv_prob = 1.0
-        # prob of applying flip aug
-        self.flip_prob = 0.5
-        # rotation angle range, for example, if set to 2, the true range is (-2, 2)
-        self.degrees = 10.0
-        # translate range, for example, if set to 0.1, the true range is (-0.1, 0.1)
-        self.translate = 0.1
-        self.mosaic_scale = (0.1, 2)
-        # apply mixup aug or not
-        self.enable_mixup = True
-        self.mixup_scale = (0.5, 1.5)
-        # shear angle range, for example, if set to 2, the true range is (-2, 2)
-        self.shear = 2.0
+    # ---------------- dataloader config ---------------- #
+    # deterministic data loading
+    deterministic: bool = False
+    # set worker to 4 for shorter dataloader init time
+    # If your training process cost many memory, reduce this value.
+    data_num_workers: int = 4
+    input_size: tuple[int, int] = (640, 640)  # (height, width)
+    # Actual multiscale ranges: [640 - 5 * 32, 640 + 5 * 32].
+    # To disable multiscale training, set the value to 0.
+    multiscale_range: int = 5
+    # you can use this to specify a multiscale range.
+    random_size: Optional[tuple[int, int]] = None
+    # dir of dataset images, if data_dir is None, this project will use `datasets` dir
+    data_dir: Optional[str] = None
+    # name of annotation file for training
+    train_ann: str = "instances_train2017.json"
+    # name of annotation file for evaluation
+    val_ann: str = "instances_val2017.json"
+    # name of annotation file for testing
+    test_ann: str = "instances_test2017.json"
 
-        # --------------  training config --------------------- #
-        # epoch number used for warmup
-        self.warmup_epochs = 5
-        # max training epoch
-        self.max_epoch = 300
-        # minimum learning rate during warmup
-        self.warmup_lr = 0
-        self.min_lr_ratio = 0.05
-        # learning rate for one image. During training, lr will multiply batchsize.
-        self.basic_lr_per_img = 0.01 / 64.0
-        # name of LRScheduler
-        self.scheduler = "yoloxwarmcos"
-        # last #epoch to close augmention like mosaic
-        self.no_aug_epochs = 15
-        # apply EMA during training
-        self.ema = True
+    # --------------- transform config ----------------- #
+    # prob of applying mosaic aug
+    mosaic_prob: float = 1.0
+    # prob of applying mixup aug
+    mixup_prob: float = 1.0
+    # prob of applying hsv aug
+    hsv_prob: float = 1.0
+    # prob of applying flip aug
+    flip_prob: float = 0.5
+    # rotation angle range, for example, if set to 2, the true range is (-2, 2)
+    degrees: float = 10.0
+    # translate range, for example, if set to 0.1, the true range is (-0.1, 0.1)
+    translate: float = 0.1
+    mosaic_scale: tuple[float, float] = (0.1, 2)
+    # apply mixup aug or not
+    enable_mixup: bool = True
+    mixup_scale: tuple[float, float] = (0.5, 1.5)
+    # shear angle range, for example, if set to 2, the true range is (-2, 2)
+    shear: float = 2.0
 
-        # weight decay of optimizer
-        self.weight_decay = 5e-4
-        # momentum of optimizer
-        self.momentum = 0.9
-        # log period in iter, for example,
-        # if set to 1, user could see log every iteration.
-        self.print_interval = 10
-        # eval period in epoch, for example,
-        # if set to 1, model will be evaluate after every epoch.
-        self.eval_interval = 10
-        # save history checkpoint or not.
-        # If set to False, yolox will only save latest and best ckpt.
-        self.save_history_ckpt = True
-        # name of experiment
-        self.exp_name = os.path.split(os.path.realpath(__file__))[1].split(".")[0]
+    # --------------  training config --------------------- #
+    # epoch number used for warmup
+    warmup_epochs: int = 5
+    # max training epoch
+    max_epoch: int = 300
+    # minimum learning rate during warmup
+    warmup_lr: int = 0
+    min_lr_ratio: float = 0.05
+    # learning rate for one image. During training, lr will multiply batchsize.
+    basic_lr_per_img: float = 0.01 / 64.0
+    # name of LRScheduler
+    scheduler: str = "yoloxwarmcos"
+    # last #epoch to close augmention like mosaic
+    no_aug_epochs: int = 15
+    # apply EMA during training
+    ema: bool = True
 
-        # -----------------  testing config ------------------ #
-        # output image size during evaluation/test
-        self.test_size = (640, 640)
-        # confidence threshold during evaluation/test,
-        # boxes whose scores are less than test_conf will be filtered
-        self.test_conf = 0.01
-        # nms threshold
-        self.nmsthre = 0.65
+    # weight decay of optimizer
+    weight_decay: float = 5e-4
+    # momentum of optimizer
+    momentum: float = 0.9
+    # log period in iter, for example,
+    # if set to 1, user could see log every iteration.
+    print_interval: int = 10
+    # eval period in epoch, for example,
+    # if set to 1, model will be evaluate after every epoch.
+    eval_interval: int = 10
+    # save history checkpoint or not.
+    # If set to False, yolox will only save latest and best ckpt.
+    save_history_ckpt: bool = True
+
+    # -----------------  testing config ------------------ #
+    # output image size during evaluation/test
+    test_size: tuple[int, int] = (640, 640)
+    # confidence threshold during evaluation/test,
+    # boxes whose scores are less than test_conf will be filtered
+    test_conf: float = 0.01
+    # nms threshold
+    nmsthre: float = 0.65
+
+    dataset: Optional[Dataset] = None
+
+    @classmethod
+    def get_named_config(cls, name: str) -> Optional[YoloxConfig]:
+        return _NAMED_CONFIG.get(name.replace('-', '_'))
+
+    def validate(self):
+        h, w = self.input_size
+        assert h % 32 == 0 and w % 32 == 0, "input size must be multiples of 32"
+
+    def update(self, opts: dict[str, str]):
+        for k, v in opts.items():
+            # only update value with same key
+            if hasattr(self, k):
+                src_value = getattr(self, k)
+                src_type = type(src_value)
+
+                # pre-process input if source type is list or tuple
+                if isinstance(src_value, (list, tuple)):
+                    v = v.strip("[]()")
+                    v = [t.strip() for t in v.split(",")]
+
+                    # find type of tuple
+                    if len(src_value) > 0:
+                        src_item_type = type(src_value[0])
+                        v = [src_item_type(t) for t in v]
+
+                if src_value is not None and src_type != type(v):
+                    try:
+                        v = src_type(v)
+                    except Exception:
+                        v = ast.literal_eval(v)
+
+                if k == 'seed':
+                    # Special handling for seed, which has a default of None
+                    v = int(v)
+                setattr(self, k, v)
+            else:
+                raise AttributeError(f'Unknown model configuration option: {k}')
 
     def get_model(self):
-        from yolox.models import Yolox, YoloPafpn, YoloxHead
+        from yolox.models import YoloPafpn, Yolox, YoloxHead
 
         def init_yolo(M):
             for m in M.modules():
@@ -118,8 +167,8 @@ class Exp(BaseExp):
 
         if getattr(self, "model", None) is None:
             in_channels = [256, 512, 1024]
-            backbone = YoloPafpn(self.depth, self.width, in_channels=in_channels, act=self.act)
-            head = YoloxHead(self.num_classes, self.width, in_channels=in_channels, act=self.act)
+            backbone = YoloPafpn(self.depth, self.width, in_channels=in_channels, depthwise=self.depthwise, act=self.act)
+            head = YoloxHead(self.num_classes, self.width, in_channels=in_channels, depthwise=self.depthwise, act=self.act)
             self.model = Yolox(backbone, head)
 
         self.model.apply(init_yolo)
@@ -162,12 +211,12 @@ class Exp(BaseExp):
                 None: Do not use cache, in this case cache_data is also None.
         """
         from yolox.data import (
-            TrainTransform,
-            YoloBatchSampler,
             DataLoader,
             InfiniteSampler,
             MosaicDetection,
-            worker_init_reset_seed,
+            TrainTransform,
+            YoloBatchSampler,
+            worker_init_reset_seed
         )
         from yolox.utils import wait_for_the_master
 
@@ -209,14 +258,17 @@ class Exp(BaseExp):
             mosaic=not no_aug,
         )
 
-        dataloader_kwargs = {"num_workers": self.data_num_workers, "pin_memory": True}
-        dataloader_kwargs["batch_sampler"] = batch_sampler
-
         # Make sure each process has different random seed, especially for 'fork' method.
         # Check https://github.com/pytorch/pytorch/issues/63311 for more details.
-        dataloader_kwargs["worker_init_fn"] = worker_init_reset_seed
+        worker_init_fn = None if self.deterministic else worker_init_reset_seed
 
-        train_loader = DataLoader(self.dataset, **dataloader_kwargs)
+        train_loader = DataLoader(
+            self.dataset,
+            num_workers=self.data_num_workers,
+            pin_memory=True,
+            batch_sampler=batch_sampler,
+            worker_init_fn=worker_init_fn
+        )
 
         return train_loader
 
@@ -225,7 +277,7 @@ class Exp(BaseExp):
 
         if rank == 0:
             size_factor = self.input_size[1] * 1.0 / self.input_size[0]
-            if not hasattr(self, 'random_size'):
+            if self.random_size is None:
                 min_size = int(self.input_size[0] / 32) - self.multiscale_range
                 max_size = int(self.input_size[0] / 32) + self.multiscale_range
                 self.random_size = (min_size, max_size)
@@ -352,6 +404,66 @@ class Exp(BaseExp):
         return evaluator.evaluate(model, is_distributed, half, return_outputs=return_outputs)
 
 
-def check_exp_value(exp: Exp):
-    h, w = exp.input_size
+def validate_config(config: YoloxConfig):
+    h, w = config.input_size
     assert h % 32 == 0 and w % 32 == 0, "input size must be multiples of 32"
+
+
+class YoloxS(YoloxConfig):
+    def __init__(self):
+        super().__init__("yolox_s")
+        self.depth = 0.33
+        self.width = 0.50
+
+
+class YoloxM(YoloxConfig):
+    def __init__(self):
+        super().__init__("yolox_m")
+        self.depth = 0.67
+        self.width = 0.75
+
+
+class YoloxL(YoloxConfig):
+    def __init__(self):
+        super().__init__("yolox_l")
+        self.depth = 1.0
+        self.width = 1.0
+
+
+class YoloxX(YoloxConfig):
+    def __init__(self):
+        super().__init__("yolox_x")
+        self.depth = 1.33
+        self.width = 1.25
+
+
+class YoloxTiny(YoloxConfig):
+    def __init__(self):
+        super().__init__("yolox_tiny")
+        self.depth = 0.33
+        self.width = 0.375
+        self.input_size = (416, 416)
+        self.random_size = (10, 20)
+        self.mosaic_scale = (0.5, 1.5)
+        self.test_size = (416, 416)
+        self.enable_mixup = False
+
+
+class YoloxNano(YoloxConfig):
+    def __init__(self):
+        super().__init__("yolox_nano")
+        self.depth = 0.33
+        self.width = 0.25
+        self.depthwise = True
+        self.input_size = (416, 416)
+        self.random_size = (10, 20)
+        self.mosaic_scale = (0.5, 1.5)
+        self.test_size = (416, 416)
+        self.mosaic_prob = 0.5
+        self.enable_mixup = False
+
+
+_NAMED_CONFIG: dict[str, YoloxConfig] = {
+    config.name: config
+    for config in (YoloxS(), YoloxM(), YoloxL(), YoloxX(), YoloxTiny(), YoloxNano())
+}

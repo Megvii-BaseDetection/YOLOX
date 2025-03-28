@@ -8,7 +8,8 @@ from typing import Optional, Union
 import torch
 import torch.nn as nn
 
-from yolox import exp
+from yolox.config import YoloxConfig
+
 from .yolo_head import YoloxHead
 from .yolo_pafpn import YoloPafpn
 
@@ -61,16 +62,19 @@ class Yolox(nn.Module):
     def from_pretrained(
         cls,
         pretrained_model_name_or_path: Union[str, os.PathLike],
-        experiment: Optional[exp.Exp] = None,
+        config: Optional[YoloxConfig] = None,
         device: str = 'cpu',
     ) -> 'Yolox':
         path = str(pretrained_model_name_or_path)
         if os.path.isfile(path):
-            assert experiment is not None
+            if config is None:
+                raise ValueError('config must be provided when loading model from a file')
         else:
-            path = cls.__cached_pretrained_model(path)
-            experiment = exp.get_exp(exp_name=pretrained_model_name_or_path)
-        model = experiment.get_model().to(device)
+            config = YoloxConfig.get_named_config(path)
+            if config is None:
+                raise ValueError(f'Unknown model: {pretrained_model_name_or_path}')
+            path = cls.__cached_pretrained_weights(path)
+        model = config.get_model().to(device)
         model.eval()
         model.head.training = False
         model.training = False
@@ -79,7 +83,7 @@ class Yolox(nn.Module):
         return model
 
     @classmethod
-    def __cached_pretrained_model(cls, model_id: str) -> str:
+    def __cached_pretrained_weights(cls, model_id: str) -> str:
         weights_dir = HOME / 'weights'
         weights_dir.mkdir(exist_ok=True, parents=True)
         weights_file = weights_dir / f'{model_id}.pth'

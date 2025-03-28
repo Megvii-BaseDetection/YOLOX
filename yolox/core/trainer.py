@@ -1,5 +1,6 @@
 # Copyright (c) Megvii, Inc. and its affiliates.
 
+from argparse import Namespace
 import datetime
 import os
 import time
@@ -9,8 +10,8 @@ import torch
 from torch.nn.parallel import DistributedDataParallel as DDP
 from torch.utils.tensorboard import SummaryWriter
 
+from yolox.config import YoloxConfig
 from yolox.data import DataPrefetcher
-from yolox.exp import Exp
 from yolox.utils import (
     MeterBuffer,
     MlflowLogger,
@@ -34,31 +35,31 @@ from yolox.utils import (
 
 
 class Trainer:
-    def __init__(self, exp: Exp, args):
+    def __init__(self, config: YoloxConfig, args: Namespace):
         # init function only defines some basic attr, other attrs like model, optimizer are built in
         # before_train methods.
-        self.exp = exp
+        self.exp = config
         self.args = args
 
         # training related attr
-        self.max_epoch = exp.max_epoch
+        self.max_epoch = config.max_epoch
         self.amp_training = args.fp16
         self.scaler = torch.cuda.amp.GradScaler(enabled=args.fp16)
         self.is_distributed = get_world_size() > 1
         self.rank = get_rank()
         self.local_rank = get_local_rank()
         self.device = "cuda:{}".format(self.local_rank)
-        self.use_model_ema = exp.ema
-        self.save_history_ckpt = exp.save_history_ckpt
+        self.use_model_ema = config.ema
+        self.save_history_ckpt = config.save_history_ckpt
 
         # data/dataloader related attr
         self.data_type = torch.float16 if args.fp16 else torch.float32
-        self.input_size = exp.input_size
+        self.input_size = config.input_size
         self.best_ap = 0
 
         # metric record
-        self.meter = MeterBuffer(window_size=exp.print_interval)
-        self.file_name = os.path.join(exp.output_dir, args.experiment_name)
+        self.meter = MeterBuffer(window_size=config.print_interval)
+        self.file_name = os.path.join(config.output_dir, args.name)
 
         if self.rank == 0:
             os.makedirs(self.file_name, exist_ok=True)
@@ -298,10 +299,11 @@ class Trainer:
             self.meter.clear_meters()
 
         # random resizing
-        if (self.progress_in_iter + 1) % 10 == 0:
-            self.input_size = self.exp.random_resize(
-                self.train_loader, self.epoch, self.rank, self.is_distributed
-            )
+        if not self.exp.deterministic:
+            if (self.progress_in_iter + 1) % 10 == 0:
+                self.input_size = self.exp.random_resize(
+                    self.train_loader, self.epoch, self.rank, self.is_distributed
+                )
 
     @property
     def progress_in_iter(self):

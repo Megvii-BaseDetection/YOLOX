@@ -10,7 +10,7 @@ from yolox.exp import get_exp
 
 
 def make_parser():
-    parser = argparse.ArgumentParser("YOLOX torchscript deploy")
+    parser = argparse.ArgumentParser("yolox torchscript-deploy")
     parser.add_argument(
         "--output-name", type=str, default="yolox.torchscript.pt", help="output name of models"
     )

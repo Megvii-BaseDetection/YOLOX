@@ -5,28 +5,23 @@ import os
 import random
 import sys
 import warnings
-from loguru import logger
 
 import torch
-import torch.backends.cudnn as cudnn
+from loguru import logger
+from torch.backends import cudnn
 from torch.nn.parallel import DistributedDataParallel as DDP
 
+from yolox.config import YoloxConfig
 from yolox.core import launch
-from yolox.exp import get_exp
-from yolox.utils import (
-    configure_module,
-    configure_nccl,
-    fuse_model,
-    get_local_rank,
-    get_model_info,
-    setup_logger
-)
+from yolox.utils import configure_module, configure_nccl, fuse_model, get_local_rank, get_model_info, setup_logger
+
+from .utils import parse_model_config_opts, resolve_config
 
 
 def make_parser():
     parser = argparse.ArgumentParser("yolox eval")
-    parser.add_argument("-expn", "--experiment-name", type=str, default=None)
-    parser.add_argument("-n", "--name", type=str, default=None, help="model name")
+    parser.add_argument("-c", "--config", type=str, help="A builtin config such as yolox_s, or a custom Python class given as {module}:{classname} such as yolox.config:YoloxS")
+    parser.add_argument("-n", "--name", type=str, default=None, help="Model name; defaults to the model name specified in config")
 
     # distributed
     parser.add_argument(
@@ -48,14 +43,7 @@ def make_parser():
     parser.add_argument(
         "--machine_rank", default=0, type=int, help="node rank for multi-node training"
     )
-    parser.add_argument(
-        "-f",
-        "--exp_file",
-        default=None,
-        type=str,
-        help="please input your experiment description file",
-    )
-    parser.add_argument("-c", "--ckpt", default=None, type=str, help="ckpt for eval")
+    parser.add_argument("--ckpt", default=None, type=str, help="ckpt for eval")
     parser.add_argument("--conf", default=None, type=float, help="test conf")
     parser.add_argument("--nms", default=None, type=float, help="test nms threshold")
     parser.add_argument("--tsize", default=None, type=int, help="test img size")
@@ -103,22 +91,24 @@ def make_parser():
         help="speed test only.",
     )
     parser.add_argument(
-        "opts",
-        help="Modify config options using the command-line",
-        default=None,
-        nargs=argparse.REMAINDER,
+        "-D",
+        type=str,
+        metavar="OPT=VALUE",
+        help="Override model configuration option with custom value (example: -D num_classes=71)",
+        action="append",
     )
     return parser
 
 
-@logger.catch
-def eval(exp, args, num_gpu):
+def eval(config: YoloxConfig, args, num_gpu):
     if args.seed is not None:
         random.seed(args.seed)
         torch.manual_seed(args.seed)
         cudnn.deterministic = True
         warnings.warn(
-            "You have chosen to seed testing. This will turn on the CUDNN deterministic setting, "
+            "You have chosen to seed training. This will turn on the CUDNN deterministic setting, "
+            "which can slow down your training considerably! You may see unexpected behavior "
+            "when restarting from checkpoints."
         )
 
     is_distributed = num_gpu > 1
@@ -129,7 +119,7 @@ def eval(exp, args, num_gpu):
 
     rank = get_local_rank()
 
-    file_name = os.path.join(exp.output_dir, args.experiment_name)
+    file_name = os.path.join(config.output_dir, args.experiment_name)
 
     if rank == 0:
         os.makedirs(file_name, exist_ok=True)
@@ -138,17 +128,17 @@ def eval(exp, args, num_gpu):
     logger.info("Args: {}".format(args))
 
     if args.conf is not None:
-        exp.test_conf = args.conf
+        config.test_conf = args.conf
     if args.nms is not None:
-        exp.nmsthre = args.nms
+        config.nmsthre = args.nms
     if args.tsize is not None:
-        exp.test_size = (args.tsize, args.tsize)
+        config.test_size = (args.tsize, args.tsize)
 
-    model = exp.get_model()
-    logger.info("Model Summary: {}".format(get_model_info(model, exp.test_size)))
+    model = config.get_model()
+    logger.info("Model Summary: {}".format(get_model_info(model, config.test_size)))
     logger.info("Model Structure:\n{}".format(str(model)))
 
-    evaluator = exp.get_evaluator(args.batch_size, is_distributed, args.test, args.legacy)
+    evaluator = config.get_evaluator(args.batch_size, is_distributed, args.test, args.legacy)
     evaluator.per_class_AP = True
     evaluator.per_class_AR = True
 
@@ -190,7 +180,7 @@ def eval(exp, args, num_gpu):
 
     # start evaluate
     *_, summary = evaluator.evaluate(
-        model, is_distributed, args.fp16, trt_file, decoder, exp.test_size
+        model, is_distributed, args.fp16, trt_file, decoder, config.test_size
     )
     logger.info("\n" + summary)
 
@@ -198,24 +188,27 @@ def eval(exp, args, num_gpu):
 def main(argv: list[str]) -> None:
     configure_module()
     args = make_parser().parse_args(argv)
-    exp = get_exp(args.exp_file, args.name)
-    exp.merge(args.opts)
+    if args.config is None:
+        raise AttributeError("Please specify a model configuration.")
+    config = resolve_config(args.config)
+    config.update(parse_model_config_opts(args.D))
+    config.validate()
 
-    if not args.experiment_name:
-        args.experiment_name = exp.exp_name
+    if not args.name:
+        args.name = config.name
 
     num_gpu = torch.cuda.device_count() if args.devices is None else args.devices
     assert num_gpu <= torch.cuda.device_count()
 
     dist_url = "auto" if args.dist_url is None else args.dist_url
     launch(
-        main,
+        eval,
         num_gpu,
         args.num_machines,
         args.machine_rank,
         backend=args.dist_backend,
         dist_url=dist_url,
-        args=(exp, args, num_gpu),
+        args=(config, args, num_gpu),
     )
 
 if __name__ == "__main__":
