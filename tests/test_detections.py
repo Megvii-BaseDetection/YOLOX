@@ -12,7 +12,7 @@ class TestDetections:
             processor = YoloxProcessor(model_id)
             tensor = processor(test_images)
             output = model(tensor)
-            actual = processor.postprocess(test_images, output)
+            actual = processor.postprocess(test_images, output, threshold = 0.65)
             print(actual)
             for a, e in zip(actual, expected):
                 for ba, be in zip(a['bboxes'], e['bboxes']):

@@ -1,0 +1,13 @@
+# MD013/line-length
+# (set line length to 120, don't enforce for tables)
+MD013:
+    line_length: 120
+    tables: false
+
+# MD033/no-inline-html
+# (allow inline HTML)
+MD033: false
+
+# MD041/first-line-h1
+# (don't enforce that first line is a top-level heading)
+MD041: false

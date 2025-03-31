@@ -12,12 +12,10 @@ from yolox.config import YoloxConfig
 
 class YoloxProcessor:
     config: YoloxConfig
-    threshold: float
 
     def __init__(
         self,
         model_name_or_config: Union[str, YoloxConfig],
-        threshold: float = 0.5,
     ):
         if isinstance(model_name_or_config, str):
             self.config = YoloxConfig.get_named_config(model_name_or_config)
@@ -25,8 +23,6 @@ class YoloxProcessor:
             self.config = model_name_or_config
         else:
             raise ValueError("model_name_or_config must be a string or YoloxConfig")
-
-        self.threshold = threshold
 
     def __call__(self, inputs: Iterable[Image]) -> torch.Tensor:
         return self.__images_to_tensor(inputs)
@@ -40,8 +36,8 @@ class YoloxProcessor:
             tensors.append(torch.from_numpy(image_transform))
         return torch.stack(tensors)
 
-    def postprocess(self, images: Iterable[Image], tensor: torch.Tensor) -> list[Detections]:
-        outputs: list[torch.Tensor] = utils.postprocess(tensor, self.config.num_classes, self.config.nmsthre, class_agnostic=False)
+    def postprocess(self, images: Iterable[Image], tensor: torch.Tensor, threshold: float = 0.5) -> list[Detections]:
+        outputs: list[torch.Tensor] = utils.postprocess(tensor, self.config.num_classes, threshold, self.config.nmsthre, class_agnostic=False)
         results: list[Detections] = []
         for i, image in enumerate(images):
             ratio = min(self.config.test_size[0] / image.height, self.config.test_size[1] / image.width)
