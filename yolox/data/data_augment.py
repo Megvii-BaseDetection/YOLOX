@@ -215,11 +215,15 @@ class TrainTransform:
         if random.random() < self.hsv_prob:
             augment_hsv(image)
 
-        if self.gaussian_blur is not None:
-            image = augment_gaussian_blur(image, self.gaussian_blur)
-
-        if self.motion_blur is not None:
-            image = augment_motion_blur(image, self.motion_blur)
+        if self.gaussian_blur is None:
+            if self.motion_blur is not None:
+                image = augment_motion_blur(image, self.motion_blur)
+        else:
+            if self.motion_blur is not None:
+                image = random.choice([augment_gaussian_blur(image, self.gaussian_blur),
+                                       augment_motion_blur(image, self.motion_blur)])
+            else:
+                image = augment_gaussian_blur(image, self.gaussian_blur)
 
         if self.fog is not None:
             image = augment_fog(image, self.fog)
