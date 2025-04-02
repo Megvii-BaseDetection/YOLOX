@@ -30,7 +30,7 @@ def filter_box(output, scale_range):
 
 
 def postprocess(prediction: torch.Tensor, num_classes: int, conf_thre: float = 0.7, nms_thre: float = 0.45,
-                class_agnostic: bool = False) -> list[torch.Tensor]:
+                class_agnostic: bool = False) -> list[torch.Tensor | None]:
     """
     Postprocess for YOLOX. It includes NMS and score threshold filter.
     :param prediction: YoloX model prediction tensor.
