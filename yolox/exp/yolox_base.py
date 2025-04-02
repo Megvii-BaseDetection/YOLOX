@@ -114,6 +114,10 @@ class Exp(BaseExp):
         self.nmsthre = 0.65
         # freeze model backbone weights
         self.freeze_backbone = False
+        self.gaussian_blur = None
+        self.motion_blur = None
+        self.fog = None
+        self.sun_glare = None
 
     def get_model(self):
         from yolox.models import YOLOX, YOLOPAFPN, YOLOXHead
@@ -201,7 +205,12 @@ class Exp(BaseExp):
             preproc=TrainTransform(
                 max_labels=120,
                 flip_prob=self.flip_prob,
-                hsv_prob=self.hsv_prob),
+                hsv_prob=self.hsv_prob,
+                gaussian_blur=self.gaussian_blur,
+                motion_blur=self.motion_blur,
+                fog=self.fog,
+                sun_glare=self.sun_glare
+            ),
             degrees=self.degrees,
             translate=self.translate,
             mosaic_scale=self.mosaic_scale,

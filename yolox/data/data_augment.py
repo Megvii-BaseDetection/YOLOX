@@ -8,7 +8,7 @@ Dataset classes.
 The data augmentation procedures were interpreted from @weiliu89's SSD paper
 http://arxiv.org/abs/1512.02325
 """
-
+import albumentations as A
 import math
 import random
 
@@ -29,6 +29,33 @@ def augment_hsv(img, hgain=5, sgain=30, vgain=30):
     img_hsv[..., 2] = np.clip(img_hsv[..., 2] + hsv_augs[2], 0, 255)
 
     cv2.cvtColor(img_hsv.astype(img.dtype), cv2.COLOR_HSV2BGR, dst=img)  # no return needed
+
+
+def augment_gaussian_blur(img, parameters):
+    transform = A.GaussianBlur(blur_limit=parameters[0], sigma_limit=parameters[1], p=parameters[2])
+    result = transform(image=img)
+    return result["image"]
+
+
+def augment_motion_blur(img, parameters):
+    transform = A.MotionBlur(blur_limit=parameters[0], angle_range=parameters[1], direction_range=parameters[2],
+                             p=parameters[3])
+    result = transform(image=img)
+    return result["image"]
+
+
+def augment_fog(img, parameters):
+    transform = A.RandomFog(fog_coef_range=parameters[0], alpha_coef=parameters[1], p=parameters[2])
+    result = transform(image=img)
+    return result["image"]
+
+
+def augment_sun_glare(img, parameters):
+    transform = A.RandomSunFlare(flare_roi=parameters[0], angle_range=parameters[1],
+                                 num_flare_circles_range=parameters[2], src_radius=parameters[3],
+                                 src_color=parameters[4], method=parameters[5], p=parameters[6])
+    result = transform(image=img)
+    return result["image"]
 
 
 def get_aug_params(value, center=0):
@@ -159,10 +186,15 @@ def preproc(img, input_size, swap=(2, 0, 1)):
 
 
 class TrainTransform:
-    def __init__(self, max_labels=50, flip_prob=0.5, hsv_prob=1.0):
+    def __init__(self, max_labels=50, flip_prob=0.5, hsv_prob=1.0, gaussian_blur=None, motion_blur=None, fog=None,
+                 sun_glare=None):
         self.max_labels = max_labels
         self.flip_prob = flip_prob
         self.hsv_prob = hsv_prob
+        self.gaussian_blur = gaussian_blur
+        self.motion_blur = motion_blur
+        self.fog = fog
+        self.sun_glare = sun_glare
 
     def __call__(self, image, targets, input_dim):
         boxes = targets[:, :4].copy()
@@ -182,6 +214,20 @@ class TrainTransform:
 
         if random.random() < self.hsv_prob:
             augment_hsv(image)
+
+        if self.gaussian_blur is not None:
+            image = augment_gaussian_blur(image, self.gaussian_blur)
+
+        if self.motion_blur is not None:
+            image = augment_motion_blur(image, self.motion_blur)
+
+        if self.fog is not None:
+            image = augment_fog(image, self.fog)
+
+        if self.sun_glare is not None:
+            image = augment_sun_glare(image, self.sun_glare)
+
+
         image_t, boxes = _mirror(image, boxes, self.flip_prob)
         height, width, _ = image_t.shape
         image_t, r_ = preproc(image_t, input_dim)
