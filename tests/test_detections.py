@@ -1,26 +1,48 @@
-from PIL.Image import Image
+from PIL import Image
 
-from yolox.models import Yolox, YoloxProcessor
+from yolox.models import Yolox, YoloxModule, YoloxProcessor
+from yolox.models.processor import Detections
 
 
 class TestDetections:
-    def test_detections(self, test_images: list[Image]) -> None:
-        for model_id, expected in DETECTIONS_DATA.items():
-            print('----------------------------------------')
-            print(f'Testing model: {model_id}')
-            model = Yolox.from_pretrained(model_id)
-            processor = YoloxProcessor(model_id)
-            tensor = processor(test_images)
-            output = model(tensor)
-            actual = processor.postprocess(test_images, output, threshold = 0.65)
-            print(actual)
-            for a, e in zip(actual, expected):
-                for ba, be in zip(a['bboxes'], e['bboxes']):
-                    for x, y in zip(ba, be):
-                        assert abs(x - y) < 1e-2
-                for sa, se in zip(a['scores'], e['scores']):
-                    assert abs(sa - se) < 1e-4
-                assert a['labels'] == e['labels']
+    def test_detections(self, test_image_files: list[str]) -> None:
+        test_images = [Image.open(image_file) for image_file in test_image_files]
+
+        for call_pattern in ('files', 'images', 'separate', 'deprecated'):
+            for model_id, expected in DETECTIONS_DATA.items():
+                print('----------------------------------------')
+                print(f'Testing model {model_id!r} with call pattern {call_pattern!r}')
+                actual: list[Detections]
+
+                if call_pattern == 'files':
+                    model = Yolox.from_pretrained(model_id)
+                    actual = model(test_image_files, threshold = 0.65)
+                elif call_pattern == 'images':
+                    model = Yolox.from_pretrained(model_id)
+                    actual = model(test_images, threshold = 0.65)
+                elif call_pattern == 'separate':
+                    model = YoloxModule.from_pretrained(model_id)
+                    processor = YoloxProcessor(model_id)
+                    tensor = processor(test_images)
+                    output = model(tensor)
+                    actual = processor.postprocess(test_images, output, threshold = 0.65)
+                elif call_pattern == 'deprecated':
+                    model = Yolox.from_pretrained(model_id)
+                    processor = YoloxProcessor(model_id)
+                    tensor = processor(test_images)
+                    output = model(tensor)
+                    actual = processor.postprocess(test_images, output, threshold = 0.65)
+                else:
+                    raise AssertionError()
+
+                print(actual)
+                for a, e in zip(actual, expected):
+                    for ba, be in zip(a['bboxes'], e['bboxes']):
+                        for x, y in zip(ba, be):
+                            assert abs(x - y) < 1e-2
+                    for sa, se in zip(a['scores'], e['scores']):
+                        assert abs(sa - se) < 1e-4
+                    assert a['labels'] == e['labels']
 
 
 # These baselines were computed with torchvision-0.17.2 / torch-2.2.2. They will reproduce exactly on those torch

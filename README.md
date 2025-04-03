@@ -27,10 +27,7 @@ url = "https://raw.githubusercontent.com/pixeltable/pixeltable-yolox/main/tests/
 image = Image.open(requests.get(url, stream=True).raw)
 
 model = Yolox.from_pretrained("yolox_s")
-processor = YoloxProcessor("yolox_s")
-tensor = processor([image])
-output = model(tensor)
-result = processor.postprocess([image], output)
+result = model([image])  # Inputs can be PIL images or filenames
 ```
 
 This yields the following output:
@@ -81,6 +78,19 @@ For help:
 
 ```bash
 yolox train -h
+```
+
+### Separate Module/Processor Steps
+
+To separate out the Pytorch module from image pre- and post-processing during inference (as is typical in the Hugging
+Face transformers API):
+
+```python
+module = YoloxModule.from_pretrained("yolox_s")
+processor = YoloxProcessor("yolox_s")
+tensor = processor([image])
+output = module(tensor)
+result = processor.postprocess([image], output)
 ```
 
 ## Background

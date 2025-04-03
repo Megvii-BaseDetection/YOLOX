@@ -7,4 +7,4 @@ from .processor import YoloxProcessor
 from .yolo_fpn import YoloFpn
 from .yolo_head import YoloxHead
 from .yolo_pafpn import YoloPafpn
-from .yolox import Yolox
+from .yolox import Yolox, YoloxModule

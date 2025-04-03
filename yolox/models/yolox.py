@@ -1,21 +1,58 @@
 # Copyright (c) Megvii Inc. All rights reserved.
 
+from __future__ import annotations
+
 import os
 import urllib.request
 from pathlib import Path
-from typing import Optional, Union
+from typing import Iterable, Optional, Union
 
+from PIL import Image
 import torch
 import torch.nn as nn
 
 from yolox.config import YoloxConfig
+from yolox.models.processor import Detections, YoloxProcessor
 
 from .yolo_head import YoloxHead
 from .yolo_pafpn import YoloPafpn
 
 HOME = Path(os.environ.get('YOLOX_HOME', str(Path.home() / '.cache' / 'yolox')))
 
-class Yolox(nn.Module):
+class Yolox:
+    module: YoloxModule
+    processor: YoloxProcessor
+
+    def __init__(self, module: YoloxModule, processor: YoloxProcessor):
+        self.module = module
+        self.processor = processor
+
+    @classmethod
+    def from_pretrained(
+        cls,
+        pretrained_model_name_or_path: Union[str, os.PathLike],
+        config: Optional[YoloxConfig] = None,
+        device: str = 'cpu',
+    ) -> Yolox:
+        module = YoloxModule.from_pretrained(pretrained_model_name_or_path, config, device)
+        processor = YoloxProcessor(config or pretrained_model_name_or_path)
+        return cls(module, processor)
+
+    def __call__(self, inputs: Iterable[Union[Image.Image, str, os.PathLike]], threshold: float = 0.5) -> list[Detections]:
+        if isinstance(inputs, torch.Tensor):
+            # For backward compatibility (deprecated call pattern; use YoloxModule instead)
+            return self.module(inputs)
+
+        images: list[Image.Image] = [
+            image if isinstance(image, Image.Image) else Image.open(image)
+            for image in inputs
+        ]
+        tensor = self.processor(images)
+        output = self.module(tensor)
+        return self.processor.postprocess(images, output, threshold=threshold)
+
+
+class YoloxModule(nn.Module):
     """
     YOLOX model module. The module list is defined by create_yolov3_modules function.
     The network returns loss values from three YOLO layers during training
@@ -64,7 +101,7 @@ class Yolox(nn.Module):
         pretrained_model_name_or_path: Union[str, os.PathLike],
         config: Optional[YoloxConfig] = None,
         device: str = 'cpu',
-    ) -> 'Yolox':
+    ) -> YoloxModule:
         path = str(pretrained_model_name_or_path)
         if os.path.isfile(path):
             if config is None:

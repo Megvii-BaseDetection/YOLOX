@@ -157,7 +157,7 @@ class YoloxConfig:
                 raise AttributeError(f'Unknown model configuration option: {k}')
 
     def get_model(self):
-        from yolox.models import YoloPafpn, Yolox, YoloxHead
+        from yolox.models import YoloPafpn, YoloxModule, YoloxHead
 
         def init_yolo(M):
             for m in M.modules():
@@ -169,7 +169,7 @@ class YoloxConfig:
             in_channels = [256, 512, 1024]
             backbone = YoloPafpn(self.depth, self.width, in_channels=in_channels, depthwise=self.depthwise, act=self.act)
             head = YoloxHead(self.num_classes, self.width, in_channels=in_channels, depthwise=self.depthwise, act=self.act)
-            self.model = Yolox(backbone, head)
+            self.model = YoloxModule(backbone, head)
 
         self.model.apply(init_yolo)
         self.model.head.initialize_biases(1e-2)

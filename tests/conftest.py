@@ -6,7 +6,6 @@ from pathlib import Path
 
 
 @pytest.fixture(scope='session')
-def test_images() -> list[Image.Image]:
+def test_image_files() -> list[str]:
     image_dir = Path(__file__).parent / 'data'
-    image_files = sorted(glob(f'{image_dir}/*.jpg'))
-    return [Image.open(file) for file in image_files]
+    return sorted(glob(f'{image_dir}/*.jpg'))
