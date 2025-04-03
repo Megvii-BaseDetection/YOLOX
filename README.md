@@ -1,5 +1,6 @@
 <div align="center">
-<img src="assets/logo.png" alt="YoloX" width="350"></div>
+<img src="https://raw.githubusercontent.com/pixeltable/pixeltable-yolox/main/assets/logo.png"
+     alt="YoloX" width="350"></div>
 <br>
 
 `pixeltable-yolox` is a lightweight, Apache-licensed object detection library built on pytorch. It is a fork of the
@@ -142,7 +143,7 @@ to open source development and collaboration.
 ## Contributing
 
 We welcome contributions from the community! If you're interested in helping maintain and improve `pixeltable-yolox`,
-please stay tuned for our contributor's guide which will be published after the initial release.
+check out the [contributors' guide](https://github.com/pixeltable/pixeltable-yolox/blob/main/CONTRIBUTING.md).
 
 ## In memory of Dr. Jian Sun
 
@@ -154,5 +155,6 @@ It is hoped that every AI practitioner in the world will stick to the belief of 
 cognitive boundaries, and extraordinary technology to achieve product value" and move forward all the way.
 
 <div align="center">
-<img src="assets/sunjian.png" alt="Dr. Jian Sun" width="200">
+<img src="https://raw.githubusercontent.com/pixeltable/pixeltable-yolox/main/assets/sunjian.png"
+     alt="Dr. Jian Sun" width="200">
 </div>
