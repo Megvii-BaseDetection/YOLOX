@@ -33,8 +33,6 @@ We actively monitor:
    - Published via [GitHub Advisories](https://github.com/Megvii-BaseDetection/YOLOX/security/advisories)  
    - CVE assignment coordinated with [MITRE](https://cveform.mitre.org)
   
-   - https://github.com/ossf/scorecard/blob/1e72b3ac6e297e29c63156145f945a464f087675/docs/checks.md#signed-releases
-
 ## Secure Development Practices  
 - Always verify hashes when downloading dependencies:  
   ```bash
