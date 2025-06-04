@@ -5,7 +5,7 @@
 ### Types of Security Issues
 We actively monitor:  
 - Code vulnerabilities (RCE, XSS, authentication bypass)  
-- Dependency risks (critical CVEs in `requirements.txt`)  
+- Dependency risks (critical vulnerabilities in project dependencies, such as requirements.txt, pyproject.toml, or equivalent files)  
 - Configuration flaws (insecure defaults in deployment scripts)  
 
 ### Disclosure Channels (Choose one):
@@ -36,4 +36,4 @@ We actively monitor:
 ## Secure Development Practices  
 - Always verify hashes when downloading dependencies:  
   ```bash
-  sha256sum -c requirements.sha256
+  sha256sum -c <your-dependency-hash-file>
