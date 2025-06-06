@@ -37,3 +37,4 @@ We actively monitor:
 - Always verify hashes when downloading dependencies:  
   ```bash
   sha256sum -c <your-dependency-hash-file>
+  ```
