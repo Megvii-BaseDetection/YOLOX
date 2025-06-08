@@ -11,7 +11,7 @@ import time
 import numpy as np
 from pycocotools.cocoeval import COCOeval
 
-from .jit_ops import FastCOCOEvalOp
+from jit_ops import FastCOCOEvalOp
 
 
 class COCOeval_opt(COCOeval):
