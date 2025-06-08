@@ -14,7 +14,9 @@ import numpy as np
 import torch
 
 from yolox.utils import gather, is_main_process, postprocess, synchronize, time_synchronized
+from yolox.utils.device_utils import get_current_device, get_xla_model
 
+xm = get_xla_model()
 
 class VOCEvaluator:
     """
@@ -57,7 +59,7 @@ class VOCEvaluator:
             summary (sr): summary info of evaluation.
         """
         # TODO half to amp_test
-        tensor_type = torch.cuda.HalfTensor if half else torch.cuda.FloatTensor
+        tensor_type = torch.float16 if half else torch.float32
         model = model.eval()
         if half:
             model = model.half()
@@ -81,7 +83,7 @@ class VOCEvaluator:
 
         for cur_iter, (imgs, _, info_imgs, ids) in enumerate(progress_bar(self.dataloader)):
             with torch.no_grad():
-                imgs = imgs.type(tensor_type)
+                imgs = imgs.type(tensor_type).to(device=get_current_device())
 
                 # skip the last iters since batchsize might be not enough for batch inference
                 is_time_record = cur_iter < len(self.dataloader) - 1
@@ -105,11 +107,16 @@ class VOCEvaluator:
 
             data_list.update(self.convert_to_voc_format(outputs, info_imgs, ids))
 
-        statistics = torch.cuda.FloatTensor([inference_time, nms_time, n_samples])
+        statistics = torch.tensor([inference_time, nms_time, n_samples], 
+                                  dtype=torch.float32, 
+                                  device=get_current_device())
         if distributed:
             data_list = gather(data_list, dst=0)
             data_list = ChainMap(*data_list)
-            torch.distributed.reduce(statistics, dst=0)
+            if xm:
+                torch.distributed.all_reduce(statistics)
+            else:
+                torch.distributed.reduce(statistics, dst=0)
 
         eval_results = self.evaluate_prediction(data_list, statistics)
         synchronize()

@@ -4,7 +4,6 @@
 
 import torch
 
-
 class DataPrefetcher:
     """
     DataPrefetcher is inspired by code of following file:
@@ -15,9 +14,11 @@ class DataPrefetcher:
 
     def __init__(self, loader):
         self.loader = iter(loader)
-        self.stream = torch.cuda.Stream()
-        self.input_cuda = self._input_cuda_for_image
-        self.record_stream = DataPrefetcher._record_stream_for_image
+
+        if torch.cuda.is_available():
+            self.stream = torch.cuda.Stream()
+            self.input_cuda = self._input_cuda_for_image
+            self.record_stream = DataPrefetcher._record_stream_for_image
         self.preload()
 
     def preload(self):
@@ -28,18 +29,26 @@ class DataPrefetcher:
             self.next_target = None
             return
 
-        with torch.cuda.stream(self.stream):
-            self.input_cuda()
-            self.next_target = self.next_target.cuda(non_blocking=True)
+        if torch.cuda.is_available():
+            with torch.cuda.stream(self.stream):
+                self.input_cuda()
+                self.next_target = self.next_target.cuda(non_blocking=True)
+        else:
+            self.next_input = self.next_input
+            self.next_target = self.next_target
 
     def next(self):
-        torch.cuda.current_stream().wait_stream(self.stream)
-        input = self.next_input
-        target = self.next_target
-        if input is not None:
-            self.record_stream(input)
-        if target is not None:
-            target.record_stream(torch.cuda.current_stream())
+        if torch.cuda.is_available():
+            torch.cuda.current_stream().wait_stream(self.stream)
+            input = self.next_input
+            target = self.next_target
+            if input is not None:
+                self.record_stream(input)
+            if target is not None:
+                target.record_stream(torch.cuda.current_stream())
+        else:
+            input = self.next_input
+            target = self.next_target
         self.preload()
         return input, target
 

@@ -3,9 +3,11 @@
 # Copyright (c) Megvii Inc. All rights reserved.
 
 import megengine.module as M
+from yolox.utils.device_utils import get_xla_model
 
 from .network_blocks import BaseConv, CSPLayer, DWConv, Focus, ResLayer, SPPBottleneck
 
+xm = get_xla_model()
 
 class Darknet(M.Module):
     # number of blocks from dark2 to dark5.
@@ -70,6 +72,10 @@ class Darknet(M.Module):
         return m
 
     def forward(self, x):
+
+        if xm:
+            xm.mark_step()
+
         outputs = {}
         x = self.stem(x)
         outputs["stem"] = x
@@ -81,6 +87,10 @@ class Darknet(M.Module):
         outputs["dark4"] = x
         x = self.dark5(x)
         outputs["dark5"] = x
+
+        if xm:
+            xm.mark_step()
+
         return {k: v for k, v in outputs.items() if k in self.out_features}
 
 
@@ -140,6 +150,10 @@ class CSPDarknet(M.Module):
         )
 
     def forward(self, x):
+
+        if xm:
+            xm.mark_step()
+
         outputs = {}
         x = self.stem(x)
         outputs["stem"] = x
@@ -151,4 +165,8 @@ class CSPDarknet(M.Module):
         outputs["dark4"] = x
         x = self.dark5(x)
         outputs["dark5"] = x
+
+        if xm:
+            xm.mark_step()
+            
         return {k: v for k, v in outputs.items() if k in self.out_features}

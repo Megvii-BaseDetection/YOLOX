@@ -20,9 +20,9 @@ import numpy as np
 
 import torch
 from torch import distributed as dist
+from yolox.utils.device_utils import get_current_device, get_distributed_backend, get_distributed_init_method, get_local_device_count, get_xla_model, xm
 
 __all__ = [
-    "get_num_devices",
     "wait_for_the_master",
     "is_main_process",
     "synchronize",
@@ -35,18 +35,8 @@ __all__ = [
     "all_gather",
 ]
 
-_LOCAL_PROCESS_GROUP = None
-
-
-def get_num_devices():
-    gpu_list = os.getenv('CUDA_VISIBLE_DEVICES', None)
-    if gpu_list is not None:
-        return len(gpu_list.split(','))
-    else:
-        devices_list_info = os.popen("nvidia-smi -L")
-        devices_list_info = devices_list_info.read().strip().split("\n")
-        return len(devices_list_info)
-
+__DEFAULT_GLOO_GROUP = None
+xm = get_xla_model()
 
 @contextmanager
 def wait_for_the_master(local_rank: int = None):
@@ -61,7 +51,7 @@ def wait_for_the_master(local_rank: int = None):
         local_rank = get_local_rank()
 
     if local_rank > 0:
-        dist.barrier()
+        barrier()
     yield
     if local_rank == 0:
         if not dist.is_available():
@@ -69,10 +59,10 @@ def wait_for_the_master(local_rank: int = None):
         if not dist.is_initialized():
             return
         else:
-            dist.barrier()
+            barrier()
 
 
-def synchronize():
+def synchronize(group=None):
     """
     Helper function to synchronize (barrier) among all processes when using distributed training
     """
@@ -80,10 +70,11 @@ def synchronize():
         return
     if not dist.is_initialized():
         return
-    world_size = dist.get_world_size()
+    world_size = dist.get_world_size(group=group)
     if world_size == 1:
         return
-    dist.barrier()
+    
+    barrier(group=group)
 
 
 def get_world_size() -> int:
@@ -105,16 +96,9 @@ def get_rank() -> int:
 def get_local_rank() -> int:
     """
     Returns:
-        The rank of the current process within the local (per-machine) process group.
+        The rank of the current process within the local machine
     """
-    if _LOCAL_PROCESS_GROUP is None:
-        return get_rank()
-
-    if not dist.is_available():
-        return 0
-    if not dist.is_initialized():
-        return 0
-    return dist.get_rank(group=_LOCAL_PROCESS_GROUP)
+    return int(os.getenv("LOCAL_RANK", 0))
 
 
 def get_local_size() -> int:
@@ -122,33 +106,24 @@ def get_local_size() -> int:
     Returns:
         The size of the per-machine process group, i.e. the number of processes per machine.
     """
-    if not dist.is_available():
-        return 1
-    if not dist.is_initialized():
-        return 1
-    return dist.get_world_size(group=_LOCAL_PROCESS_GROUP)
+    return get_local_device_count()
 
 
 def is_main_process() -> bool:
     return get_rank() == 0
 
-
-@functools.lru_cache()
 def _get_global_gloo_group():
     """
     Return a process group based on gloo backend, containing all the ranks
     The result is cached.
     """
-    if dist.get_backend() == "nccl":
-        return dist.new_group(backend="gloo")
-    else:
-        return dist.group.WORLD
-
-
+    global __DEFAULT_GLOO_GROUP
+    assert __DEFAULT_GLOO_GROUP is not None, "Gloo group is not initialized"
+    return __DEFAULT_GLOO_GROUP
+    
 def _serialize_to_tensor(data, group):
     backend = dist.get_backend(group)
-    assert backend in ["gloo", "nccl"]
-    device = torch.device("cpu" if backend == "gloo" else "cuda")
+    device = torch.device("cpu") if backend == "gloo" else get_current_device()
 
     buffer = pickle.dumps(data)
     if len(buffer) > 1024 ** 3:
@@ -211,8 +186,9 @@ def all_gather(data, group=None):
         return [data]
 
     tensor = _serialize_to_tensor(data, group)
-
+    synchronize(group=group)
     size_list, tensor = _pad_to_largest_tensor(tensor, group)
+    synchronize(group=group)
     max_size = max(size_list)
 
     # receiving Tensor from all ranks
@@ -246,14 +222,16 @@ def gather(data, dst=0, group=None):
     """
     if get_world_size() == 1:
         return [data]
-    if group is None:
-        group = _get_global_gloo_group()
     if dist.get_world_size(group=group) == 1:
         return [data]
+    if group is None:
+        group = _get_global_gloo_group()
     rank = dist.get_rank(group=group)
 
     tensor = _serialize_to_tensor(data, group)
+    synchronize(group=group)
     size_list, tensor = _pad_to_largest_tensor(tensor, group)
+    synchronize(group=group)
 
     # receiving Tensor from all ranks
     if rank == dst:
@@ -292,3 +270,34 @@ def time_synchronized():
     if torch.cuda.is_available():
         torch.cuda.synchronize()
     return time.time()
+
+
+def barrier(group=None):
+    dist.barrier(group=group)
+
+def init_distributed(world_size: int, rank: int):
+
+    if not dist.is_initialized():
+        init_method = get_distributed_init_method()
+        backend = get_distributed_backend()  
+
+        dist.init_process_group(backend=backend, 
+                                    world_size=world_size, 
+                                    rank=rank, 
+                                    init_method=init_method)
+        
+        global __DEFAULT_GLOO_GROUP
+        if __DEFAULT_GLOO_GROUP is None:
+            __DEFAULT_GLOO_GROUP = dist.new_group(backend="gloo")
+
+def deinit_distributed():
+    if dist.is_initialized():
+        global __DEFAULT_GLOO_GROUP
+        try:
+            if __DEFAULT_GLOO_GROUP is not None:
+                dist.destroy_process_group(group=__DEFAULT_GLOO_GROUP)
+        except Exception as e:
+            logger.warning(f"Error: {e}")
+        finally:
+            dist.destroy_process_group()
+       

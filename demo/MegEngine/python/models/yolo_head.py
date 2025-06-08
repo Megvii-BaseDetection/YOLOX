@@ -4,6 +4,7 @@
 
 import megengine.functional as F
 import megengine.module as M
+from yolox.utils.device_utils import parse_dtype
 
 from .network_blocks import BaseConv, DWConv
 
@@ -154,14 +155,16 @@ class YOLOXHead(M.Module):
             return outputs
 
     def get_output_and_grid(self, output, k, stride, dtype):
-        grid = self.grids[k]
 
+        device, dtype = parse_dtype(dtype)
+        grid = self.grids[k]
+       
         batch_size = output.shape[0]
         n_ch = 5 + self.num_classes
         hsize, wsize = output.shape[-2:]
         if grid.shape[2:4] != output.shape[2:4]:
             yv, xv = meshgrid([F.arange(hsize), F.arange(wsize)])
-            grid = F.stack((xv, yv), 2).reshape(1, 1, hsize, wsize, 2).type(dtype)
+            grid = F.stack((xv, yv), 2).reshape(1, 1, hsize, wsize, 2).to(device=device, dtype=dtype)
             self.grids[k] = grid
 
         output = output.view(batch_size, self.n_anchors, n_ch, hsize, wsize)

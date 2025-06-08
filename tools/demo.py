@@ -9,6 +9,7 @@ from loguru import logger
 
 import cv2
 
+from yolox.utils.device_utils import get_current_device
 import torch
 
 from yolox.data.data_augment import ValTransform
@@ -46,12 +47,6 @@ def make_parser():
         help="please input your experiment description file",
     )
     parser.add_argument("-c", "--ckpt", default=None, type=str, help="ckpt for eval")
-    parser.add_argument(
-        "--device",
-        default="cpu",
-        type=str,
-        help="device to run our model, can either be cpu or gpu",
-    )
     parser.add_argument("--conf", default=0.3, type=float, help="test conf")
     parser.add_argument("--nms", default=0.3, type=float, help="test nms threshold")
     parser.add_argument("--tsize", default=None, type=int, help="test img size")
@@ -105,7 +100,6 @@ class Predictor(object):
         cls_names=COCO_CLASSES,
         trt_file=None,
         decoder=None,
-        device="cpu",
         fp16=False,
         legacy=False,
     ):
@@ -116,7 +110,6 @@ class Predictor(object):
         self.confthre = exp.test_conf
         self.nmsthre = exp.nmsthre
         self.test_size = exp.test_size
-        self.device = device
         self.fp16 = fp16
         self.preproc = ValTransform(legacy=legacy)
         if trt_file is not None:
@@ -125,7 +118,7 @@ class Predictor(object):
             model_trt = TRTModule()
             model_trt.load_state_dict(torch.load(trt_file))
 
-            x = torch.ones(1, 3, exp.test_size[0], exp.test_size[1]).cuda()
+            x = torch.ones(1, 3, exp.test_size[0], exp.test_size[1]).to(device=get_current_device())
             self.model(x)
             self.model = model_trt
 
@@ -148,10 +141,10 @@ class Predictor(object):
         img, _ = self.preproc(img, None, self.test_size)
         img = torch.from_numpy(img).unsqueeze(0)
         img = img.float()
-        if self.device == "gpu":
-            img = img.cuda()
-            if self.fp16:
-                img = img.half()  # to FP16
+        
+        img = img.to(device=get_current_device())
+        if self.fp16:
+            img = img.half()  # to FP16
 
         with torch.no_grad():
             t0 = time.time()
@@ -253,9 +246,6 @@ def main(exp, args):
         vis_folder = os.path.join(file_name, "vis_res")
         os.makedirs(vis_folder, exist_ok=True)
 
-    if args.trt:
-        args.device = "gpu"
-
     logger.info("Args: {}".format(args))
 
     if args.conf is not None:
@@ -268,10 +258,10 @@ def main(exp, args):
     model = exp.get_model()
     logger.info("Model Summary: {}".format(get_model_info(model, exp.test_size)))
 
-    if args.device == "gpu":
-        model.cuda()
-        if args.fp16:
-            model.half()  # to FP16
+    
+    model.to(device=get_current_device())
+    if args.fp16:
+        model.half()  # to FP16
     model.eval()
 
     if not args.trt:
@@ -304,7 +294,7 @@ def main(exp, args):
 
     predictor = Predictor(
         model, exp, COCO_CLASSES, trt_file, decoder,
-        args.device, args.fp16, args.legacy,
+        args.fp16, args.legacy,
     )
     current_time = time.localtime()
     if args.demo == "image":

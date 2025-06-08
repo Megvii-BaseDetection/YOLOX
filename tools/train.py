@@ -3,16 +3,15 @@
 # Copyright (c) Megvii, Inc. and its affiliates.
 
 import argparse
-import random
 import warnings
 from loguru import logger
 
 import torch
-import torch.backends.cudnn as cudnn
 
 from yolox.core import launch
 from yolox.exp import Exp, check_exp_value, get_exp
-from yolox.utils import configure_module, configure_nccl, configure_omp, get_num_devices
+from yolox.utils import configure_module, configure_nccl, configure_omp
+from yolox.utils.device_utils import set_manual_seed
 
 
 def make_parser():
@@ -21,19 +20,7 @@ def make_parser():
     parser.add_argument("-n", "--name", type=str, default=None, help="model name")
 
     # distributed
-    parser.add_argument(
-        "--dist-backend", default="nccl", type=str, help="distributed backend"
-    )
-    parser.add_argument(
-        "--dist-url",
-        default=None,
-        type=str,
-        help="url used to set up distributed training",
-    )
     parser.add_argument("-b", "--batch-size", type=int, default=64, help="batch size")
-    parser.add_argument(
-        "-d", "--devices", default=None, type=int, help="device for training"
-    )
     parser.add_argument(
         "-f",
         "--exp_file",
@@ -51,12 +38,6 @@ def make_parser():
         default=None,
         type=int,
         help="resume training start epoch",
-    )
-    parser.add_argument(
-        "--num_machines", default=1, type=int, help="num of node for training"
-    )
-    parser.add_argument(
-        "--machine_rank", default=0, type=int, help="node rank for multi-node training"
     )
     parser.add_argument(
         "--fp16",
@@ -99,20 +80,24 @@ def make_parser():
 
 @logger.catch
 def main(exp: Exp, args):
-    if exp.seed is not None:
-        random.seed(exp.seed)
-        torch.manual_seed(exp.seed)
-        cudnn.deterministic = True
-        warnings.warn(
-            "You have chosen to seed training. This will turn on the CUDNN deterministic setting, "
-            "which can slow down your training considerably! You may see unexpected behavior "
-            "when restarting from checkpoints."
-        )
 
-    # set environment variables for distributed training
-    configure_nccl()
-    configure_omp()
-    cudnn.benchmark = True
+    assert (not args.occupy or torch.cuda.is_available()), "--occupy requires CUDA"
+
+    if exp.seed is not None:
+        set_manual_seed(exp.seed)
+        if torch.cuda.is_available():
+            torch.backends.cudnn.deterministic = True
+            warnings.warn(
+                "You have chosen to seed training. This will turn on the CUDNN deterministic setting, "
+                "which can slow down your training considerably! You may see unexpected behavior "
+                "when restarting from checkpoints."
+            )
+
+    # set environment variables for distributed training for CUDA
+    if torch.cuda.is_available():
+        configure_nccl()
+        configure_omp()
+        torch.backends.cudnn.benchmark = True
 
     trainer = exp.get_trainer(args)
     trainer.train()
@@ -128,19 +113,8 @@ if __name__ == "__main__":
     if not args.experiment_name:
         args.experiment_name = exp.exp_name
 
-    num_gpu = get_num_devices() if args.devices is None else args.devices
-    assert num_gpu <= get_num_devices()
-
     if args.cache is not None:
+        logger.info(f"Dataset cache: {args.cache}; loading dataset before launch")
         exp.dataset = exp.get_dataset(cache=True, cache_type=args.cache)
 
-    dist_url = "auto" if args.dist_url is None else args.dist_url
-    launch(
-        main,
-        num_gpu,
-        args.num_machines,
-        args.machine_rank,
-        backend=args.dist_backend,
-        dist_url=dist_url,
-        args=(exp, args),
-    )
+    launch(main,args=(exp, args))

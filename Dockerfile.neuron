@@ -1,0 +1,21 @@
+FROM public.ecr.aws/neuron/pytorch-training-neuronx:2.5.1-neuronx-py310-sdk2.22.0-ubuntu22.04
+
+ENV DEBIAN_FRONTEND=noninteractive
+ENV DEBCONF_NONINTERACTIVE_SEEN=true
+
+# Keeps Python from generating .pyc files in the container
+ENV PYTHONDONTWRITEBYTECODE=1
+
+# Turns off buffering for easier container logging
+ENV PYTHONUNBUFFERED=1
+
+ENV PJRT_DEVICE=NEURON
+
+RUN apt-get update && apt-get -y install python3-opencv
+COPY . /yolox-x
+RUN pip3 install -v -e /yolox-x
+RUN pip3 install protobuf==3.20.3
+WORKDIR /app
+
+# During debugging, this entry point will be overridden. For more information, please refer to https://aka.ms/vscode-docker-python-debug
+CMD ["python", "tools/train.py"]

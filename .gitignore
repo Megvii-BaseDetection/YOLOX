@@ -226,3 +226,7 @@ events.out.tfevents*
 .Trashes
 ehthumbs.db
 Thumbs.db
+
+cache
+*.out
+*.txt

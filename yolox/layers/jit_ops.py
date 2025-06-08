@@ -10,6 +10,11 @@ from typing import List
 
 __all__ = ["JitOp", "FastCOCOEvalOp"]
 
+try:
+    import torch
+    assert torch.cuda.is_available()
+except AssertionError as e:
+    raise ImportError()
 
 class JitOp:
     """

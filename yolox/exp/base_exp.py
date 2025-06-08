@@ -2,6 +2,7 @@
 # Copyright (c) Megvii Inc. All rights reserved.
 
 import ast
+import os
 import pprint
 from abc import ABCMeta, abstractmethod
 from typing import Dict, List, Tuple
@@ -17,8 +18,8 @@ class BaseExp(metaclass=ABCMeta):
     """Basic class for any experiment."""
 
     def __init__(self):
-        self.seed = None
-        self.output_dir = "./YOLOX_outputs"
+        self.seed = 2024
+        self.output_dir = os.getenv("YOLOX_OUTPUT_DIR", "./YOLOX_outputs")
         self.print_interval = 100
         self.eval_interval = 10
         self.dataset = None

@@ -11,6 +11,8 @@ import numpy as np
 
 import torch
 
+from yolox.utils.device_utils import get_current_device
+
 __all__ = [
     "AverageMeter",
     "MeterBuffer",
@@ -22,6 +24,8 @@ __all__ = [
 
 
 def get_total_and_free_memory_in_Mb(cuda_device):
+    assert torch.cuda.is_available()
+
     devices_info_str = os.popen(
         "nvidia-smi --query-gpu=memory.total,memory.used --format=csv,nounits,noheader"
     )
@@ -37,10 +41,12 @@ def occupy_mem(cuda_device, mem_ratio=0.9):
     """
     pre-allocate gpu memory for training to avoid memory Fragmentation.
     """
+    assert torch.cuda.is_available()
+
     total, used = get_total_and_free_memory_in_Mb(cuda_device)
     max_mem = int(total * mem_ratio)
     block_mem = max_mem - used
-    x = torch.cuda.FloatTensor(256, 1024, block_mem)
+    x = torch.tensor([256, 1024, block_mem], device=get_current_device())
     del x
     time.sleep(5)
 
@@ -49,6 +55,8 @@ def gpu_mem_usage():
     """
     Compute the GPU memory usage for the current device (MB).
     """
+    assert torch.cuda.is_available()
+    
     mem_usage_bytes = torch.cuda.max_memory_allocated()
     return mem_usage_bytes / (1024 * 1024)
 

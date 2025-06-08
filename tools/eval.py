@@ -8,8 +8,9 @@ import random
 import warnings
 from loguru import logger
 
+from yolox.utils.device_utils import get_current_device, get_xla_model, set_manual_seed
 import torch
-import torch.backends.cudnn as cudnn
+    
 from torch.nn.parallel import DistributedDataParallel as DDP
 
 from yolox.core import launch
@@ -23,6 +24,7 @@ from yolox.utils import (
     setup_logger
 )
 
+xm = get_xla_model()
 
 def make_parser():
     parser = argparse.ArgumentParser("YOLOX Eval")
@@ -30,25 +32,7 @@ def make_parser():
     parser.add_argument("-n", "--name", type=str, default=None, help="model name")
 
     # distributed
-    parser.add_argument(
-        "--dist-backend", default="nccl", type=str, help="distributed backend"
-    )
-    parser.add_argument(
-        "--dist-url",
-        default=None,
-        type=str,
-        help="url used to set up distributed training",
-    )
     parser.add_argument("-b", "--batch-size", type=int, default=64, help="batch size")
-    parser.add_argument(
-        "-d", "--devices", default=None, type=int, help="device for training"
-    )
-    parser.add_argument(
-        "--num_machines", default=1, type=int, help="num of node for training"
-    )
-    parser.add_argument(
-        "--machine_rank", default=0, type=int, help="node rank for multi-node training"
-    )
     parser.add_argument(
         "-f",
         "--exp_file",
@@ -113,20 +97,23 @@ def make_parser():
 
 
 @logger.catch
-def main(exp, args, num_gpu):
+def main(exp, args):
+    assert (not args.trt or torch.cuda.is_available()), "--trt requires CUDA"
+
     if args.seed is not None:
-        random.seed(args.seed)
-        torch.manual_seed(args.seed)
-        cudnn.deterministic = True
-        warnings.warn(
-            "You have chosen to seed testing. This will turn on the CUDNN deterministic setting, "
-        )
+        set_manual_seed(args.seed)
+        if torch.cuda.is_available():
+            torch.backends.cudnn.deterministic = True
+            warnings.warn(
+                "You have chosen to seed testing. This will turn on the CUDNN deterministic setting, "
+            )
 
-    is_distributed = num_gpu > 1
+    is_distributed = torch.distributed.is_initialized() 
 
-    # set environment variables for distributed training
-    configure_nccl()
-    cudnn.benchmark = True
+    # set environment variables for distributed training for CUDA
+    if torch.cuda.is_available():
+        configure_nccl()
+        torch.backends.cudnn.benchmark = True
 
     rank = get_local_rank()
 
@@ -153,8 +140,7 @@ def main(exp, args, num_gpu):
     evaluator.per_class_AP = True
     evaluator.per_class_AR = True
 
-    torch.cuda.set_device(rank)
-    model.cuda(rank)
+    model.to(device=get_current_device())
     model.eval()
 
     if not args.speed and not args.trt:
@@ -163,13 +149,17 @@ def main(exp, args, num_gpu):
         else:
             ckpt_file = args.ckpt
         logger.info("loading checkpoint from {}".format(ckpt_file))
-        loc = "cuda:{}".format(rank)
+        loc = get_current_device()
         ckpt = torch.load(ckpt_file, map_location=loc)
         model.load_state_dict(ckpt["model"])
         logger.info("loaded checkpoint done.")
 
     if is_distributed:
-        model = DDP(model, device_ids=[rank])
+        if xm:
+            xm.mark_step()
+            model = DDP(model, gradient_as_bucket_view=True)
+        else:
+            model = DDP(model)
 
     if args.fuse:
         logger.info("\tFusing model...")
@@ -205,16 +195,4 @@ if __name__ == "__main__":
     if not args.experiment_name:
         args.experiment_name = exp.exp_name
 
-    num_gpu = torch.cuda.device_count() if args.devices is None else args.devices
-    assert num_gpu <= torch.cuda.device_count()
-
-    dist_url = "auto" if args.dist_url is None else args.dist_url
-    launch(
-        main,
-        num_gpu,
-        args.num_machines,
-        args.machine_rank,
-        backend=args.dist_backend,
-        dist_url=dist_url,
-        args=(exp, args, num_gpu),
-    )
+    launch(main,args=(exp, args))

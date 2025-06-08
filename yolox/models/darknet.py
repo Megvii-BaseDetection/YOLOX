@@ -4,8 +4,11 @@
 
 from torch import nn
 
+from yolox.utils.device_utils import get_xla_model
+
 from .network_blocks import BaseConv, CSPLayer, DWConv, Focus, ResLayer, SPPBottleneck
 
+xm = get_xla_model()
 
 class Darknet(nn.Module):
     # number of blocks from dark2 to dark5.
@@ -80,6 +83,10 @@ class Darknet(nn.Module):
         return m
 
     def forward(self, x):
+
+        if xm:
+            xm.mark_step()
+            
         outputs = {}
         x = self.stem(x)
         outputs["stem"] = x
@@ -91,6 +98,10 @@ class Darknet(nn.Module):
         outputs["dark4"] = x
         x = self.dark5(x)
         outputs["dark5"] = x
+
+        if xm:
+            xm.mark_step()
+
         return {k: v for k, v in outputs.items() if k in self.out_features}
 
 
@@ -165,6 +176,9 @@ class CSPDarknet(nn.Module):
         )
 
     def forward(self, x):
+        if xm:
+            xm.mark_step()
+
         outputs = {}
         x = self.stem(x)
         outputs["stem"] = x
@@ -176,4 +190,8 @@ class CSPDarknet(nn.Module):
         outputs["dark4"] = x
         x = self.dark5(x)
         outputs["dark5"] = x
+
+        if xm:
+            xm.mark_step()
+
         return {k: v for k, v in outputs.items() if k in self.out_features}

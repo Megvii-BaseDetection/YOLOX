@@ -26,7 +26,10 @@ from yolox.utils import (
     time_synchronized,
     xyxy2xywh
 )
+from yolox.utils.device_utils import get_current_device, get_xla_model
+from yolox.utils.dist import _get_global_gloo_group, get_rank
 
+xm = get_xla_model()
 
 def per_class_AR_table(coco_eval, class_names=COCO_CLASSES, headers=["class", "AR"], colums=6):
     per_class_AR = {}
@@ -132,14 +135,14 @@ class COCOEvaluator:
             summary (sr): summary info of evaluation.
         """
         # TODO half to amp_test
-        tensor_type = torch.cuda.HalfTensor if half else torch.cuda.FloatTensor
+        tensor_type = torch.float16 if half else torch.float32
         model = model.eval()
         if half:
             model = model.half()
         ids = []
         data_list = []
         output_data = defaultdict()
-        progress_bar = tqdm if is_main_process() else iter
+        progress_bar = tqdm # if is_main_process() else iter
 
         inference_time = 0
         nms_time = 0
@@ -155,11 +158,12 @@ class COCOEvaluator:
             model(x)
             model = model_trt
 
+        model = model.to(device=get_current_device())
         for cur_iter, (imgs, _, info_imgs, ids) in enumerate(
             progress_bar(self.dataloader)
         ):
             with torch.no_grad():
-                imgs = imgs.type(tensor_type)
+                imgs = imgs.type(tensor_type).to(device=get_current_device())
 
                 # skip the last iters since batchsize might be not enough for batch inference
                 is_time_record = cur_iter < len(self.dataloader) - 1
@@ -185,17 +189,23 @@ class COCOEvaluator:
                 outputs, info_imgs, ids, return_outputs=True)
             data_list.extend(data_list_elem)
             output_data.update(image_wise_data)
-
-        statistics = torch.cuda.FloatTensor([inference_time, nms_time, n_samples])
+  
+        statistics = torch.tensor([inference_time, nms_time, n_samples], 
+                                  dtype=torch.float32, 
+                                  device=get_current_device())
         if distributed:
             # different process/device might have different speed,
             # to make sure the process will not be stucked, sync func is used here.
-            synchronize()
-            data_list = gather(data_list, dst=0)
-            output_data = gather(output_data, dst=0)
+            group = _get_global_gloo_group()
+            synchronize(group=group)
+            data_list = gather(data_list, dst=0, group=group)
+            output_data = gather(output_data, dst=0, group=group)
             data_list = list(itertools.chain(*data_list))
             output_data = dict(ChainMap(*output_data))
-            torch.distributed.reduce(statistics, dst=0)
+            if xm:
+                torch.distributed.all_reduce(statistics)
+            else:
+                torch.distributed.reduce(statistics, dst=0)
 
         eval_results = self.evaluate_prediction(data_list, statistics)
         synchronize()
@@ -256,7 +266,10 @@ class COCOEvaluator:
         if not is_main_process():
             return 0, 0, None
 
-        logger.info("Evaluate in main process...")
+        if xm:
+            xm.mark_step()
+
+        logger.info(f"Evaluate in main process: data_dict length: {len(data_dict)}, statistics: {statistics}")
 
         annType = ["segm", "bbox", "keypoints"]
 
@@ -278,7 +291,7 @@ class COCOEvaluator:
         )
 
         info = time_info + "\n"
-
+        logger.info(f"time_info: {info} {time.time()}")
         # Evaluate the Dt (detection) json comparing with the ground truth
         if len(data_dict) > 0:
             cocoGt = self.dataloader.dataset.coco
@@ -289,6 +302,7 @@ class COCOEvaluator:
             else:
                 _, tmp = tempfile.mkstemp()
                 json.dump(data_dict, open(tmp, "w"))
+                logger.info(f"load eval data: {tmp} {time.time()}")
                 cocoDt = cocoGt.loadRes(tmp)
             try:
                 from yolox.layers import COCOeval_opt as COCOeval
@@ -298,10 +312,13 @@ class COCOEvaluator:
                 logger.warning("Use standard COCOeval.")
 
             cocoEval = COCOeval(cocoGt, cocoDt, annType[1])
+            logger.info(f"evaluate: {time.time()}")
             cocoEval.evaluate()
+            logger.info(f"accumulate: {time.time()}")
             cocoEval.accumulate()
             redirect_string = io.StringIO()
             with contextlib.redirect_stdout(redirect_string):
+                logger.info(f"summarize: {time.time()}")
                 cocoEval.summarize()
             info += redirect_string.getvalue()
             cat_ids = list(cocoGt.cats.keys())
@@ -312,6 +329,7 @@ class COCOEvaluator:
             if self.per_class_AR:
                 AR_table = per_class_AR_table(cocoEval, class_names=cat_names)
                 info += "per class AR:\n" + AR_table + "\n"
+            logger.info(f"info completed: {time.time()}")
             return cocoEval.stats[0], cocoEval.stats[1], info
         else:
             return 0, 0, info

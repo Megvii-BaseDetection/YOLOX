@@ -5,11 +5,12 @@
 import pickle
 from collections import OrderedDict
 
+from yolox.utils.device_utils import get_current_device
 import torch
 from torch import distributed as dist
 from torch import nn
 
-from .dist import _get_global_gloo_group, get_world_size
+from yolox.utils.dist import _get_global_gloo_group, get_world_size
 
 ASYNC_NORM = (
     nn.BatchNorm1d,
@@ -38,7 +39,8 @@ def get_async_norm_states(module):
     return async_norm_states
 
 
-def pyobj2tensor(pyobj, device="cuda"):
+def pyobj2tensor(pyobj):
+    device = get_current_device()
     """serialize picklable python object to tensor"""
     storage = torch.ByteStorage.from_buffer(pickle.dumps(pyobj))
     return torch.ByteTensor(storage).to(device=device)
@@ -83,7 +85,7 @@ def all_reduce(py_dict, op="sum", group=None):
     tensor_numels = [py_dict[k].numel() for k in py_key]
 
     flatten_tensor = torch.cat([py_dict[k].flatten() for k in py_key])
-    dist.all_reduce(flatten_tensor, op=_get_reduce_op(op))
+    dist.all_reduce(flatten_tensor, op=_get_reduce_op(op), group=group)
     if op == "mean":
         flatten_tensor /= world_size
 

@@ -4,10 +4,13 @@
 
 import megengine.functional as F
 import megengine.module as M
+from yolox.utils.device_utils import get_xla_model
 
 from .darknet import Darknet
 from .network_blocks import BaseConv, UpSample
 
+
+xm = get_xla_model()
 
 class YOLOFPN(M.Module):
     """
@@ -59,6 +62,9 @@ class YOLOFPN(M.Module):
             Tuple[Tensor]: FPN output features..
         """
         #  backbone
+        if xm:
+            xm.mark_step()
+            
         out_features = self.backbone(inputs)
         x2, x1, x0 = [out_features[f] for f in self.in_features]
 
@@ -75,4 +81,8 @@ class YOLOFPN(M.Module):
         out_dark3 = self.out2(x2_in)
 
         outputs = (out_dark3, out_dark4, x0)
+
+        if xm:
+            xm.mark_step()
+
         return outputs

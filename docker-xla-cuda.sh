@@ -1,0 +1,1 @@
+docker run -t -d -v /home/ubuntu/efs/datasets:/datasets -v /home/ubuntu/efs/git/YOLOX-x:/app --shm-size=16g --net=host --gpus all docker.io/library/yolox-x-xla:latest  sleep infinity

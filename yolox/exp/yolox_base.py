@@ -4,14 +4,18 @@
 import os
 import random
 
+from yolox.utils.device_utils import get_current_device, get_xla_model
 import torch
 import torch.distributed as dist
 import torch.nn as nn
+
+from yolox.utils.dist import barrier, synchronize
 
 from .base_exp import BaseExp
 
 __all__ = ["Exp", "check_exp_value"]
 
+xm = get_xla_model()
 
 class Exp(BaseExp):
     def __init__(self):
@@ -107,6 +111,8 @@ class Exp(BaseExp):
         self.test_conf = 0.01
         # nms threshold
         self.nmsthre = 0.65
+
+        self.random_size_interval = 10
 
     def get_model(self):
         from yolox.models import YOLOX, YOLOPAFPN, YOLOXHead
@@ -222,7 +228,9 @@ class Exp(BaseExp):
         return train_loader
 
     def random_resize(self, data_loader, epoch, rank, is_distributed):
-        tensor = torch.LongTensor(2).cuda()
+
+        device = get_current_device()
+        tensor = torch.LongTensor(2).to(device=device)
 
         if rank == 0:
             size_factor = self.input_size[1] * 1.0 / self.input_size[0]
@@ -236,7 +244,7 @@ class Exp(BaseExp):
             tensor[1] = size[1]
 
         if is_distributed:
-            dist.barrier()
+            barrier()
             dist.broadcast(tensor, 0)
 
         input_size = (tensor[0].item(), tensor[1].item())

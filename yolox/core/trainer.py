@@ -6,6 +6,7 @@ import os
 import time
 from loguru import logger
 
+from yolox.utils.device_utils import get_current_device, get_current_device_type, get_xla_model
 import torch
 from torch.nn.parallel import DistributedDataParallel as DDP
 from torch.utils.tensorboard import SummaryWriter
@@ -34,6 +35,8 @@ from yolox.utils import (
 )
 
 
+xm = get_xla_model()
+
 class Trainer:
     def __init__(self, exp: Exp, args):
         # init function only defines some basic attr, other attrs like model, optimizer are built in
@@ -44,11 +47,20 @@ class Trainer:
         # training related attr
         self.max_epoch = exp.max_epoch
         self.amp_training = args.fp16
-        self.scaler = torch.cuda.amp.GradScaler(enabled=args.fp16)
+        if hasattr(torch, "GradScaler"):
+            self.scaler = torch.GradScaler(get_current_device_type(), enabled=args.fp16)
+        elif xm:
+            from torch_xla.amp import GradScaler
+            self.scaler = GradScaler(enabled=args.fp16)
+        elif torch.cuda.is_available():
+            self.scaler = torch.cuda.amp.GradScaler(enabled=args.fp16)
+        else:
+            self.scaler = torch.cpu.amp.GradScaler(enabled=args.fp16)
+
         self.is_distributed = get_world_size() > 1
         self.rank = get_rank()
         self.local_rank = get_local_rank()
-        self.device = "cuda:{}".format(self.local_rank)
+        self.device = get_current_device()
         self.use_model_ema = exp.ema
         self.save_history_ckpt = exp.save_history_ckpt
 
@@ -94,25 +106,39 @@ class Trainer:
             self.after_iter()
 
     def train_one_iter(self):
+        
         iter_start_time = time.time()
-
+        logger.debug(f"iter start: {time.time()}")
         inps, targets = self.prefetcher.next()
         inps = inps.to(self.data_type)
         targets = targets.to(self.data_type)
         targets.requires_grad = False
         inps, targets = self.exp.preprocess(inps, targets, self.input_size)
         data_end_time = time.time()
+        logger.debug(f"input ready: {data_end_time}")
+        
+        if xm:
+            inps = inps.to(device=self.device)
+            targets = targets.to(device=self.device)
+            logger.debug(f"input shape: {inps.shape}")
 
-        with torch.cuda.amp.autocast(enabled=self.amp_training):
+        logger.debug(f"forward: {time.time()}")
+        with torch.autocast(get_current_device_type(), enabled=self.amp_training):
             outputs = self.model(inps, targets)
 
         loss = outputs["total_loss"]
-
+        if xm:
+            loss = loss.to(device=self.device)
         self.optimizer.zero_grad()
-        self.scaler.scale(loss).backward()
+        scaled_loss = self.scaler.scale(loss)
+        logger.debug(f"backward: {time.time()}")
+        scaled_loss.backward()
         self.scaler.step(self.optimizer)
         self.scaler.update()
-
+        if xm:
+            xm.mark_step()
+        logger.debug(f"optimizer step: {time.time()}")
+        
         if self.use_model_ema:
             self.ema_model.update(self.model)
 
@@ -127,13 +153,17 @@ class Trainer:
             lr=lr,
             **outputs,
         )
+        if xm:
+            xm.mark_step()
+        logger.debug(f"iter end: {time.time()}")
+
+      
 
     def before_train(self):
         logger.info("args: {}".format(self.args))
         logger.info("exp value:\n{}".format(self.exp))
 
         # model related init
-        torch.cuda.set_device(self.local_rank)
         model = self.exp.get_model()
         logger.info(
             "Model Summary: {}".format(get_model_info(model, self.exp.test_size))
@@ -166,7 +196,11 @@ class Trainer:
             occupy_mem(self.local_rank)
 
         if self.is_distributed:
-            model = DDP(model, device_ids=[self.local_rank], broadcast_buffers=False)
+            if xm:
+                xm.mark_step()
+                model = DDP(model, broadcast_buffers=False, gradient_as_bucket_view=True)
+            else:
+                model = DDP(model, broadcast_buffers=False)
 
         if self.use_model_ema:
             self.ema_model = ModelEMA(model, 0.9998)
@@ -265,7 +299,10 @@ class Trainer:
                 ["{}: {:.3f}s".format(k, v.avg) for k, v in time_meter.items()]
             )
 
-            mem_str = "gpu mem: {:.0f}Mb, mem: {:.1f}Gb".format(gpu_mem_usage(), mem_usage())
+            if torch.cuda.is_available():
+                mem_str = "gpu mem: {:.0f}Mb, mem: {:.1f}Gb".format(gpu_mem_usage(), mem_usage())
+            else:
+                mem_str = "mem: {:.1f}Gb".format(mem_usage())
 
             logger.info(
                 "{}, {}, {}, {}, lr: {:.3e}".format(
@@ -299,7 +336,7 @@ class Trainer:
             self.meter.clear_meters()
 
         # random resizing
-        if (self.progress_in_iter + 1) % 10 == 0:
+        if (self.progress_in_iter + 1) % self.exp.random_size_interval == 0:
             self.input_size = self.exp.random_resize(
                 self.train_loader, self.epoch, self.rank, self.is_distributed
             )
@@ -381,6 +418,7 @@ class Trainer:
             logger.info("\n" + summary)
         synchronize()
 
+        logger.info(f"Save checkpoints start: {time.time()}")
         self.save_ckpt("last_epoch", update_best_ckpt, ap=ap50_95)
         if self.save_history_ckpt:
             self.save_ckpt(f"epoch_{self.epoch + 1}", ap=ap50_95)
@@ -395,6 +433,8 @@ class Trainer:
                 }
             self.mlflow_logger.save_checkpoints(self.args, self.exp, self.file_name, self.epoch,
                                                 metadata, update_best_ckpt)
+
+        logger.info(f"Save checkpoints end: {time.time()}")
 
     def save_ckpt(self, ckpt_name, update_best_ckpt=False, ap=None):
         if self.rank == 0:

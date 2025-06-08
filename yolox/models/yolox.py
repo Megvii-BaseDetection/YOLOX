@@ -4,9 +4,12 @@
 
 import torch.nn as nn
 
+from yolox.utils.device_utils import get_xla_model
+
 from .yolo_head import YOLOXHead
 from .yolo_pafpn import YOLOPAFPN
 
+xm = get_xla_model()
 
 class YOLOX(nn.Module):
     """
@@ -27,6 +30,10 @@ class YOLOX(nn.Module):
 
     def forward(self, x, targets=None):
         # fpn output content features of [dark3, dark4, dark5]
+
+        if xm:
+            xm.mark_step()
+
         fpn_outs = self.backbone(x)
 
         if self.training:
@@ -44,6 +51,9 @@ class YOLOX(nn.Module):
             }
         else:
             outputs = self.head(fpn_outs)
+
+        if xm:
+            xm.mark_step()
 
         return outputs
 

@@ -46,7 +46,7 @@ def get_long_description():
 
 def get_ext_modules():
     ext_module = []
-    if sys.platform != "win32":  # pre-compile ops on linux
+    if torch.cuda.is_available() and sys.platform != "win32":  # pre-compile ops on linux
         assert TORCH_AVAILABLE, "torch is required for pre-compiling ops, please install it first."
         # if any other op is added, please also add it here
         from yolox.layers import FastCOCOEvalOp
@@ -64,8 +64,8 @@ def get_cmd_class():
 setuptools.setup(
     name="yolox",
     version=get_yolox_version(),
-    author="megvii basedet team",
-    url="https://github.com/Megvii-BaseDetection/YOLOX",
+    author="ajayvohra2005",
+    url="https://github.com/ajayvohra2005/YOLOX-x",
     package_dir=get_package_dir(),
     packages=setuptools.find_packages(exclude=("tests", "tools")) + list(get_package_dir().keys()),
     python_requires=">=3.6",
@@ -82,7 +82,7 @@ setuptools.setup(
     ],
     project_urls={
         "Documentation": "https://yolox.readthedocs.io",
-        "Source": "https://github.com/Megvii-BaseDetection/YOLOX",
-        "Tracker": "https://github.com/Megvii-BaseDetection/YOLOX/issues",
+        "Source": "https://github.com/ajayvohra2005/YOLOX-x",
+        "Tracker": "https://github.com/ajayvohra2005/YOLOX-x/issues",
     },
 )
