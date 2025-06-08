@@ -19,7 +19,7 @@ Welcome to YOLOX's documentation!
 
 .. toctree::
    :maxdepth: 2
-   :caption: Demployment
+   :caption: Deployment
 
    demo/trt_py_readme
    demo/trt_cpp_readme
