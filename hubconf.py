@@ -1,3 +1,6 @@
+```python
+# This file provides entry points for loading YOLOX models via torch.hub.
+```
 #!/usr/bin/env python3
 # -*- coding:utf-8 -*-
 
