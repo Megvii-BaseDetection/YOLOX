@@ -83,8 +83,20 @@ class BaseExp(metaclass=ABCMeta):
                         v = [src_item_type(t) for t in v]
 
                 if src_value is not None and src_type != type(v):
-                    try:
-                        v = src_type(v)
-                    except Exception:
-                        v = ast.literal_eval(v)
+                    if isinstance(src_value, bool):
+                        # Booleans are a special case because src_type(v) is equivalent
+                        # to bool(v). For v = "False", bool("False") = True which is not
+                        # the expected result
+                        words = ("true", "1", "false", "0")
+                        if v.lower() in words:
+                            v = v.lower() in ("true", "1")
+                        else:
+                            raise RuntimeError(
+                                f"Cannot cast '{v}' to bool. Expect one of {words}"
+                            )
+                    else:
+                        try:
+                            v = src_type(v)
+                        except Exception:
+                            v = ast.literal_eval(v)
                 setattr(self, k, v)
