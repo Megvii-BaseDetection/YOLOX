@@ -227,7 +227,7 @@ class YOLOXHead(nn.Module):
         output = output.permute(0, 1, 3, 4, 2).reshape(
             batch_size, hsize * wsize, -1
         )
-        grid = grid.view(1, -1, 2)
+        grid = grid.view(1, -1, 2).to(output.device)
         output[..., :2] = (output[..., :2] + grid) * stride
         output[..., 2:4] = torch.exp(output[..., 2:4]) * stride
         return output, grid
