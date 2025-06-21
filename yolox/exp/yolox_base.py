@@ -26,6 +26,10 @@ class Exp(BaseExp):
         self.width = 1.00
         # activation name. For example, if using "relu", then "silu" will be replaced to "relu".
         self.act = "silu"
+        # activate the depthwise convolution at backbone YOLOX
+        self.depthwise_backbone = True
+        # activate the depthwise convolution at head YOLOX
+        self.depthwise_head = True
 
         # ---------------- dataloader config ---------------- #
         # set worker to 4 for shorter dataloader init time
@@ -119,8 +123,8 @@ class Exp(BaseExp):
 
         if getattr(self, "model", None) is None:
             in_channels = [256, 512, 1024]
-            backbone = YOLOPAFPN(self.depth, self.width, in_channels=in_channels, act=self.act)
-            head = YOLOXHead(self.num_classes, self.width, in_channels=in_channels, act=self.act)
+            backbone = YOLOPAFPN(self.depth, self.width, in_channels=in_channels, act=self.act, depthwise=self.depthwise_backbone)
+            head = YOLOXHead(self.num_classes, self.width, in_channels=in_channels, act=self.act, depthwise=self.depthwise_head)
             self.model = YOLOX(backbone, head)
 
         self.model.apply(init_yolo)
