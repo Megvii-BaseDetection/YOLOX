@@ -57,16 +57,33 @@ def launch(
         args (tuple): arguments passed to main_func
     """
     world_size = num_machines * num_gpus_per_machine
+    if world_size <= 0:
+        raise ValueError('`world_size` should be positive, currently {}'.format(world_size))
+    
+    # Even if `world_size == 1`, we have to initialize the process group,
+    # so the user code can use all the `torch.dist`` facilities. This 
+    # makes the code uniform whether there is one or more processes.
+
+    if dist_url == "auto":
+        assert (
+            num_machines == 1
+        ), "`dist_url=auto` cannot work with distributed training."
+        port = _find_free_port()
+        dist_url = f"tcp://127.0.0.1:{port}"
+
+    worker_args = (
+        main_func,
+        world_size,
+        num_gpus_per_machine,
+        machine_rank,
+        backend,
+        dist_url,
+        args,
+    )
+    
     if world_size > 1:
         # https://github.com/pytorch/pytorch/pull/14391
         # TODO prctl in spawned processes
-
-        if dist_url == "auto":
-            assert (
-                num_machines == 1
-            ), "dist_url=auto cannot work with distributed training."
-            port = _find_free_port()
-            dist_url = f"tcp://127.0.0.1:{port}"
 
         start_method = "spawn"
         cache = vars(args[1]).get("cache", False)
@@ -82,20 +99,13 @@ def launch(
         mp.start_processes(
             _distributed_worker,
             nprocs=num_gpus_per_machine,
-            args=(
-                main_func,
-                world_size,
-                num_gpus_per_machine,
-                machine_rank,
-                backend,
-                dist_url,
-                args,
-            ),
+            args=worker_args,
             daemon=False,
             start_method=start_method,
         )
+
     else:
-        main_func(*args)
+        _distributed_worker(0, *worker_args)
 
 
 def _distributed_worker(
