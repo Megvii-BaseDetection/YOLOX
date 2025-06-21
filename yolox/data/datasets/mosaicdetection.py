@@ -151,13 +151,13 @@ class MosaicDetection(Dataset):
             # img_info and img_id are not used for training.
             # They are also hard to be specified on a mosaic image.
             # -----------------------------------------------------------------
-            return mix_img, padded_labels, img_info, img_id
+            return mix_img, padded_labels, img_info, idx
 
         else:
             self._dataset._input_dim = self.input_dim
             img, label, img_info, img_id = self._dataset.pull_item(idx)
             img, label = self.preproc(img, label, self.input_dim)
-            return img, label, img_info, img_id
+            return img, label, img_info, idx
 
     def mixup(self, origin_img, origin_labels, input_dim):
         jit_factor = random.uniform(*self.mixup_scale)
