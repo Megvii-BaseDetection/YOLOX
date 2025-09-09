@@ -108,6 +108,7 @@ class VOCDetection(CacheDataset):
         dataset_name="VOC0712",
         cache=False,
         cache_type="ram",
+        num_channels=3
     ):
         self.root = data_dir
         self.image_set = image_sets
@@ -131,6 +132,7 @@ class VOCDetection(CacheDataset):
             ):
                 self.ids.append((rootpath, line.strip()))
         self.num_imgs = len(self.ids)
+        self.num_channels = num_channels
 
         self.annotations = self._load_coco_annotations()
 
@@ -184,7 +186,7 @@ class VOCDetection(CacheDataset):
 
     def load_image(self, index):
         img_id = self.ids[index]
-        img = cv2.imread(self._imgpath % img_id, cv2.IMREAD_COLOR)
+        img = cv2.imread(self._imgpath % img_id, cv2.IMREAD_COLOR if self.num_channels == 3 else cv2.IMREAD_GRAYSCALE)
         assert img is not None, f"file named {self._imgpath % img_id} not found"
 
         return img

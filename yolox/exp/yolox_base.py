@@ -32,6 +32,7 @@ class Exp(BaseExp):
         # If your training process cost many memory, reduce this value.
         self.data_num_workers = 4
         self.input_size = (640, 640)  # (height, width)
+        self.num_channels = 3  # 3 for RGB/BGR, 1 for grayscale
         # Actual multiscale ranges: [640 - 5 * 32, 640 + 5 * 32].
         # To disable multiscale training, set the value to 0.
         self.multiscale_range = 5
@@ -45,6 +46,10 @@ class Exp(BaseExp):
         self.val_ann = "instances_val2017.json"
         # name of annotation file for testing
         self.test_ann = "instances_test2017.json"
+        # name of image folders for training, evaluation and testing
+        self.train_name = "train2017"
+        self.val_name = "val2017"
+        self.test_name = "test2017"
 
         # --------------- transform config ----------------- #
         # prob of applying mosaic aug
@@ -52,7 +57,7 @@ class Exp(BaseExp):
         # prob of applying mixup aug
         self.mixup_prob = 1.0
         # prob of applying hsv aug
-        self.hsv_prob = 1.0
+        self.hsv_prob = 1.0 if self.num_channels == 3 else 0.0  # HSV not relevant for grayscale
         # prob of applying flip aug
         self.flip_prob = 0.5
         # rotation angle range, for example, if set to 2, the true range is (-2, 2)
@@ -119,7 +124,7 @@ class Exp(BaseExp):
 
         if getattr(self, "model", None) is None:
             in_channels = [256, 512, 1024]
-            backbone = YOLOPAFPN(self.depth, self.width, in_channels=in_channels, act=self.act)
+            backbone = YOLOPAFPN(self.depth, self.width, in_channels=in_channels, act=self.act, num_channels=self.num_channels)
             head = YOLOXHead(self.num_classes, self.width, in_channels=in_channels, act=self.act)
             self.model = YOLOX(backbone, head)
 
@@ -150,6 +155,8 @@ class Exp(BaseExp):
             ),
             cache=cache,
             cache_type=cache_type,
+            name=self.train_name,
+            num_channels=self.num_channels,
         )
 
     def get_data_loader(self, batch_size, is_distributed, no_aug=False, cache_img: str = None):
@@ -304,9 +311,10 @@ class Exp(BaseExp):
         return COCODataset(
             data_dir=self.data_dir,
             json_file=self.val_ann if not testdev else self.test_ann,
-            name="val2017" if not testdev else "test2017",
+            name=self.val_name if not testdev else self.test_name,
             img_size=self.test_size,
             preproc=ValTransform(legacy=legacy),
+            num_channels=self.num_channels,
         )
 
     def get_eval_loader(self, batch_size, is_distributed, **kwargs):
