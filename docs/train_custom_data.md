@@ -24,7 +24,7 @@ You can also write the Dataset by your own. Let's take the [VOC](https://github.
         return img, target, img_info, img_id
 ```
 
-One more thing worth noting is that you should also implement [pull_item](https://github.com/Megvii-BaseDetection/YOLOX/blob/main/yolox/data/datasets/voc.py#L129) and [load_anno](https://github.com/Megvii-BaseDetection/YOLOX/blob/main/yolox/data/datasets/voc.py#L121) method for the `Mosiac` and `MixUp` augmentations.
+One more thing worth noting is that you should also implement [pull_item](https://github.com/Megvii-BaseDetection/YOLOX/blob/main/yolox/data/datasets/voc.py#L129) and [load_anno](https://github.com/Megvii-BaseDetection/YOLOX/blob/main/yolox/data/datasets/voc.py#L121) method for the `Mosaic` and `MixUp` augmentations.
 
 **Step 3** Prepare the evaluator. We currently have [COCO evaluator](https://github.com/Megvii-BaseDetection/YOLOX/blob/main/yolox/evaluators/coco_evaluator.py) and [VOC evaluator](https://github.com/Megvii-BaseDetection/YOLOX/blob/main/yolox/evaluators/voc_evaluator.py).
 If you have your own format data or evaluation metric, you can write your own evaluator.
