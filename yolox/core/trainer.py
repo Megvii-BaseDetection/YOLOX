@@ -342,6 +342,28 @@ class Trainer:
             self.start_epoch = 0
 
         return model
+        
+    def parse_per_class_table(self, table_text: str) -> dict[str, float]:
+        metrics = {}
+        for raw_line in table_text.splitlines():
+            line = raw_line.strip()
+            if not line.startswith("|"):
+                continue
+            if ":---" in line or "class" in line.lower():
+                continue
+
+            parts = [p.strip() for p in line.strip("|").split("|")]
+            for i in range(0, len(parts), 2):
+                if i + 1 >= len(parts):
+                    break
+                cls_name, val_str = parts[i], parts[i + 1]
+                if not cls_name or not val_str:
+                    continue
+                try:
+                    metrics[cls_name] = float(val_str)
+                except ValueError:
+                    continue
+        return metrics
 
     def evaluate_and_save_model(self):
         if self.use_model_ema:
@@ -363,6 +385,23 @@ class Trainer:
             if self.args.logger == "tensorboard":
                 self.tblogger.add_scalar("val/COCOAP50", ap50, self.epoch + 1)
                 self.tblogger.add_scalar("val/COCOAP50_95", ap50_95, self.epoch + 1)
+                try:
+                    import re
+                    if "per class AP:" in summary:
+                        ap_section = summary.split("per class AP:", 1)[1]
+                        ap_table_text = ap_section.split("per class AR:", 1)[0].strip()
+                        per_class_ap = self.parse_per_class_table(ap_table_text)
+                        for cls_name, ap in per_class_ap.items():
+                            self.tblogger.add_scalar(f"per_class_AP_val/{cls_name}", ap, self.epoch + 1)
+
+                    if "per class AR:" in summary:
+                        ar_section = summary.split("per class AR:", 1)[1]
+                        ar_table_text = ar_section.strip()
+                        per_class_ar = self.parse_per_class_table(ar_table_text)
+                        for cls_name, ar in per_class_ar.items():
+                            self.tblogger.add_scalar(f"per_class_AR_val/{cls_name}", ar, self.epoch + 1)
+                except Exception as e:
+                    pass
             if self.args.logger == "wandb":
                 self.wandb_logger.log_metrics({
                     "val/COCOAP50": ap50,
