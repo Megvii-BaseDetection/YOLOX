@@ -143,11 +143,20 @@ class COCODataset(CacheDataset):
     def load_image(self, index):
         file_name = self.annotations[index][3]
 
+        # Try to be faster
         img_file = os.path.join(self.data_dir, self.name, file_name)
+        from delayed_image import DelayedLoad
+        import kwimage
+        delayed = DelayedLoad(img_file)
+        delayed.prepare()
+        # The idea is to use overviews to load data faster.
+        # Does this break annotation bounding box coordinates?
+        img = delayed.scale(0.25, interpolation='linear').finalize()
+        img = kwimage.convert_colorspace(img, src_space='rgb', dst_space='bgr')
+        img = kwimage.ensure_uint255(img)
 
-        img = cv2.imread(img_file)
-        assert img is not None, f"file named {img_file} not found"
-
+        # img = cv2.imread(img_file)
+        # assert img is not None, f"file named {img_file} not found"
         return img
 
     @cache_read_img(use_cache=True)

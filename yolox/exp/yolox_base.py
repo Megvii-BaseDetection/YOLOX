@@ -139,7 +139,7 @@ class Exp(BaseExp):
         """
         from yolox.data import COCODataset, TrainTransform
 
-        return COCODataset(
+        datset = COCODataset(
             data_dir=self.data_dir,
             json_file=self.train_ann,
             img_size=self.input_size,
@@ -151,6 +151,7 @@ class Exp(BaseExp):
             cache=cache,
             cache_type=cache_type,
         )
+        return datset
 
     def get_data_loader(self, batch_size, is_distributed, no_aug=False, cache_img: str = None):
         """
