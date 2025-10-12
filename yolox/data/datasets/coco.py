@@ -6,6 +6,7 @@ import os
 
 import cv2
 import numpy as np
+
 from pycocotools.coco import COCO
 
 from ..dataloading import get_yolox_datadir
@@ -72,6 +73,9 @@ class COCODataset(CacheDataset):
         self.preproc = preproc
         self.annotations = self._load_coco_annotations()
 
+        # Allow our change to be toggleable.
+        self.OPTIMIZE_LOADING = True
+
         path_filename = [os.path.join(name, anno[3]) for anno in self.annotations]
         super().__init__(
             input_dimension=img_size,
@@ -82,6 +86,53 @@ class COCODataset(CacheDataset):
             cache=cache,
             cache_type=cache_type
         )
+
+    @classmethod
+    def demo(COCODataset, key='vidshapes1', img_size=(416, 416), preproc=None,
+             cache=False, cache_type='ram', **kwargs):
+        """
+        Create demo data for testing and doctests.
+
+        Args:
+            key (str):
+                the type of the demo kwcoco datset to generate
+
+            **kwargs : other arguments to :func:`kwcoco.CocoDataset.demo`.
+
+        Example:
+            >>> # xdoctest: +REQUIRES(module:kwcoco)
+            >>> # This demo shows the case where you don't get a speedup
+            >>> from yolox.data.datasets.coco import *  # NOQA
+            >>> import ubelt as ub
+            >>> self = COCODataset.demo(key='vidshapes1')
+            >>> assert len(self) == 2
+            >>> anno0 = self.load_anno(0)
+            >>> assert len(anno0) == 2
+        """
+        import kwcoco
+        import ubelt as ub
+        # Use kwcoco demodata capabilities and then transform into the legacy
+        # structure for compatability
+        dset = kwcoco.CocoDataset.demo(key, **kwargs)
+        # Make it so the mscoco dataset compatability hard coded path
+        # assumptions dont matter by using absolute paths
+        dset.reroot(absolute=True)
+        dset.conform(legacy=True)
+        # Need to write the modified coco path to a json file to read
+        # it with the standard loader used in this class.
+        dset.fpath = ub.Path(dset.fpath).augment(prefix='absolute_', ext='.json')
+        dset.dump()
+        # Create this class pointing at the kwcoco generated data
+        self = COCODataset(
+            data_dir=dset.bundle_dpath,
+            json_file=dset.fpath,
+            name=dset.fpath.name,
+            img_size=img_size,
+            preproc=preproc,
+            cache=cache,
+            cache_type=cache_type,
+        )
+        return self
 
     def __len__(self):
         return self.num_imgs
@@ -131,32 +182,131 @@ class COCODataset(CacheDataset):
         return self.annotations[index][0]
 
     def load_resized_img(self, index):
-        img = self.load_image(index)
-        r = min(self.img_size[0] / img.shape[0], self.img_size[1] / img.shape[1])
-        resized_img = cv2.resize(
-            img,
-            (int(img.shape[1] * r), int(img.shape[0] * r)),
-            interpolation=cv2.INTER_LINEAR,
-        ).astype(np.uint8)
+        """
+        Example:
+            >>> # xdoctest: +REQUIRES(module:kwcoco)
+            >>> # This demo shows the case where you don't get a speedup
+            >>> from yolox.data.datasets.coco import *  # NOQA
+            >>> import ubelt as ub
+            >>> self = COCODataset.demo('vidshapes1', image_size=(512, 512))
+            >>> self.img_size = (256, 256)
+            >>> self.OPTIMIZE_LOADING = False
+            >>> index = 0
+            >>> with ub.Timer() as time_orig:
+            >>>     img_original = self.load_resized_img(index)
+            >>> self.OPTIMIZE_LOADING = True
+            >>> with ub.Timer() as time_opt:
+            >>>     img_optimized = self.load_resized_img(index)
+            >>> assert img_original.shape == img_optimized.shape
+            >>> print(f'time_orig.elapsed={time_orig.elapsed}')
+            >>> print(f'time_opt.elapsed ={time_opt.elapsed}')
+            >>> img_original - img_optimized
+            >>> # xdoctest: +REQUIRES(--show)
+            >>> import kwplot
+            >>> import kwimage
+            >>> kwplot.autompl()
+            >>> kwplot.imshow(img_original, pnum=(1, 2, 1), title='original')
+            >>> kwplot.imshow(img_optimized, pnum=(1, 2, 2), title='optimized')
+            >>> kwplot.show_if_requested()
+
+        Example:
+            >>> # xdoctest: +REQUIRES(module:kwcoco)
+            >>> # xdoctest: +REQUIRES(module:osgeo)
+            >>> # This demo shows the case where you get a speedup
+            >>> from yolox.data.datasets.coco import *  # NOQA
+            >>> import ubelt as ub
+            >>> self = COCODataset.demo('vidshapes1', image_size=(2048, 2048), render={'overviews': 'auto'})
+            >>> self.img_size = (640, 640)
+            >>> self.OPTIMIZE_LOADING = False
+            >>> index = 0
+            >>> with ub.Timer() as time_orig:
+            >>>     img_original = self.load_resized_img(index)
+            >>> self.OPTIMIZE_LOADING = True
+            >>> with ub.Timer() as time_opt:
+            >>>     img_optimized = self.load_resized_img(index)
+            >>> assert img_original.shape == img_optimized.shape
+            >>> print(f'time_orig.elapsed={time_orig.elapsed}')
+            >>> print(f'time_opt.elapsed ={time_opt.elapsed}')
+            >>> img_original - img_optimized
+            >>> # xdoctest: +REQUIRES(--show)
+            >>> import kwplot
+            >>> import kwimage
+            >>> kwplot.autompl()
+            >>> kwplot.imshow(img_original, pnum=(1, 2, 1), title='original')
+            >>> kwplot.imshow(img_optimized, pnum=(1, 2, 2), title='optimized')
+            >>> kwplot.show_if_requested()
+        """
+        if self.OPTIMIZE_LOADING:
+            # New logic loads and resizes simultaniously
+            resized_img = self.load_image(index)
+        else:
+            # Old logic loads and then resizes
+            img = self.load_image(index)
+            r = min(self.img_size[0] / img.shape[0], self.img_size[1] / img.shape[1])
+            new_size = (int(img.shape[1] * r), int(img.shape[0] * r))
+            resized_img = cv2.resize(
+                img,
+                new_size,
+                interpolation=cv2.INTER_LINEAR,
+            ).astype(np.uint8)
         return resized_img
 
     def load_image(self, index):
-        file_name = self.annotations[index][3]
+        """
+        Note:
+            If OPTIMIZE_LOADING is True, this will load and resize the image in
+            one pass. Note you only get time savings if you are doing a big
+            downsample and if the image has overviews. However, the optimized
+            resize has the ability to antialias.
+        """
+        if self.OPTIMIZE_LOADING:
+            from delayed_image import DelayedLoad
+            import kwimage
+            # Optimized new logic, but required delayed image
+            ann_data = self.annotations[index]
+            (res, img_info, resized_info, file_name) = ann_data
 
-        # Try to be faster
-        img_file = os.path.join(self.data_dir, self.name, file_name)
-        from delayed_image import DelayedLoad
-        import kwimage
-        delayed = DelayedLoad(img_file)
-        delayed.prepare()
-        # The idea is to use overviews to load data faster.
-        # Does this break annotation bounding box coordinates?
-        img = delayed.scale(0.25, interpolation='linear').finalize()
-        img = kwimage.convert_colorspace(img, src_space='rgb', dst_space='bgr')
-        img = kwimage.ensure_uint255(img)
+            # Use delayed image which will be able to optimize the load operation
+            # to use overviews if needed.
+            img_file = os.path.join(self.data_dir, self.name, file_name)
+            delayed = DelayedLoad(img_file)
+            delayed.prepare()
 
-        # img = cv2.imread(img_file)
-        # assert img is not None, f"file named {img_file} not found"
+            # Get what size the image is on disk
+            disk_height, disk_width = delayed.shape[0:2]
+            assert (disk_width, disk_height) == img_info  # should agree
+
+            # Kind of roundabout way to get the resize target, but keeping the
+            # logic the way it was, and just optimizing it.
+            r = min(self.img_size[0] / disk_height, self.img_size[1] / disk_width)
+            new_dsize = (int(disk_width * r), int(disk_height * r))
+
+            # This is the what gives us the fast load + resize operation
+            resized = delayed.resize(
+                dsize=new_dsize,
+                interpolation='linear',
+                # antialias=False
+                antialias=True
+            )
+
+            # Even though we are returning a resized image, the other logic
+            # in this file should still align annotations correctly because
+            # it uses the metadata in the coco file to also resize them
+            # to match what we do here.
+            img = resized.finalize()
+
+            # Convert back to bgr as that is what the original data expects
+            img = kwimage.convert_colorspace(img, src_space='rgb', dst_space='bgr')
+
+            # Ensure that we are in uint8
+            img = kwimage.ensure_uint255(img)
+
+        else:
+            # This is the original slow logic
+            file_name = self.annotations[index][3]
+            img_file = os.path.join(self.data_dir, self.name, file_name)
+            img = cv2.imread(img_file)
+            # assert img is not None, f"file named {img_file} not found"
         return img
 
     @cache_read_img(use_cache=True)
