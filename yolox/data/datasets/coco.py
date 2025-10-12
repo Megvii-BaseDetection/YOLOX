@@ -274,7 +274,9 @@ class COCODataset(CacheDataset):
 
             # Get what size the image is on disk
             disk_height, disk_width = delayed.shape[0:2]
-            assert (disk_width, disk_height) == img_info  # should agree
+            assert (disk_height, disk_width) == img_info, (
+                f'Should agree, but ({disk_height}, {disk_width}) != img_info=f{img_info}'
+            )
 
             # Kind of roundabout way to get the resize target, but keeping the
             # logic the way it was, and just optimizing it.
