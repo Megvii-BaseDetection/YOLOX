@@ -215,6 +215,7 @@ python -m yolox.tools.eval -n  yolox-s -c yolox_s.pth -b 1 -d 1 --conf 0.001 --f
 4. [ncnn in C++ and Java](./demo/ncnn)
 5. [OpenVINO in C++ and Python](./demo/OpenVINO)
 6. [Accelerate YOLOX inference with nebullvm in Python](./demo/nebullvm)
+7. [Executorch export and an Executorch Runtime](./demo/executorch)
 
 ## Third-party resources
 * YOLOX for streaming perception: [StreamYOLO (CVPR 2022 Oral)](https://github.com/yancie-yjr/StreamYOLO)
