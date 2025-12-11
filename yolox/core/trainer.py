@@ -33,6 +33,42 @@ from yolox.utils import (
     synchronize
 )
 
+class EarlyStopping:
+    def __init__(self, patience: int, min_delta: float, mode="max"):
+        self.patience = patience
+        self.min_delta = min_delta
+        self.mode = mode # "max", "min", "percentage"
+        self.best = None
+        self.counter = 0
+
+    def step(self, value):
+        # Initialize best value on first call
+        if self.best is None:
+            self.best = value
+            return False
+
+        # Compute improvement depending on mode
+        if self.mode == "max":
+            improvement = value - self.best
+        elif self.mode == "min":
+            improvement = self.best - value
+        elif self.mode == "percentage":
+            if self.best == 0:
+                improvement = 0  # avoid division by zero
+            else:
+                improvement = (value - self.best) / abs(self.best)
+        else:
+            raise ValueError(f"Unknown mode: {self.mode}, supported modes are 'max', 'min', 'percentage'.")
+
+        # Check if improvement is sufficient
+        if improvement > self.min_delta:
+            self.best = value
+            self.counter = 0
+        else:
+            self.counter += 1
+
+        return self.counter >= self.patience
+
 
 class Trainer:
     def __init__(self, exp: Exp, args):
@@ -40,6 +76,7 @@ class Trainer:
         # before_train methods.
         self.exp = exp
         self.args = args
+        self.early_stopper = None
 
         # training related attr
         self.max_epoch = exp.max_epoch
@@ -234,7 +271,15 @@ class Trainer:
 
         if (self.epoch + 1) % self.exp.eval_interval == 0:
             all_reduce_norm(self.model)
-            self.evaluate_and_save_model()
+            ap50_95 = self.evaluate_and_save_model()
+
+        # Early stopping
+        if self.early_stopper is not None:
+            if self.early_stopper.step(ap50_95):
+                logger.info(f"Early stopping triggered at epoch {self.epoch}. " f"Best AP: {self.early_stopper.best}")
+                # save best checkpoint before exiting
+                self.save_ckpt("best_ckpt")
+                raise SystemExit
 
     def before_iter(self):
         pass
@@ -395,6 +440,7 @@ class Trainer:
                 }
             self.mlflow_logger.save_checkpoints(self.args, self.exp, self.file_name, self.epoch,
                                                 metadata, update_best_ckpt)
+        return ap50_95
 
     def save_ckpt(self, ckpt_name, update_best_ckpt=False, ap=None):
         if self.rank == 0:

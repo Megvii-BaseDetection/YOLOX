@@ -349,6 +349,11 @@ class Exp(BaseExp):
         # NOTE: trainer shouldn't be an attribute of exp object
         return trainer
 
+    def get_early_stopping(self, patience, min_delta, mode):
+        from yolox.core import EarlyStopping
+
+        return EarlyStopping(patience=patience, min_delta=min_delta, mode=mode)
+
     def eval(self, model, evaluator, is_distributed, half=False, return_outputs=False):
         return evaluator.evaluate(model, is_distributed, half, return_outputs=return_outputs)
 

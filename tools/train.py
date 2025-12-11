@@ -89,6 +89,13 @@ def make_parser():
         default="tensorboard"
     )
     parser.add_argument(
+        "--early-stopping",
+        dest="early_stopping",
+        default=False,
+        action="store_true",
+        help="Use early stopping to prevent overfitting.",
+    )
+    parser.add_argument(
         "opts",
         help="Modify config options using the command-line",
         default=None,
@@ -115,6 +122,13 @@ def main(exp: Exp, args):
     cudnn.benchmark = True
 
     trainer = exp.get_trainer(args)
+
+    # configure early stopping parameters
+    if args.early_stopping:
+        # requires 1% relative improvement over 10 epochs to reset patience
+        # available modes: "max", "min", "percentage"
+        trainer.early_stopper = exp.get_early_stopping(patience=10, min_delta=0.01, mode="percentage")
+
     trainer.train()
 
 
