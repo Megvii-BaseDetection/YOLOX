@@ -325,11 +325,12 @@ class YOLOXHead(nn.Module):
                         raise  # RuntimeError might not caused by CUDA OOM
 
                     logger.error(
-                        "OOM RuntimeError is raised due to the huge memory cost during label assignment. \
-                           CPU mode is applied in this batch. If you want to avoid this issue, \
-                           try to reduce the batch size or image size."
+                        "OOM RuntimeError is raised due to the huge memory cost during label "
+                        "assignment. CPU mode is applied in this batch. If you want to avoid "
+                        "this issue, try to reduce the batch size or image size."
                     )
-                    torch.cuda.empty_cache()
+                    if torch.cuda.is_available():
+                        torch.cuda.empty_cache()
                     (
                         gt_matched_classes,
                         fg_mask,
@@ -350,7 +351,8 @@ class YOLOXHead(nn.Module):
                         "cpu",
                     )
 
-                torch.cuda.empty_cache()
+                if torch.cuda.is_available():
+                    torch.cuda.empty_cache()
                 num_fg += num_fg_img
 
                 cls_target = F.one_hot(
@@ -471,7 +473,7 @@ class YOLOXHead(nn.Module):
         if mode == "cpu":
             cls_preds_, obj_preds_ = cls_preds_.cpu(), obj_preds_.cpu()
 
-        with torch.cuda.amp.autocast(enabled=False):
+        with torch.amp.autocast("cuda", enabled=False):
             cls_preds_ = (
                 cls_preds_.float().sigmoid_() * obj_preds_.float().sigmoid_()
             ).sqrt()
@@ -496,7 +498,7 @@ class YOLOXHead(nn.Module):
         ) = self.simota_matching(cost, pair_wise_ious, gt_classes, num_gt, fg_mask)
         del pair_wise_cls_loss, cost, pair_wise_ious, pair_wise_ious_loss
 
-        if mode == "cpu":
+        if mode == "cpu" and torch.cuda.is_available():
             gt_matched_classes = gt_matched_classes.cuda()
             fg_mask = fg_mask.cuda()
             pred_ious_this_matching = pred_ious_this_matching.cuda()
