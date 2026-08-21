@@ -7,8 +7,8 @@ For more details, please refer to our [report on Arxiv](https://arxiv.org/abs/21
 
 This repo is an implementation of PyTorch version YOLOX, there is also a [MegEngine implementation](https://github.com/MegEngine/YOLOX).
 
-<img src="assets/git_fig.png" width="1000" >
-
+<img src="assets/git_fig.png" width=" 1000" >
+  
 ## Updates!!
 * 【2023/02/28】 We support assignment visualization tool, see doc [here](./docs/assignment_visualization.md).
 * 【2022/04/14】 We support jit compile op.
