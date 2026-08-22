@@ -1,5 +1,8 @@
 <div align="center"><img src="assets/logo.png" width="350"></div>
-<img src="assets/demo.png" >
+<img src="assets/demo.
+
+
+thenks for your project 
 
 ## Introduction
 YOLOX is an anchor-free version of YOLO, with a simpler design but better performance! It aims to bridge the gap between research and industrial communities.
