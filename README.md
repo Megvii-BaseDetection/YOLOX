@@ -226,6 +226,7 @@ python -m yolox.tools.eval -n  yolox-s -c yolox_s.pth -b 1 -d 1 --conf 0.001 --f
 * YOLOX Deploy DeepStream: [YOLOX-deepstream](https://github.com/nanmi/YOLOX-deepstream) from [nanmi](https://github.com/nanmi)
 * YOLOX MNN/TNN/ONNXRuntime: [YOLOX-MNN](https://github.com/DefTruth/lite.ai.toolkit/blob/main/lite/mnn/cv/mnn_yolox.cpp)、[YOLOX-TNN](https://github.com/DefTruth/lite.ai.toolkit/blob/main/lite/tnn/cv/tnn_yolox.cpp) and [YOLOX-ONNXRuntime C++](https://github.com/DefTruth/lite.ai.toolkit/blob/main/lite/ort/cv/yolox.cpp) from [DefTruth](https://github.com/DefTruth)
 * Converting darknet or yolov5 datasets to COCO format for YOLOX: [YOLO2COCO](https://github.com/RapidAI/YOLO2COCO) from [Daniel](https://github.com/znsoftm)
+* YOLOX is available in [Intel® Geti™](https://github.com/open-edge-platform/geti), an open-source platform that allows you to fine-tune YOLOX models on your custom data and optimize them for INT8 inference via OpenVINO™ / ONNX. Notably, Geti™ offers full support for training and inference on Intel® GPUs (XPU) and CPU.
 
 ## Cite YOLOX
 If you use YOLOX in your research, please cite our work by using the following BibTeX entry:
