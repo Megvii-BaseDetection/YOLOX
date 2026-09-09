@@ -6,6 +6,7 @@ from .boxes import *
 from .checkpoint import load_ckpt, save_checkpoint
 from .compat import meshgrid
 from .demo_utils import *
+from .device import *
 from .dist import *
 from .ema import *
 from .logger import WandbLogger, setup_logger

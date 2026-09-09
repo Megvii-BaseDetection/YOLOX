@@ -47,10 +47,21 @@ def occupy_mem(cuda_device, mem_ratio=0.9):
 
 def gpu_mem_usage():
     """
-    Compute the GPU memory usage for the current device (MB).
+    Compute the accelerator memory usage for the current device (MB).
+
+    Returns 0 when there is no accelerator: this is only ever used for a log line,
+    so it must not be the thing that stops a CPU or MPS run. `max_memory_allocated`
+    is CUDA-only, and MPS exposes a current-allocation counter instead of a peak.
     """
-    mem_usage_bytes = torch.cuda.max_memory_allocated()
-    return mem_usage_bytes / (1024 * 1024)
+    if torch.cuda.is_available():
+        return torch.cuda.max_memory_allocated() / (1024 * 1024)
+    mps = getattr(torch, "mps", None)
+    if mps is not None and hasattr(mps, "current_allocated_memory"):
+        try:
+            return mps.current_allocated_memory() / (1024 * 1024)
+        except Exception:
+            return 0
+    return 0
 
 
 def mem_usage():

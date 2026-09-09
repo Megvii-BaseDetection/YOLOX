@@ -20,6 +20,7 @@ import torch
 from yolox.data.datasets import COCO_CLASSES
 from yolox.utils import (
     gather,
+    get_device,
     is_main_process,
     postprocess,
     synchronize,
@@ -132,7 +133,10 @@ class COCOEvaluator:
             summary (sr): summary info of evaluation.
         """
         # TODO half to amp_test
-        tensor_type = torch.cuda.HalfTensor if half else torch.cuda.FloatTensor
+        # Was torch.cuda.HalfTensor/FloatTensor, which names a device as well as a
+        # dtype and therefore cannot express MPS or CPU. Carry them separately.
+        device = get_device()
+        dtype = torch.float16 if half else torch.float32
         model = model.eval()
         if half:
             model = model.half()
@@ -159,7 +163,7 @@ class COCOEvaluator:
             progress_bar(self.dataloader)
         ):
             with torch.no_grad():
-                imgs = imgs.type(tensor_type)
+                imgs = imgs.to(device=device, dtype=dtype)
 
                 # skip the last iters since batchsize might be not enough for batch inference
                 is_time_record = cur_iter < len(self.dataloader) - 1
@@ -168,7 +172,7 @@ class COCOEvaluator:
 
                 outputs = model(imgs)
                 if decoder is not None:
-                    outputs = decoder(outputs, dtype=outputs.type())
+                    outputs = decoder(outputs, dtype=outputs.dtype)
 
                 if is_time_record:
                     infer_end = time_synchronized()
@@ -186,7 +190,10 @@ class COCOEvaluator:
             data_list.extend(data_list_elem)
             output_data.update(image_wise_data)
 
-        statistics = torch.cuda.FloatTensor([inference_time, nms_time, n_samples])
+        statistics = torch.tensor(
+            [inference_time, nms_time, n_samples],
+            dtype=torch.float32, device=get_device(),
+        )
         if distributed:
             # different process/device might have different speed,
             # to make sure the process will not be stucked, sync func is used here.

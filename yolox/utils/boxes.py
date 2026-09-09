@@ -97,7 +97,7 @@ def bboxes_iou(bboxes_a, bboxes_b, xyxy=True):
 
         area_a = torch.prod(bboxes_a[:, 2:], 1)
         area_b = torch.prod(bboxes_b[:, 2:], 1)
-    en = (tl < br).type(tl.type()).prod(dim=2)
+    en = (tl < br).to(tl.dtype).prod(dim=2)
     area_i = torch.prod(br - tl, 2) * en  # * ((tl < br).all())
     return area_i / (area_a[:, None] + area_b - area_i)
 

@@ -19,6 +19,8 @@ from yolox.utils import (
     WandbLogger,
     adjust_status,
     all_reduce_norm,
+    get_device,
+    get_device_type,
     get_local_rank,
     get_model_info,
     get_rank,
@@ -44,11 +46,19 @@ class Trainer:
         # training related attr
         self.max_epoch = exp.max_epoch
         self.amp_training = args.fp16
-        self.scaler = torch.cuda.amp.GradScaler(enabled=args.fp16)
+        self.device_type = get_device_type()
+        # fp16 autocast is a CUDA feature; asking for it elsewhere silently produces
+        # a disabled scaler, so refuse it loudly instead of training at fp32 while
+        # the logs claim otherwise.
+        if args.fp16 and self.device_type != "cuda":
+            raise ValueError(
+                "--fp16 requires CUDA; current device is '{}'".format(self.device_type)
+            )
+        self.scaler = torch.amp.GradScaler(self.device_type, enabled=args.fp16)
         self.is_distributed = get_world_size() > 1
         self.rank = get_rank()
         self.local_rank = get_local_rank()
-        self.device = "cuda:{}".format(self.local_rank)
+        self.device = get_device(self.local_rank)
         self.use_model_ema = exp.ema
         self.save_history_ckpt = exp.save_history_ckpt
 
@@ -103,7 +113,7 @@ class Trainer:
         inps, targets = self.exp.preprocess(inps, targets, self.input_size)
         data_end_time = time.time()
 
-        with torch.cuda.amp.autocast(enabled=self.amp_training):
+        with torch.amp.autocast(self.device_type, enabled=self.amp_training):
             outputs = self.model(inps, targets)
 
         loss = outputs["total_loss"]
@@ -133,7 +143,9 @@ class Trainer:
         logger.info("exp value:\n{}".format(self.exp))
 
         # model related init
-        torch.cuda.set_device(self.local_rank)
+        # Only CUDA has a per-process device index; MPS and CPU are single-device.
+        if self.device_type == "cuda":
+            torch.cuda.set_device(self.local_rank)
         model = self.exp.get_model()
         logger.info(
             "Model Summary: {}".format(get_model_info(model, self.exp.test_size))
@@ -162,7 +174,8 @@ class Trainer:
         self.lr_scheduler = self.exp.get_lr_scheduler(
             self.exp.basic_lr_per_img * self.args.batch_size, self.max_iter
         )
-        if self.args.occupy:
+        # Pre-allocating to avoid fragmentation is a CUDA-specific trick.
+        if self.args.occupy and self.device_type == "cuda":
             occupy_mem(self.local_rank)
 
         if self.is_distributed:
