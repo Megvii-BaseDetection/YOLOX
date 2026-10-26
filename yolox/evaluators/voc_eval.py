@@ -85,7 +85,21 @@ def voc_eval(
         lines = f.readlines()
     imagenames = [x.strip() for x in lines]
 
-    if not os.path.isfile(cachefile):
+    recs = None
+    if os.path.isfile(cachefile):
+        # load
+        with open(cachefile, "rb") as f:
+            recs = pickle.load(f)
+        # the cache is stale if it was written for a different image set
+        missing = [name for name in imagenames if name not in recs]
+        if missing:
+            print(
+                f"Cached annotations in {cachefile} are missing {len(missing)} "
+                f"of {len(imagenames)} images, rebuilding the cache"
+            )
+            recs = None
+
+    if recs is None:
         # load annots
         recs = {}
         for i, imagename in enumerate(imagenames):
@@ -96,10 +110,6 @@ def voc_eval(
         print(f"Saving cached annotations to {cachefile}")
         with open(cachefile, "wb") as f:
             pickle.dump(recs, f)
-    else:
-        # load
-        with open(cachefile, "rb") as f:
-            recs = pickle.load(f)
 
     # extract gt objects for this class
     class_recs = {}
