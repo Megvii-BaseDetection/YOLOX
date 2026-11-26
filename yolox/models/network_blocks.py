@@ -14,6 +14,35 @@ class SiLU(nn.Module):
         return x * torch.sigmoid(x)
 
 
+class WaLU(nn.Module):
+    """Winsorized Adaptive Linear Unit with per-sample clipping bounds.
+
+    For a batched input (N, C, ...), average negative and positive values
+    separately across all non-batch dimensions. Clip to those means, using
+    zero for a missing sign. Bounds remain differentiable and are recomputed
+    in both training and evaluation. Inputs are never modified in place.
+    """
+
+    def forward(self, x):
+        if x.ndim < 2:
+            raise ValueError("WaLU expects a batched tensor with at least two dimensions")
+
+        dims = tuple(range(1, x.ndim))
+        # Accumulate and divide in FP32 under mixed precision; retain FP64
+        # for double-precision inputs (e.g. numerical gradient checks).
+        stats_dtype = torch.float32 if x.dtype in (torch.float16, torch.bfloat16) else x.dtype
+        negative = x < 0
+        positive = x > 0
+        lower = torch.where(negative, x, 0.0).sum(
+            dim=dims, keepdim=True, dtype=stats_dtype
+        ) / negative.sum(dim=dims, keepdim=True).clamp_min(1)
+        upper = torch.where(positive, x, 0.0).sum(
+            dim=dims, keepdim=True, dtype=stats_dtype
+        ) / positive.sum(dim=dims, keepdim=True).clamp_min(1)
+
+        return torch.maximum(lower.to(x.dtype), torch.minimum(upper.to(x.dtype), x))
+
+
 def get_activation(name="silu", inplace=True):
     if name == "silu":
         module = nn.SiLU(inplace=inplace)
@@ -21,13 +50,15 @@ def get_activation(name="silu", inplace=True):
         module = nn.ReLU(inplace=inplace)
     elif name == "lrelu":
         module = nn.LeakyReLU(0.1, inplace=inplace)
+    elif name == "walu":
+        module = WaLU()
     else:
         raise AttributeError("Unsupported act type: {}".format(name))
     return module
 
 
 class BaseConv(nn.Module):
-    """A Conv2d -> Batchnorm -> silu/leaky relu block"""
+    """A Conv2d -> Batchnorm -> activation block"""
 
     def __init__(
         self, in_channels, out_channels, ksize, stride, groups=1, bias=False, act="silu"
