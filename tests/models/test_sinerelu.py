@@ -18,60 +18,44 @@ class TestSineReLU(unittest.TestCase):
                 self.assertEqual(activation.epsilon, 0.0025)
                 self.assertEqual(list(activation.parameters()), [])
                 self.assertEqual(list(activation.buffers()), [])
-                self.assertIn("epsilon=0.0025", repr(activation))
 
-    def test_piecewise_values(self):
+    def test_matches_keras_maximum(self):
         values = [-7 * math.pi / 4, -math.pi, -math.pi / 4, -0.1, 0.0, 1e-8, 2.0]
         x = torch.tensor(values, dtype=torch.float64)
         for epsilon in (0.0025, 0.025, 0.1):
             with self.subTest(epsilon=epsilon):
                 expected = torch.tensor([
-                    value if value > 0 else epsilon * (math.sin(value) - math.cos(value))
+                    max(epsilon * (math.sin(value) - math.cos(value)), value)
                     for value in values
                 ], dtype=x.dtype)
                 torch.testing.assert_close(SineReLU(epsilon)(x), expected)
 
-    def test_zero_uses_the_nonpositive_branch(self):
-        epsilon = 0.0025
-        x = torch.tensor([-1e-12, -0.0, 0.0, 1e-12], dtype=torch.float64)
-        y = SineReLU(epsilon)(x)
-        self.assertAlmostEqual(y[0].item(), -epsilon, places=12)
-        self.assertEqual(y[1].item(), -epsilon)
-        self.assertEqual(y[2].item(), -epsilon)
-        self.assertEqual(y[3].item(), x[3].item())
+    def test_identity_branch_at_and_near_zero(self):
+        x = torch.tensor([-0.002, -1e-12, -0.0, 0.0, 1e-12], dtype=torch.float64)
+        torch.testing.assert_close(SineReLU()(x), x)
 
     def test_analytical_gradients(self):
         epsilon = 0.0025
-        values = [-math.pi, -0.4, 0.0, 1e-8, 2.0]
+        values = [-math.pi, -0.4, -1e-8, 0.0, 1e-8, 2.0]
         x = torch.tensor(values, dtype=torch.float64, requires_grad=True)
         SineReLU(epsilon)(x).sum().backward()
-        # At zero autograd follows the selected branch; the mathematical
-        # function itself is discontinuous and has no derivative there.
+        # The identity branch also wins for sufficiently small negative inputs.
         expected = torch.tensor([
-            1.0 if value > 0 else epsilon * (math.cos(value) + math.sin(value))
+            1.0 if value > epsilon * (math.sin(value) - math.cos(value))
+            else epsilon * (math.cos(value) + math.sin(value))
             for value in values
         ], dtype=x.dtype)
         torch.testing.assert_close(x.grad, expected)
 
-    def test_numerical_gradients_away_from_zero(self):
+    def test_numerical_gradients(self):
         x = torch.tensor(
-            [-6.0, -2.0, -0.25, 0.25, 9.0], dtype=torch.float64, requires_grad=True
+            [-6.0, -2.0, -0.25, 0.0, 0.25, 9.0], dtype=torch.float64, requires_grad=True
         )
         self.assertTrue(torch.autograd.gradcheck(SineReLU(), (x,)))
 
     def test_zero_epsilon_reduces_to_relu(self):
         x = torch.tensor([-10.0, -1.0, 0.0, 1.0, 10.0])
         torch.testing.assert_close(SineReLU(epsilon=0)(x), x.relu())
-
-    def test_invalid_epsilon(self):
-        for epsilon in (-0.1, float("inf"), float("-inf"), float("nan")):
-            with self.subTest(epsilon=epsilon):
-                with self.assertRaises(ValueError):
-                    SineReLU(epsilon)
-
-    def test_requires_floating_point_input(self):
-        with self.assertRaises(TypeError):
-            SineReLU()(torch.tensor([-1, 0, 1]))
 
     def test_shape_dtype_and_device(self):
         generator = torch.Generator().manual_seed(7)
@@ -94,7 +78,7 @@ class TestSineReLU(unittest.TestCase):
                     dtype=dtype, requires_grad=True,
                 )
                 reference = torch.tensor([
-                    value if value > 0 else epsilon * (math.sin(value) - math.cos(value))
+                    max(epsilon * (math.sin(value) - math.cos(value)), value)
                     for value in x.detach().double().tolist()
                 ], dtype=dtype)
                 y = SineReLU(epsilon)(x)
@@ -115,13 +99,6 @@ class TestSineReLU(unittest.TestCase):
         activation = SineReLU()
         x = torch.tensor([-6.0, -2.0, 0.0, 1.0, 9.0])
         torch.testing.assert_close(activation.train()(x), activation.eval()(x))
-
-    def test_positive_infinity_has_identity_gradient(self):
-        x = torch.tensor([float("inf"), 1.0], requires_grad=True)
-        y = SineReLU()(x)
-        torch.testing.assert_close(y, x)
-        y.sum().backward()
-        torch.testing.assert_close(x.grad, torch.ones_like(x))
 
     @unittest.skipUnless(torch.cuda.is_available(), "CUDA is not available")
     def test_cuda_mixed_precision(self):

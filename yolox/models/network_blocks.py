@@ -2,8 +2,6 @@
 # -*- encoding: utf-8 -*-
 # Copyright (c) Megvii Inc. All rights reserved.
 
-import math
-
 import torch
 import torch.nn as nn
 
@@ -17,33 +15,15 @@ class SiLU(nn.Module):
 
 
 class SineReLU(nn.Module):
-    """Linear for x > 0; epsilon * (sin(x) - cos(x)) for x <= 0.
-
-    Uses the piecewise definition in Wilder Rodrigues's SineReLU article,
-    with the CNN epsilon of 0.0025. For epsilon > 0 the function jumps at
-    zero; autograd follows the selected nonpositive branch there.
-    """
+    """Sinusoidal  Rectified Linear Unit, matching the original keras-contrib implementation."""
 
     def __init__(self, epsilon=0.0025):
         super().__init__()
-        self.epsilon = float(epsilon)
-        if not math.isfinite(self.epsilon) or self.epsilon < 0:
-            raise ValueError("epsilon must be finite and nonnegative")
+        self.epsilon = epsilon
 
     def forward(self, x):
-        if not torch.is_floating_point(x):
-            raise TypeError("SineReLU expects a floating-point tensor")
-
-        positive = x > 0
-        # Avoid evaluating unused trigonometric functions at positive infinity.
-        wave_input = torch.where(positive, 0.0, x)
-        if x.dtype in (torch.float16, torch.bfloat16):
-            wave_input = wave_input.float()
-        wave = self.epsilon * (torch.sin(wave_input) - torch.cos(wave_input))
-        return torch.where(positive, x, wave.to(x.dtype))
-
-    def extra_repr(self):
-        return "epsilon={}".format(self.epsilon)
+        wave = self.epsilon * (torch.sin(x) - torch.cos(x))
+        return torch.maximum(wave, x)
 
 
 class WaLU(nn.Module):

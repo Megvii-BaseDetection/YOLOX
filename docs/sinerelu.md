@@ -1,35 +1,29 @@
 # SineReLU
 
-This implementation follows the piecewise definition in
-[Wilder Rodrigues's original article](https://wilder-rodrigues.medium.com/sinerelu-an-alternative-to-the-relu-activation-function-e46a6199997d):
+This is a direct PyTorch translation of the
+[original keras-contrib source](https://github.com/keras-team/keras-contrib/blob/3fc5ef709e061416f4bc8a92ca3750c824b5d2b0/keras_contrib/layers/advanced_activations/sinerelu.py):
 
-```text
-SineReLU(x) = x                               if x > 0
-              epsilon * (sin(x) - cos(x))      if x <= 0
+```python
+wave = self.epsilon * (torch.sin(x) - torch.cos(x))
+return torch.maximum(wave, x)
 ```
 
-The default `epsilon=0.0025` matches the CNN experiments in the article. Epsilon
-is a fixed, finite, nonnegative hyperparameter; it is not learned. The activation
-accepts floating-point tensors of any shape and operates independently on each
-element. It has no running statistics and behaves identically in train/eval mode.
-It does not modify its input in place, including when constructed through
-`get_activation(..., inplace=True)`.
+The default `epsilon=0.0025` matches the original source. Epsilon controls the wave
+amplitude and is not learned. The activation operates independently on each
+element, preserves the shape and dtype of floating-point inputs, and uses
+PyTorch's native tensor operations and autograd. Train and eval behavior match.
+Inputs are not modified in place.
 
 ## Behavior at zero and gradients
 
-Zero, including negative zero, selects the oscillating branch, so the result is
-`-epsilon`. For `epsilon > 0`, the function is discontinuous at zero because its
-right-hand limit is zero. Consequently it is not differentiable everywhere.
-We preserve the article's piecewise definition rather than changing its boundary.
+For the default positive epsilon, `SineReLU(0) = max(-epsilon, 0) = 0`, and the
+gradient at zero is `1`. The identity branch also wins for some small negative
+inputs, so selecting branches solely by the sign of the input is not equivalent.
 
-Autograd gives derivative `1` for positive inputs and
-`epsilon * (cos(x) + sin(x))` for negative inputs. At exactly zero, PyTorch
-follows the selected oscillating branch and returns gradient `epsilon`; this
-is a branch-gradient convention, not a mathematical derivative at the jump.
-Negative-branch derivatives can also be zero at isolated points.
-
-For FP16/BF16 inputs, trigonometric operations and scaling use FP32; outputs
-retain the input dtype and device. FP64 inputs retain double precision.
+Where the identity branch wins, the derivative is `1`; where the wave wins,
+it is `epsilon * (cos(x) + sin(x))`. The function is continuous, but can have
+kinks where the branches intersect. At ties, PyTorch applies its `maximum`
+subgradient convention.
 
 ## Select SineReLU
 
@@ -60,6 +54,6 @@ The `act sinerelu` factory selection uses the CNN default of `0.0025`.
 python -m unittest discover -s tests/models -p 'test_*.py' -v
 ```
 
-The tests cover the piecewise values, zero boundary, analytical and numerical
+The tests cover the original maximum formula, zero behavior, analytical and numerical
 gradients, low-precision inputs, and a YOLOX-S training/inference smoke check.
 The CUDA autocast test runs when a CUDA GPU is available.
