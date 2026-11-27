@@ -68,7 +68,7 @@ This repo is an implementation of PyTorch version YOLOX, there is also a [MegEng
 
 Step1. Install YOLOX from source.
 ```shell
-git clone git@github.com:Megvii-BaseDetection/YOLOX.git
+git clone git@github.com:wilderrodrigues/YOLOX.git
 cd YOLOX
 pyenv install 3.13.7
 pyenv activate 3.13.7
