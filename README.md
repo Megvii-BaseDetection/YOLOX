@@ -70,8 +70,19 @@ Step1. Install YOLOX from source.
 ```shell
 git clone git@github.com:Megvii-BaseDetection/YOLOX.git
 cd YOLOX
-pip3 install -v -e .  # or  python3 setup.py develop
+pyenv install 3.13.7
+pyenv activate 3.13.7
+pyenv global 3.13.7 # or local, if you do not want to mess with your environment. 
+poetry env use "$(pyenv which python)"
+poetry install
 ```
+
+Python 3.13.7+ (3.13 and 3.14) and Poetry 2.3+ are supported. On Linux with an
+NVIDIA GPU, use `poetry sync --extras cuda` to install the CUDA 12.6 build.
+MacBooks with Apple silicon and Linux machines without CUDA use CPU execution.
+Prefix the Python commands below with `poetry run`; `--device auto` selects CUDA
+when available and CPU otherwise. See [environment setup](docs/environment.md)
+for platform details, optional dependencies, and verification commands.
 
 </details>
 

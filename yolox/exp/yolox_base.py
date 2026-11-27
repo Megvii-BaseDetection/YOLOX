@@ -109,7 +109,7 @@ class Exp(BaseExp):
         self.nmsthre = 0.65
 
     def get_model(self):
-        from yolox.models import YOLOX, YOLOPAFPN, YOLOXHead
+        from yolox.models import YOLOPAFPN, YOLOX, YOLOXHead
 
         def init_yolo(M):
             for m in M.modules():
@@ -163,12 +163,12 @@ class Exp(BaseExp):
                 None: Do not use cache, in this case cache_data is also None.
         """
         from yolox.data import (
-            TrainTransform,
-            YoloBatchSampler,
             DataLoader,
             InfiniteSampler,
             MosaicDetection,
-            worker_init_reset_seed,
+            TrainTransform,
+            YoloBatchSampler,
+            worker_init_reset_seed
         )
         from yolox.utils import wait_for_the_master
 
@@ -210,7 +210,9 @@ class Exp(BaseExp):
             mosaic=not no_aug,
         )
 
-        dataloader_kwargs = {"num_workers": self.data_num_workers, "pin_memory": True}
+        dataloader_kwargs = {
+            "num_workers": self.data_num_workers, "pin_memory": torch.cuda.is_available()
+        }
         dataloader_kwargs["batch_sampler"] = batch_sampler
 
         # Make sure each process has different random seed, especially for 'fork' method.
@@ -222,7 +224,8 @@ class Exp(BaseExp):
         return train_loader
 
     def random_resize(self, data_loader, epoch, rank, is_distributed):
-        tensor = torch.LongTensor(2).cuda()
+        device = "cuda" if is_distributed else "cpu"
+        tensor = torch.empty(2, dtype=torch.long, device=device)
 
         if rank == 0:
             size_factor = self.input_size[1] * 1.0 / self.input_size[0]
@@ -322,7 +325,7 @@ class Exp(BaseExp):
 
         dataloader_kwargs = {
             "num_workers": self.data_num_workers,
-            "pin_memory": True,
+            "pin_memory": torch.cuda.is_available(),
             "sampler": sampler,
         }
         dataloader_kwargs["batch_size"] = batch_size

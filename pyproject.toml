@@ -1,0 +1,89 @@
+[project]
+name = "yolox"
+version = "0.3.0"
+description = "YOLOX object detection with WaLU and SineReLU experiments"
+authors = [{ name = "Megvii BaseDetection team" }]
+license = "Apache-2.0"
+readme = "README.md"
+requires-python = ">=3.13.7,<3.15"
+dependencies = [
+    "numpy>=2.2,<3",
+    "torch==2.10.0 ; sys_platform != 'linux'",
+    "torch==2.10.0+cpu ; sys_platform == 'linux' and extra != 'cuda'",
+    "torchvision==0.25.0 ; sys_platform != 'linux'",
+    "torchvision==0.25.0+cpu ; sys_platform == 'linux' and extra != 'cuda'",
+    "opencv-python>=4.11,<5 ; sys_platform == 'darwin'",
+    "opencv-python-headless>=4.11,<5 ; sys_platform != 'darwin'",
+    "loguru>=0.7,<1",
+    "tqdm>=4.67,<5",
+    "tabulate>=0.9,<1",
+    "psutil>=6,<8",
+    "tensorboard>=2.19,<3",
+    "pycocotools>=2.0.10,<3",
+    "packaging>=24,<27",
+]
+
+[project.optional-dependencies]
+cuda = [
+    "torch==2.10.0+cu126 ; sys_platform == 'linux'",
+    "torchvision==0.25.0+cu126 ; sys_platform == 'linux'",
+]
+
+[project.urls]
+Repository = "https://github.com/Megvii-BaseDetection/YOLOX"
+Documentation = "https://yolox.readthedocs.io"
+
+[tool.poetry]
+requires-poetry = ">=2.3,<3"
+packages = [{ include = "yolox" }, { include = "tools" }, { include = "exps" }]
+include = [{ path = "yolox/layers/cocoeval/*.cpp", format = ["sdist", "wheel"] }]
+
+[tool.poetry.dependencies]
+torch = [
+    { markers = "sys_platform != 'linux'", source = "PyPI" },
+    { markers = "sys_platform == 'linux' and extra != 'cuda'", source = "pytorch-cpu" },
+    { markers = "sys_platform == 'linux' and extra == 'cuda'", source = "pytorch-cuda" },
+]
+torchvision = [
+    { markers = "sys_platform != 'linux'", source = "PyPI" },
+    { markers = "sys_platform == 'linux' and extra != 'cuda'", source = "pytorch-cpu" },
+    { markers = "sys_platform == 'linux' and extra == 'cuda'", source = "pytorch-cuda" },
+]
+
+[[tool.poetry.source]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+priority = "explicit"
+
+[[tool.poetry.source]]
+name = "pytorch-cuda"
+url = "https://download.pytorch.org/whl/cu126"
+priority = "explicit"
+
+[tool.poetry.group.dev.dependencies]
+pytest = ">=8.3,<9"
+flake8 = ">=7,<8"
+isort = ">=5.13,<6"
+
+[tool.poetry.group.export]
+optional = true
+
+[tool.poetry.group.export.dependencies]
+onnx = ">=1.19,<2"
+onnxsim = ">=0.8,<0.9"
+onnxruntime = ">=1.23,<2"
+
+[tool.poetry.group.docs]
+optional = true
+
+[tool.poetry.group.docs.dependencies]
+sphinx = ">=8.2,<9"
+sphinx-rtd-theme = ">=3,<4"
+myst-parser = ">=4,<5"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[build-system]
+requires = ["poetry-core>=2.2,<3"]
+build-backend = "poetry.core.masonry.api"

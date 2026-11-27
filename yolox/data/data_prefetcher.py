@@ -13,11 +13,10 @@ class DataPrefetcher:
     https://github.com/NVIDIA/apex/issues/304#issuecomment-493562789.
     """
 
-    def __init__(self, loader):
+    def __init__(self, loader, device=None):
         self.loader = iter(loader)
-        self.stream = torch.cuda.Stream()
-        self.input_cuda = self._input_cuda_for_image
-        self.record_stream = DataPrefetcher._record_stream_for_image
+        self.device = torch.device(device or ("cuda" if torch.cuda.is_available() else "cpu"))
+        self.stream = torch.cuda.Stream(device=self.device) if self.device.type == "cuda" else None
         self.preload()
 
     def preload(self):
@@ -28,24 +27,24 @@ class DataPrefetcher:
             self.next_target = None
             return
 
-        with torch.cuda.stream(self.stream):
-            self.input_cuda()
-            self.next_target = self.next_target.cuda(non_blocking=True)
+        if self.stream is None:
+            self.next_input = self.next_input.to(self.device)
+            self.next_target = self.next_target.to(self.device)
+        else:
+            with torch.cuda.stream(self.stream):
+                self.next_input = self.next_input.to(self.device, non_blocking=True)
+                self.next_target = self.next_target.to(self.device, non_blocking=True)
 
     def next(self):
-        torch.cuda.current_stream().wait_stream(self.stream)
+        if self.stream is not None:
+            current_stream = torch.cuda.current_stream(self.device)
+            current_stream.wait_stream(self.stream)
         input = self.next_input
         target = self.next_target
-        if input is not None:
-            self.record_stream(input)
-        if target is not None:
-            target.record_stream(torch.cuda.current_stream())
+        if self.stream is not None:
+            if input is not None:
+                input.record_stream(current_stream)
+            if target is not None:
+                target.record_stream(current_stream)
         self.preload()
         return input, target
-
-    def _input_cuda_for_image(self):
-        self.next_input = self.next_input.cuda(non_blocking=True)
-
-    @staticmethod
-    def _record_stream_for_image(input):
-        input.record_stream(torch.cuda.current_stream())

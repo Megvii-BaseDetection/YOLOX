@@ -9,6 +9,9 @@ Welcome to YOLOX's documentation!
    :caption: Quick Run
    
    quick_run
+   environment
+   walu
+   sinerelu
    model_zoo
 
 .. toctree::

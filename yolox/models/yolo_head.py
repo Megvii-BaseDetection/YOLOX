@@ -325,7 +325,7 @@ class YOLOXHead(nn.Module):
                         raise  # RuntimeError might not caused by CUDA OOM
 
                     logger.error(
-                        "OOM RuntimeError is raised due to the huge memory cost during label assignment. \
+                        "OOM RuntimeError is raised due to memory cost during label assignment. \
                            CPU mode is applied in this batch. If you want to avoid this issue, \
                            try to reduce the batch size or image size."
                     )
@@ -350,7 +350,8 @@ class YOLOXHead(nn.Module):
                         "cpu",
                     )
 
-                torch.cuda.empty_cache()
+                if outputs.is_cuda:
+                    torch.cuda.empty_cache()
                 num_fg += num_fg_img
 
                 cls_target = F.one_hot(
@@ -471,7 +472,7 @@ class YOLOXHead(nn.Module):
         if mode == "cpu":
             cls_preds_, obj_preds_ = cls_preds_.cpu(), obj_preds_.cpu()
 
-        with torch.cuda.amp.autocast(enabled=False):
+        with torch.amp.autocast(cls_preds_.device.type, enabled=False):
             cls_preds_ = (
                 cls_preds_.float().sigmoid_() * obj_preds_.float().sigmoid_()
             ).sqrt()
@@ -497,10 +498,10 @@ class YOLOXHead(nn.Module):
         del pair_wise_cls_loss, cost, pair_wise_ious, pair_wise_ious_loss
 
         if mode == "cpu":
-            gt_matched_classes = gt_matched_classes.cuda()
-            fg_mask = fg_mask.cuda()
-            pred_ious_this_matching = pred_ious_this_matching.cuda()
-            matched_gt_inds = matched_gt_inds.cuda()
+            gt_matched_classes = gt_matched_classes.to(cls_preds.device)
+            fg_mask = fg_mask.to(cls_preds.device)
+            pred_ious_this_matching = pred_ious_this_matching.to(cls_preds.device)
+            matched_gt_inds = matched_gt_inds.to(cls_preds.device)
 
         return (
             gt_matched_classes,

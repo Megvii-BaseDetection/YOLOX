@@ -49,7 +49,7 @@ def gpu_mem_usage():
     """
     Compute the GPU memory usage for the current device (MB).
     """
-    mem_usage_bytes = torch.cuda.max_memory_allocated()
+    mem_usage_bytes = torch.cuda.max_memory_allocated() if torch.cuda.is_available() else 0
     return mem_usage_bytes / (1024 * 1024)
 
 

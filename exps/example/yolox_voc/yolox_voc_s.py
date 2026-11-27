@@ -22,7 +22,7 @@ class Exp(MyExp):
         self.exp_name = os.path.split(os.path.realpath(__file__))[1].split(".")[0]
 
     def get_dataset(self, cache: bool, cache_type: str = "ram"):
-        from yolox.data import VOCDetection, TrainTransform
+        from yolox.data import TrainTransform, VOCDetection
 
         return VOCDetection(
             data_dir=os.path.join(get_yolox_datadir(), "VOCdevkit"),
@@ -37,7 +37,7 @@ class Exp(MyExp):
         )
 
     def get_eval_dataset(self, **kwargs):
-        from yolox.data import VOCDetection, ValTransform
+        from yolox.data import ValTransform, VOCDetection
         legacy = kwargs.get("legacy", False)
 
         return VOCDetection(

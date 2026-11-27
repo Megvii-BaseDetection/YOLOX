@@ -12,13 +12,14 @@ import torch.backends.cudnn as cudnn
 
 from yolox.core import launch
 from yolox.exp import Exp, check_exp_value, get_exp
-from yolox.utils import configure_module, configure_nccl, configure_omp, get_num_devices
+from yolox.utils import configure_device, configure_module, configure_nccl, configure_omp
 
 
 def make_parser():
     parser = argparse.ArgumentParser("YOLOX train parser")
     parser.add_argument("-expn", "--experiment-name", type=str, default=None)
     parser.add_argument("-n", "--name", type=str, default=None, help="model name")
+    parser.add_argument("--device", choices=("auto", "cpu", "cuda"), default="auto")
 
     # distributed
     parser.add_argument(
@@ -110,9 +111,10 @@ def main(exp: Exp, args):
         )
 
     # set environment variables for distributed training
-    configure_nccl()
+    if args.device == "cuda":
+        configure_nccl()
     configure_omp()
-    cudnn.benchmark = True
+    cudnn.benchmark = args.device == "cuda"
 
     trainer = exp.get_trainer(args)
     trainer.train()
@@ -128,8 +130,7 @@ if __name__ == "__main__":
     if not args.experiment_name:
         args.experiment_name = exp.exp_name
 
-    num_gpu = get_num_devices() if args.devices is None else args.devices
-    assert num_gpu <= get_num_devices()
+    num_gpu = configure_device(args)
 
     if args.cache is not None:
         exp.dataset = exp.get_dataset(cache=True, cache_type=args.cache)

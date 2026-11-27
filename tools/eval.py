@@ -15,10 +15,12 @@ from torch.nn.parallel import DistributedDataParallel as DDP
 from yolox.core import launch
 from yolox.exp import get_exp
 from yolox.utils import (
+    configure_device,
     configure_module,
     configure_nccl,
     fuse_model,
     get_local_rank,
+    get_device,
     get_model_info,
     setup_logger
 )
@@ -28,6 +30,7 @@ def make_parser():
     parser = argparse.ArgumentParser("YOLOX Eval")
     parser.add_argument("-expn", "--experiment-name", type=str, default=None)
     parser.add_argument("-n", "--name", type=str, default=None, help="model name")
+    parser.add_argument("--device", choices=("auto", "cpu", "cuda"), default="auto")
 
     # distributed
     parser.add_argument(
@@ -125,8 +128,9 @@ def main(exp, args, num_gpu):
     is_distributed = num_gpu > 1
 
     # set environment variables for distributed training
-    configure_nccl()
-    cudnn.benchmark = True
+    if args.device == "cuda":
+        configure_nccl()
+    cudnn.benchmark = args.device == "cuda"
 
     rank = get_local_rank()
 
@@ -153,8 +157,11 @@ def main(exp, args, num_gpu):
     evaluator.per_class_AP = True
     evaluator.per_class_AR = True
 
-    torch.cuda.set_device(rank)
-    model.cuda(rank)
+    device = get_device(args.device)
+    if device.type == "cuda":
+        torch.cuda.set_device(rank)
+        device = torch.device("cuda", rank)
+    model.to(device)
     model.eval()
 
     if not args.speed and not args.trt:
@@ -163,8 +170,7 @@ def main(exp, args, num_gpu):
         else:
             ckpt_file = args.ckpt
         logger.info("loading checkpoint from {}".format(ckpt_file))
-        loc = "cuda:{}".format(rank)
-        ckpt = torch.load(ckpt_file, map_location=loc)
+        ckpt = torch.load(ckpt_file, map_location=device)
         model.load_state_dict(ckpt["model"])
         logger.info("loaded checkpoint done.")
 
@@ -205,8 +211,7 @@ if __name__ == "__main__":
     if not args.experiment_name:
         args.experiment_name = exp.exp_name
 
-    num_gpu = torch.cuda.device_count() if args.devices is None else args.devices
-    assert num_gpu <= torch.cuda.device_count()
+    num_gpu = configure_device(args)
 
     dist_url = "auto" if args.dist_url is None else args.dist_url
     launch(

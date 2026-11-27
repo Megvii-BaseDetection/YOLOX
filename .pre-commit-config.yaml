@@ -1,6 +1,6 @@
 repos:
   - repo: https://github.com/pycqa/flake8
-    rev: 3.8.3
+    rev: 7.5.0
     hooks:
       - id: flake8
   - repo: https://github.com/pre-commit/pre-commit-hooks
@@ -14,14 +14,13 @@ repos:
         args: ["--unsafe"]
       - id: debug-statements
       - id: end-of-file-fixer
-      - id: requirements-txt-fixer
       - id: trailing-whitespace
   - repo: https://github.com/jorisroovers/gitlint
     rev: v0.15.1
     hooks:
       - id: gitlint
   - repo: https://github.com/pycqa/isort
-    rev: 4.3.21
+    rev: 5.13.2
     hooks:
       - id: isort
 

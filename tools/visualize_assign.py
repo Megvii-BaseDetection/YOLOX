@@ -35,7 +35,7 @@ class AssignVisualizer(Trainer):
         inps, targets = self.exp.preprocess(inps, targets, self.input_size)
         data_end_time = time.time()
 
-        with torch.cuda.amp.autocast(enabled=self.amp_training):
+        with torch.amp.autocast(self.device.type, enabled=self.amp_training):
             path_prefix = os.path.join(self.vis_dir, f"assign_vis_{self.batch_cnt}_")
             self.model.visualize(inps, targets, path_prefix)
 

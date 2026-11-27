@@ -62,7 +62,6 @@ class GithubURLDomain(Domain):
 
 
 # to support markdown
-from recommonmark.parser import CommonMarkParser
 
 sys.path.insert(0, os.path.abspath("../"))
 os.environ["_DOC_BUILDING"] = "True"
@@ -129,7 +128,7 @@ needs_sphinx = "3.0"
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
-    "recommonmark",
+    "myst_parser",
     "sphinx.ext.autodoc",
     "sphinx.ext.napoleon",
     "sphinx.ext.intersphinx",
@@ -138,7 +137,6 @@ extensions = [
     "sphinx.ext.mathjax",
     "sphinx.ext.viewcode",
     "sphinx.ext.githubpages",
-    'sphinx_markdown_tables',
 ]
 
 # -- Configurations for plugins ------------
@@ -156,8 +154,8 @@ else:
     # skip this when building locally
     intersphinx_timeout = 0.5
 intersphinx_mapping = {
-    "python": ("https://docs.python.org/3.6", None),
-    "numpy": ("https://docs.scipy.org/doc/numpy/", None),
+    "python": ("https://docs.python.org/3.13", None),
+    "numpy": ("https://numpy.org/doc/stable/", None),
     "torch": ("https://pytorch.org/docs/master/", None),
 }
 # -------------------------
@@ -166,7 +164,7 @@ intersphinx_mapping = {
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]
 
-source_suffix = [".rst", ".md"]
+source_suffix = {".rst": "restructuredtext", ".md": "markdown"}
 
 # The master toctree document.
 master_doc = "index"
@@ -176,7 +174,7 @@ master_doc = "index"
 #
 # This is also used if you do content translation via gettext catalogs.
 # Usually you set "language" from the command line for these cases.
-language = None
+language = "en"
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
@@ -190,7 +188,6 @@ pygments_style = "sphinx"
 # -- Options for HTML output -------------------------------------------------
 
 html_theme = "sphinx_rtd_theme"
-html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
@@ -371,14 +368,6 @@ def autodoc_skip_member(app, what, name, obj, skip, options):
 
 
 def setup(app):
-    from recommonmark.transform import AutoStructify
-
     app.add_domain(GithubURLDomain)
     app.connect("autodoc-skip-member", autodoc_skip_member)
     # app.add_role("paper", paper_ref_role)
-    app.add_config_value(
-        "recommonmark_config",
-        {"enable_math": True, "enable_inline_math": True, "enable_eval_rst": True},
-        True,
-    )
-    app.add_transform(AutoStructify)

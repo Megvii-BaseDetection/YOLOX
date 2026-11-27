@@ -14,7 +14,7 @@ import torch
 from yolox.data.data_augment import ValTransform
 from yolox.data.datasets import COCO_CLASSES
 from yolox.exp import get_exp
-from yolox.utils import fuse_model, get_model_info, postprocess, vis
+from yolox.utils import fuse_model, get_device, get_model_info, postprocess, vis
 
 IMAGE_EXT = [".jpg", ".jpeg", ".webp", ".bmp", ".png"]
 
@@ -48,9 +48,10 @@ def make_parser():
     parser.add_argument("-c", "--ckpt", default=None, type=str, help="ckpt for eval")
     parser.add_argument(
         "--device",
-        default="cpu",
+        default="auto",
+        choices=("auto", "cpu", "cuda", "gpu"),
         type=str,
-        help="device to run our model, can either be cpu or gpu",
+        help="execution device; auto selects CUDA when available, otherwise CPU",
     )
     parser.add_argument("--conf", default=0.3, type=float, help="test conf")
     parser.add_argument("--nms", default=0.3, type=float, help="test nms threshold")
@@ -201,9 +202,11 @@ def image_demo(predictor, vis_folder, path, current_time, save_result):
             save_file_name = os.path.join(save_folder, os.path.basename(image_name))
             logger.info("Saving detection result in {}".format(save_file_name))
             cv2.imwrite(save_file_name, result_image)
-        ch = cv2.waitKey(0)
-        if ch == 27 or ch == ord("q") or ch == ord("Q"):
-            break
+        else:
+            cv2.imshow("yolox", result_image)
+            ch = cv2.waitKey(0)
+            if ch == 27 or ch == ord("q") or ch == ord("Q"):
+                break
 
 
 def imageflow_demo(predictor, vis_folder, current_time, args):
@@ -234,9 +237,9 @@ def imageflow_demo(predictor, vis_folder, current_time, args):
             else:
                 cv2.namedWindow("yolox", cv2.WINDOW_NORMAL)
                 cv2.imshow("yolox", result_frame)
-            ch = cv2.waitKey(1)
-            if ch == 27 or ch == ord("q") or ch == ord("Q"):
-                break
+                ch = cv2.waitKey(1)
+                if ch == 27 or ch == ord("q") or ch == ord("Q"):
+                    break
         else:
             break
 
@@ -253,8 +256,11 @@ def main(exp, args):
         vis_folder = os.path.join(file_name, "vis_res")
         os.makedirs(vis_folder, exist_ok=True)
 
-    if args.trt:
-        args.device = "gpu"
+    device = get_device("cuda" if args.trt else args.device)
+    args.device = "gpu" if device.type == "cuda" else "cpu"
+    if args.fp16 and device.type != "cuda":
+        logger.warning("FP16 requires CUDA; using FP32 on CPU")
+        args.fp16 = False
 
     logger.info("Args: {}".format(args))
 

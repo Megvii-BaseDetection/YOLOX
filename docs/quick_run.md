@@ -7,14 +7,13 @@ Step1. Install YOLOX.
 ```shell
 git clone git@github.com:Megvii-BaseDetection/YOLOX.git
 cd YOLOX
-pip3 install -U pip && pip3 install -r requirements.txt
-pip3 install -v -e .  # or  python3 setup.py develop
+poetry env use 3.13.7
+poetry sync
 ```
-Step2. Install [pycocotools](https://github.com/cocodataset/cocoapi).
-
-```shell
-pip3 install cython; pip3 install 'git+https://github.com/cocodataset/cocoapi.git#subdirectory=PythonAPI'
-```
+For CUDA on Linux, use `poetry sync --extras cuda`. Pycocotools is included;
+no separate COCO API installation or extension compilation is needed.
+Prefix the remaining Python commands with `poetry run`.
+See [environment setup](environment.md) for Python versions and CPU/CUDA options.
 
 ## 2.Demo
 
@@ -61,8 +60,8 @@ python tools/train.py -n yolox-s -d 8 -b 64 --fp16 -o [--cache]
 To use W&B for logging, install wandb in your environment and log in to your W&B account using
 
 ```shell
-pip install wandb
-wandb login
+poetry add wandb
+poetry run wandb login
 ```
 
 Log in to your W&B account

@@ -51,14 +51,14 @@ class JitOp:
 
     def cxx_args(self) -> List:
         """Get optional list of compiler flags to forward"""
-        args = ["-O2"] if sys.platform == "win32" else ["-O3", "-std=c++14", "-g", "-Wno-reorder"]
+        args = ["-O2"] if sys.platform == "win32" else ["-O3", "-std=c++17", "-g", "-Wno-reorder"]
         return args
 
     def nvcc_args(self) -> List:
         """Get optional list of compiler flags to forward to nvcc when building CUDA sources"""
         args = [
             "-O3", "--use_fast_math",
-            "-std=c++17" if sys.platform == "win32" else "-std=c++14",
+            "-std=c++17",
             "-U__CUDA_NO_HALF_OPERATORS__",
             "-U__CUDA_NO_HALF_CONVERSIONS__",
             "-U__CUDA_NO_HALF2_OPERATORS__",
@@ -87,8 +87,9 @@ class JitOp:
                 return self.jit_load(verbose)
 
     def jit_load(self, verbose=True):
-        from torch.utils.cpp_extension import load
         from loguru import logger
+
+        from torch.utils.cpp_extension import load
         try:
             import ninja  # noqa
         except ImportError:

@@ -1,21 +1,15 @@
-# .readthedocs.yaml
-# Read the Docs configuration file
-# See https://docs.readthedocs.io/en/stable/config-file/v2.html for details
-
-# Required
 version: 2
 
-# Build documentation in the docs/ directory with Sphinx
+build:
+  os: ubuntu-24.04
+  tools:
+    python: "3.13"
+  jobs:
+    pre_install:
+      - pip install "poetry>=2.3,<3"
+      - poetry config virtualenvs.create false
+    install:
+      - poetry install --only main,docs
+
 sphinx:
-   configuration: docs/conf.py
-
-# Optionally build your docs in additional formats such as PDF
-formats:
-   - pdf
-
-# Optionally set the version of Python and requirements required to build your docs
-python:
-   version: "3.7"
-   install:
-   - requirements: docs/requirements-doc.txt
-   - requirements: requirements.txt
+  configuration: docs/conf.py

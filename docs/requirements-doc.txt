@@ -1,8 +1,0 @@
-docutils==0.16
-# https://github.com/sphinx-doc/sphinx/commit/7acd3ada3f38076af7b2b5c9f3b60bb9c2587a3d
-sphinx==3.2.0
-recommonmark==0.6.0
-sphinx_rtd_theme
-omegaconf>=2.1.0.dev24
-hydra-core>=1.1.0.dev5
-sphinx-markdown-tables==0.0.15

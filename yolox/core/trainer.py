@@ -19,6 +19,7 @@ from yolox.utils import (
     WandbLogger,
     adjust_status,
     all_reduce_norm,
+    get_device,
     get_local_rank,
     get_model_info,
     get_rank,
@@ -43,17 +44,19 @@ class Trainer:
 
         # training related attr
         self.max_epoch = exp.max_epoch
-        self.amp_training = args.fp16
-        self.scaler = torch.cuda.amp.GradScaler(enabled=args.fp16)
         self.is_distributed = get_world_size() > 1
         self.rank = get_rank()
         self.local_rank = get_local_rank()
-        self.device = "cuda:{}".format(self.local_rank)
+        self.device = get_device(getattr(args, "device", "auto"))
+        if self.device.type == "cuda":
+            self.device = torch.device("cuda", self.local_rank)
+        self.amp_training = args.fp16 and self.device.type == "cuda"
+        self.scaler = torch.amp.GradScaler("cuda", enabled=self.amp_training)
         self.use_model_ema = exp.ema
         self.save_history_ckpt = exp.save_history_ckpt
 
         # data/dataloader related attr
-        self.data_type = torch.float16 if args.fp16 else torch.float32
+        self.data_type = torch.float16 if self.amp_training else torch.float32
         self.input_size = exp.input_size
         self.best_ap = 0
 
@@ -103,7 +106,7 @@ class Trainer:
         inps, targets = self.exp.preprocess(inps, targets, self.input_size)
         data_end_time = time.time()
 
-        with torch.cuda.amp.autocast(enabled=self.amp_training):
+        with torch.amp.autocast(self.device.type, enabled=self.amp_training):
             outputs = self.model(inps, targets)
 
         loss = outputs["total_loss"]
@@ -133,7 +136,8 @@ class Trainer:
         logger.info("exp value:\n{}".format(self.exp))
 
         # model related init
-        torch.cuda.set_device(self.local_rank)
+        if self.device.type == "cuda":
+            torch.cuda.set_device(self.local_rank)
         model = self.exp.get_model()
         logger.info(
             "Model Summary: {}".format(get_model_info(model, self.exp.test_size))
@@ -155,14 +159,14 @@ class Trainer:
             cache_img=self.args.cache,
         )
         logger.info("init prefetcher, this might take one minute or less...")
-        self.prefetcher = DataPrefetcher(self.train_loader)
+        self.prefetcher = DataPrefetcher(self.train_loader, device=self.device)
         # max_iter means iters per epoch
         self.max_iter = len(self.train_loader)
 
         self.lr_scheduler = self.exp.get_lr_scheduler(
             self.exp.basic_lr_per_img * self.args.batch_size, self.max_iter
         )
-        if self.args.occupy:
+        if self.args.occupy and self.device.type == "cuda":
             occupy_mem(self.local_rank)
 
         if self.is_distributed:
@@ -404,8 +408,8 @@ class Trainer:
                 "start_epoch": self.epoch + 1,
                 "model": save_model.state_dict(),
                 "optimizer": self.optimizer.state_dict(),
-                "best_ap": self.best_ap,
-                "curr_ap": ap,
+                "best_ap": float(self.best_ap),
+                "curr_ap": None if ap is None else float(ap),
             }
             save_checkpoint(
                 ckpt_state,
